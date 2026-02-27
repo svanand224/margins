@@ -46,3 +46,14 @@ export interface DailyLog {
 
 export type SortOption = 'title' | 'author' | 'dateAdded' | 'rating' | 'progress';
 export type ViewMode = 'grid' | 'list';
+
+export interface Thread {
+  id: string;
+  name: string;
+  description?: string;
+  color: string; // CSS color or theme variable
+  icon: 'paisley' | 'lotus' | 'vine' | 'elephant' | 'mandala' | 'default';
+  bookIds: string[];
+  isAutoGenre?: boolean; // auto-generated from genre grouping
+  createdAt: string;
+}

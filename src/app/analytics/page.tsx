@@ -2,6 +2,7 @@
 
 import { useBookStore } from '@/lib/store';
 import { motion } from 'framer-motion';
+import { MehndiDivider, LotusDivider, BlockPrintBorder } from '@/components/IndianPatterns';
 import {
   BarChart3,
   BookOpen,
@@ -202,7 +203,15 @@ export default function AnalyticsPage() {
           Reading Analytics
         </h1>
         <p className="text-ink-muted mt-1">Insights into your reading habits</p>
+        <div className="mt-2">
+          <MehndiDivider className="h-4 opacity-50" />
+        </div>
       </motion.div>
+
+      {/* Decorative lotus divider */}
+      <div className="mb-6 -mt-2">
+        <LotusDivider className="h-12 opacity-80" />
+      </div>
 
       {/* Summary Stats */}
       <motion.div
@@ -238,7 +247,7 @@ export default function AnalyticsPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="glass-card rounded-2xl p-5 mb-6"
+        className="glass-card rounded-2xl p-5 mb-6 relative overflow-hidden"
       >
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -306,6 +315,11 @@ export default function AnalyticsPage() {
         </div>
       </motion.section>
 
+      {/* Block print border */}
+      <div className="mb-6">
+        <BlockPrintBorder className="h-6 opacity-50" />
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         {/* Monthly Completions */}
         <motion.section
@@ -315,7 +329,7 @@ export default function AnalyticsPage() {
           className="glass-card rounded-2xl p-5"
         >
           <h2 className="text-lg font-semibold text-ink mb-4" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-            <Calendar className="w-4 h-4 text-gold inline mr-2" />
+            <Calendar className="w-4 h-4 text-copper inline mr-2" />
             Books Completed by Month ({currentYear})
           </h2>
           <div className="space-y-2">
@@ -327,7 +341,7 @@ export default function AnalyticsPage() {
                     initial={{ width: 0 }}
                     animate={{ width: `${(d.count / stats.maxMonthly) * 100}%` }}
                     transition={{ duration: 0.5, delay: 0.3 + i * 0.03 }}
-                    className="h-full bg-gradient-to-r from-forest to-sage rounded-full"
+                    className="h-full bg-gradient-to-r from-amber to-copper rounded-full"
                   />
                 </div>
                 <span className="text-xs font-medium text-ink w-4 text-right">{d.count}</span>
@@ -344,7 +358,7 @@ export default function AnalyticsPage() {
           className="glass-card rounded-2xl p-5"
         >
           <h2 className="text-lg font-semibold text-ink mb-4" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-            <PieChart className="w-4 h-4 text-gold inline mr-2" />
+            <PieChart className="w-4 h-4 text-amber inline mr-2" />
             Genre Distribution
           </h2>
           {stats.topGenres.length > 0 ? (

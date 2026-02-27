@@ -3,12 +3,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
-import { Book, ReadingGoal, ReadingSession, ReadingStatus, DailyLog } from './types';
+import { Book, ReadingGoal, ReadingSession, ReadingStatus, DailyLog, Thread } from './types';
 
 interface BookStore {
   books: Book[];
   goals: ReadingGoal[];
   dailyLogs: DailyLog[];
+  threads: Thread[];
   readerName: string;
 
   // Book actions
@@ -28,6 +29,13 @@ interface BookStore {
   updateGoal: (id: string, updates: Partial<ReadingGoal>) => void;
   deleteGoal: (id: string) => void;
 
+  // Thread actions
+  addThread: (thread: Omit<Thread, 'id' | 'createdAt'>) => string;
+  updateThread: (id: string, updates: Partial<Thread>) => void;
+  deleteThread: (id: string) => void;
+  addBookToThread: (threadId: string, bookId: string) => void;
+  removeBookFromThread: (threadId: string, bookId: string) => void;
+
   // Daily log
   logDaily: (date: string, pagesRead: number, minutesSpent: number, bookId: string) => void;
 
@@ -41,6 +49,7 @@ export const useBookStore = create<BookStore>()(
       books: [],
       goals: [],
       dailyLogs: [],
+      threads: [],
       readerName: 'Sasha',
 
       addBook: (bookData) => {
@@ -64,7 +73,13 @@ export const useBookStore = create<BookStore>()(
       },
 
       deleteBook: (id) => {
-        set((state) => ({ books: state.books.filter((b) => b.id !== id) }));
+        set((state) => ({
+          books: state.books.filter((b) => b.id !== id),
+          threads: state.threads.map((t) => ({
+            ...t,
+            bookIds: t.bookIds.filter((bid) => bid !== id),
+          })),
+        }));
       },
 
       toggleFavorite: (id) => {
@@ -160,6 +175,47 @@ export const useBookStore = create<BookStore>()(
 
       deleteGoal: (id) => {
         set((state) => ({ goals: state.goals.filter((g) => g.id !== id) }));
+      },
+
+      addThread: (threadData) => {
+        const id = uuidv4();
+        const newThread: Thread = {
+          ...threadData,
+          id,
+          createdAt: new Date().toISOString(),
+        };
+        set((state) => ({ threads: [...state.threads, newThread] }));
+        return id;
+      },
+
+      updateThread: (id, updates) => {
+        set((state) => ({
+          threads: state.threads.map((t) => (t.id === id ? { ...t, ...updates } : t)),
+        }));
+      },
+
+      deleteThread: (id) => {
+        set((state) => ({ threads: state.threads.filter((t) => t.id !== id) }));
+      },
+
+      addBookToThread: (threadId, bookId) => {
+        set((state) => ({
+          threads: state.threads.map((t) =>
+            t.id === threadId && !t.bookIds.includes(bookId)
+              ? { ...t, bookIds: [...t.bookIds, bookId] }
+              : t
+          ),
+        }));
+      },
+
+      removeBookFromThread: (threadId, bookId) => {
+        set((state) => ({
+          threads: state.threads.map((t) =>
+            t.id === threadId
+              ? { ...t, bookIds: t.bookIds.filter((id) => id !== bookId) }
+              : t
+          ),
+        }));
       },
 
       logDaily: (date, pagesRead, minutesSpent, bookId) => {

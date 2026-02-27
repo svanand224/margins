@@ -8,16 +8,187 @@ import {
   Trophy,
   Clock,
   TrendingUp,
-  Sparkles,
   ChevronRight,
   Star,
   Flame,
   Target,
   Edit3,
+  Plus,
+  X,
+  Settings,
+  Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useMemo, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { format, differenceInDays, startOfYear, isThisYear, subDays } from 'date-fns';
+import { Thread } from '@/lib/types';
+import { MehndiDivider, ElephantWatermark, ChintzFloral, MandalaCorner, LotusDivider, OrnateFrame, BlockPrintBorder, LotusProgressBar } from '@/components/IndianPatterns';
+
+/** Animated Lotus SVG for empty states */
+function FloatingLotus({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+      {/* Center petal */}
+      <motion.path
+        d="M60 10C52 30 50 50 60 75C70 50 68 30 60 10Z"
+        stroke="var(--th-gold)"
+        strokeWidth="1.5"
+        fill="var(--th-gold)"
+        fillOpacity="0.1"
+        strokeLinejoin="round"
+        initial={{ pathLength: 0, opacity: 0 }}
+        animate={{ pathLength: 1, opacity: 1 }}
+        transition={{ duration: 1.5, ease: 'easeOut' }}
+      />
+      {/* Inner teardrop */}
+      <motion.path
+        d="M60 28C56 40 55 55 60 65C65 55 64 40 60 28Z"
+        stroke="var(--th-gold-dark)"
+        strokeWidth="0.8"
+        fill="none"
+        initial={{ pathLength: 0 }}
+        animate={{ pathLength: 1 }}
+        transition={{ duration: 1, delay: 0.5 }}
+      />
+      {/* Left inner petal */}
+      <motion.path
+        d="M60 75C50 60 40 45 38 32C42 45 50 60 60 75Z"
+        stroke="var(--th-gold)"
+        strokeWidth="1.3"
+        fill="var(--th-gold)"
+        fillOpacity="0.08"
+        strokeLinejoin="round"
+        initial={{ pathLength: 0, opacity: 0 }}
+        animate={{ pathLength: 1, opacity: 1 }}
+        transition={{ duration: 1.2, delay: 0.3 }}
+      />
+      {/* Right inner petal */}
+      <motion.path
+        d="M60 75C70 60 80 45 82 32C78 45 70 60 60 75Z"
+        stroke="var(--th-gold)"
+        strokeWidth="1.3"
+        fill="var(--th-gold)"
+        fillOpacity="0.08"
+        strokeLinejoin="round"
+        initial={{ pathLength: 0, opacity: 0 }}
+        animate={{ pathLength: 1, opacity: 1 }}
+        transition={{ duration: 1.2, delay: 0.3 }}
+      />
+      {/* Left outer petal */}
+      <motion.path
+        d="M60 75C45 65 28 50 22 38C30 50 45 65 60 75Z"
+        stroke="var(--th-gold)"
+        strokeWidth="1.2"
+        fill="var(--th-gold)"
+        fillOpacity="0.05"
+        strokeLinejoin="round"
+        initial={{ pathLength: 0, opacity: 0 }}
+        animate={{ pathLength: 1, opacity: 1 }}
+        transition={{ duration: 1, delay: 0.5 }}
+      />
+      {/* Right outer petal */}
+      <motion.path
+        d="M60 75C75 65 92 50 98 38C90 50 75 65 60 75Z"
+        stroke="var(--th-gold)"
+        strokeWidth="1.2"
+        fill="var(--th-gold)"
+        fillOpacity="0.05"
+        strokeLinejoin="round"
+        initial={{ pathLength: 0, opacity: 0 }}
+        animate={{ pathLength: 1, opacity: 1 }}
+        transition={{ duration: 1, delay: 0.5 }}
+      />
+      {/* Far left petal */}
+      <motion.path
+        d="M60 75C40 70 18 55 10 45C20 55 40 68 60 75Z"
+        stroke="var(--th-gold)"
+        strokeWidth="1"
+        fill="none"
+        opacity="0.5"
+        initial={{ pathLength: 0 }}
+        animate={{ pathLength: 1 }}
+        transition={{ duration: 0.8, delay: 0.7 }}
+      />
+      {/* Far right petal */}
+      <motion.path
+        d="M60 75C80 70 102 55 110 45C100 55 80 68 60 75Z"
+        stroke="var(--th-gold)"
+        strokeWidth="1"
+        fill="none"
+        opacity="0.5"
+        initial={{ pathLength: 0 }}
+        animate={{ pathLength: 1 }}
+        transition={{ duration: 0.8, delay: 0.7 }}
+      />
+      {/* Decorative dots */}
+      {[0, 1, 2].map((i) => (
+        <motion.circle
+          key={i}
+          cx="60"
+          cy={82 + i * 4}
+          r="1"
+          fill="var(--th-gold)"
+          initial={{ opacity: 0, scale: 0 }}
+          animate={{ opacity: 0.4 - i * 0.1, scale: 1 }}
+          transition={{ duration: 0.3, delay: 1 + i * 0.1 }}
+        />
+      ))}
+    </svg>
+  );
+}
+
+const threadIconSvgs: Record<Thread['icon'], ReactNode> = {
+  default: (
+    <svg width="14" height="14" viewBox="0 0 18 18" className="text-current">
+      <path d="M1 9 C5 4, 13 4, 17 9" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      <path d="M1 9 C5 14, 13 14, 17 9" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" opacity="0.4" />
+    </svg>
+  ),
+  paisley: (
+    <svg width="14" height="14" viewBox="0 0 24 24" className="text-current">
+      <path d="M12 2C8 2 4 6 4 12C4 18 8 22 12 22C12 22 16 20 16 14C16 8 12 6 12 2Z" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      <path d="M10 10C10 10 12 12 12 16" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.5" />
+    </svg>
+  ),
+  lotus: (
+    <svg width="14" height="14" viewBox="0 0 24 24" className="text-current">
+      <path d="M12 4C10 8 9 12 12 18C15 12 14 8 12 4Z" stroke="currentColor" strokeWidth="1.3" fill="none" />
+      <path d="M12 18C8 14 4 10 5 7C6 10 8 14 12 18Z" stroke="currentColor" strokeWidth="1.2" fill="none" />
+      <path d="M12 18C16 14 20 10 19 7C18 10 16 14 12 18Z" stroke="currentColor" strokeWidth="1.2" fill="none" />
+    </svg>
+  ),
+  vine: (
+    <svg width="14" height="14" viewBox="0 0 24 24" className="text-current">
+      <path d="M4 20C8 16 10 10 12 4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      <path d="M8 14C10 12 14 12 16 10" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.5" strokeLinecap="round" />
+      <circle cx="16" cy="8" r="2" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.4" />
+    </svg>
+  ),
+  elephant: (
+    <svg width="14" height="14" viewBox="0 0 24 24" className="text-current">
+      <path d="M6 12C6 8 8 4 14 4C18 4 20 8 20 12V18H16V14H12V18H8V14H6V12Z" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinejoin="round" />
+      <path d="M6 12C4 12 2 14 2 16" stroke="currentColor" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+    </svg>
+  ),
+  mandala: (
+    <svg width="14" height="14" viewBox="0 0 24 24" className="text-current">
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.2" fill="none" />
+      <circle cx="12" cy="12" r="7" stroke="currentColor" strokeWidth="0.8" fill="none" opacity="0.4" />
+      {[0, 60, 120, 180, 240, 300].map((angle) => (
+        <line key={angle} x1="12" y1="5" x2="12" y2="2" stroke="currentColor" strokeWidth="1" transform={`rotate(${angle} 12 12)`} opacity="0.5" />
+      ))}
+    </svg>
+  ),
+};
+
+const threadColors = [
+  { name: 'gold', class: 'from-gold/15 to-amber/10', border: 'border-gold/25', text: 'text-gold-dark' },
+  { name: 'forest', class: 'from-forest/15 to-sage-light/10', border: 'border-forest/25', text: 'text-forest' },
+  { name: 'teal', class: 'from-teal/15 to-teal-light/10', border: 'border-teal/25', text: 'text-teal' },
+  { name: 'copper', class: 'from-copper/15 to-rose-light/10', border: 'border-copper/25', text: 'text-copper' },
+  { name: 'plum', class: 'from-plum/15 to-lavender/10', border: 'border-plum/25', text: 'text-plum' },
+  { name: 'rose', class: 'from-rose/15 to-rose-light/10', border: 'border-rose/25', text: 'text-rose' },
+];
 
 const stagger = {
   hidden: { opacity: 0 },
@@ -57,10 +228,18 @@ function getGreeting(name: string) {
 }
 
 export default function HomePage() {
-  const { books, goals, dailyLogs, readerName, setReaderName } = useBookStore();
+  const { books, goals, dailyLogs, readerName, setReaderName, threads, addThread, updateThread, deleteThread, addBookToThread, removeBookFromThread } = useBookStore();
   const [quoteIndex, setQuoteIndex] = useState(0);
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(readerName);
+  const [showNewThread, setShowNewThread] = useState(false);
+  const [newThreadName, setNewThreadName] = useState('');
+  const [newThreadDesc, setNewThreadDesc] = useState('');
+  const [newThreadColor, setNewThreadColor] = useState('gold');
+  const [newThreadIcon, setNewThreadIcon] = useState<'paisley' | 'lotus' | 'vine' | 'elephant' | 'mandala' | 'default'>('default');
+  const [editingThreadId, setEditingThreadId] = useState<string | null>(null);
+  const [threadBookSearch, setThreadBookSearch] = useState('');
+  const [managingThreadId, setManagingThreadId] = useState<string | null>(null);
 
   // Cycle quotes every 8 seconds
   useEffect(() => {
@@ -131,8 +310,27 @@ export default function HomePage() {
         className="mb-8"
       >
         <div className="relative overflow-hidden rounded-2xl border border-gold-light/20 px-5 py-5 md:px-8 md:py-6">
-          <div className="absolute top-3 right-3 opacity-[0.06]">
-            <Sparkles className="w-20 h-20 text-gold" />
+          <div className="absolute top-3 right-3 opacity-[0.12]">
+            {/* Decorative lotus */}
+            <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="text-gold">
+              <ellipse cx="40" cy="40" rx="8" ry="20" fill="currentColor" fillOpacity="0.4" />
+              <ellipse cx="40" cy="40" rx="8" ry="20" fill="currentColor" fillOpacity="0.3" transform="rotate(30 40 40)" />
+              <ellipse cx="40" cy="40" rx="8" ry="20" fill="currentColor" fillOpacity="0.3" transform="rotate(-30 40 40)" />
+              <ellipse cx="40" cy="40" rx="8" ry="20" fill="currentColor" fillOpacity="0.3" transform="rotate(60 40 40)" />
+              <ellipse cx="40" cy="40" rx="8" ry="20" fill="currentColor" fillOpacity="0.3" transform="rotate(-60 40 40)" />
+              <ellipse cx="40" cy="40" rx="8" ry="20" fill="currentColor" fillOpacity="0.25" transform="rotate(90 40 40)" />
+              <circle cx="40" cy="40" r="6" fill="currentColor" />
+            </svg>
+          </div>
+          {/* Indian pattern accents */}
+          <div className="absolute top-0 left-0 w-20 h-20 opacity-60 pointer-events-none">
+            <MandalaCorner />
+          </div>
+          <div className="absolute bottom-0 right-0 w-20 h-20 opacity-60 pointer-events-none rotate-180">
+            <MandalaCorner />
+          </div>
+          <div className="absolute -bottom-4 right-4 w-32 h-28 opacity-[0.12] pointer-events-none">
+            <ElephantWatermark />
           </div>
 
           <div className="flex items-center gap-3 mb-3 flex-wrap">
@@ -214,6 +412,11 @@ export default function HomePage() {
         </div>
       </motion.div>
 
+      {/* Decorative Indian divider */}
+      <div className="mb-6 -mt-2">
+        <MehndiDivider className="h-5 opacity-60" />
+      </div>
+
       {/* Quick Stats */}
       <motion.div
         variants={stagger}
@@ -275,7 +478,7 @@ export default function HomePage() {
         >
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-ink flex items-center gap-2" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-              <BookMarked className="w-5 h-5 text-gold" />
+              <BookMarked className="w-5 h-5 text-copper" />
               Currently Reading
             </h2>
             <Link href="/library?status=reading" className="text-sm text-gold-dark hover:text-gold flex items-center gap-1 transition-colors">
@@ -314,18 +517,10 @@ export default function HomePage() {
                           <h3 className="font-semibold text-ink text-sm truncate">{book.title}</h3>
                           <p className="text-xs text-ink-muted truncate">{book.author}</p>
                           <div className="mt-3">
-                            <div className="flex items-center justify-between text-xs text-ink-muted mb-1">
+                            <div className="text-xs text-ink-muted mb-1">
                               <span>Page {book.currentPage} of {book.totalPages}</span>
-                              <span className="font-medium text-gold-dark">{progress}%</span>
                             </div>
-                            <div className="h-2 bg-cream rounded-full overflow-hidden">
-                              <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: `${progress}%` }}
-                                transition={{ duration: 1, delay: 0.7 + i * 0.1, ease: 'easeOut' }}
-                                className="h-full bg-gradient-to-r from-gold to-amber rounded-full progress-bar-glow"
-                              />
-                            </div>
+                            <LotusProgressBar progress={progress} size="sm" showPercentage />
                           </div>
                         </div>
                       </div>
@@ -338,6 +533,13 @@ export default function HomePage() {
         </motion.section>
       )}
 
+      {/* Lotus Divider before Year Goal */}
+      {stats.yearGoal && (
+        <div className="mb-6 -mt-2">
+          <LotusDivider className="h-12 opacity-80" />
+        </div>
+      )}
+
       {/* Year Goal Progress */}
       {stats.yearGoal && (
         <motion.section
@@ -346,10 +548,10 @@ export default function HomePage() {
           transition={{ delay: 0.6 }}
           className="mb-8"
         >
-          <div className="glass-card rounded-2xl p-6 bg-gradient-to-br from-gold/5 to-amber/5">
+          <div className="glass-card rounded-2xl p-6 bg-gradient-to-br from-amber/5 to-copper/5 relative overflow-hidden">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold text-ink flex items-center gap-2" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-                <Target className="w-5 h-5 text-gold" />
+                <Target className="w-5 h-5 text-rose" />
                 {new Date().getFullYear()} Reading Goal
               </h2>
               <Link href="/goals" className="text-sm text-gold-dark hover:text-gold flex items-center gap-1 transition-colors">
@@ -364,14 +566,12 @@ export default function HomePage() {
                   </span>
                   <span className="text-ink-muted">of {stats.yearGoal.target} books</span>
                 </div>
-                <div className="h-3 bg-cream rounded-full overflow-hidden mb-2">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${Math.min((stats.completedThisYear.length / stats.yearGoal.target) * 100, 100)}%` }}
-                    transition={{ duration: 1.2, delay: 0.8, ease: 'easeOut' }}
-                    className="h-full bg-gradient-to-r from-forest to-sage rounded-full progress-bar-glow"
-                  />
-                </div>
+                <LotusProgressBar 
+                  progress={Math.min((stats.completedThisYear.length / stats.yearGoal.target) * 100, 100)} 
+                  size="md" 
+                  showPercentage 
+                  className="mb-2"
+                />
                 <p className="text-xs text-ink-muted">
                   {stats.completedThisYear.length >= stats.paceNeeded
                     ? "You're ahead of pace!"
@@ -393,7 +593,7 @@ export default function HomePage() {
         >
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-ink flex items-center gap-2" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-              <Star className="w-5 h-5 text-gold" />
+              <Star className="w-5 h-5 text-amber" />
               Recently Completed
             </h2>
             <Link href="/library?status=completed" className="text-sm text-gold-dark hover:text-gold flex items-center gap-1 transition-colors">
@@ -453,22 +653,22 @@ export default function HomePage() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.3 }}
-          className="text-center py-16"
+          className="text-center py-16 relative"
         >
           <motion.div
             animate={{ y: [0, -8, 0] }}
             transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-            className="mb-6"
+            className="mb-6 relative z-10"
           >
-            <BookOpen className="w-20 h-20 text-gold-light mx-auto" />
+            <FloatingLotus className="w-28 h-24 mx-auto" />
           </motion.div>
           <h2 className="text-2xl font-bold text-ink mb-2" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
             Your reading adventure begins here
           </h2>
-          <p className="text-ink-muted mb-8 max-w-md mx-auto">
+          <p className="text-ink-muted mb-8 max-w-md mx-auto relative z-10">
             Add your first book to start tracking your journey through worlds of wonder.
           </p>
-          <Link href="/add">
+          <Link href="/add" className="relative z-10">
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -480,8 +680,15 @@ export default function HomePage() {
         </motion.div>
       )}
 
-      {/* Threads — Related books connected by genre/tags */}
-      {books.length >= 2 && (
+      {/* Lotus Divider before Threads */}
+      {(books.length >= 2 || threads.length > 0) && (
+        <div className="mb-4 -mt-4">
+          <LotusDivider className="h-10 opacity-70" />
+        </div>
+      )}
+
+      {/* Threads — Custom collections + auto-genre groups */}
+      {(books.length >= 2 || threads.length > 0) && (
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -490,62 +697,257 @@ export default function HomePage() {
         >
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-ink flex items-center gap-2" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-              <svg width="18" height="18" viewBox="0 0 18 18" className="text-gold">
+              <svg width="18" height="18" viewBox="0 0 18 18" className="text-copper">
                 <path d="M1 9 C5 4, 13 4, 17 9" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
                 <path d="M1 9 C5 14, 13 14, 17 9" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" opacity="0.4" />
               </svg>
               Threads
             </h2>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowNewThread(!showNewThread)}
+              className="flex items-center gap-1 text-xs text-gold-dark hover:text-gold transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" /> New Thread
+            </motion.button>
           </div>
-          {(() => {
-            // Group books by genre
-            const genreGroups: Record<string, typeof books> = {};
-            books.forEach(b => {
-              if (b.genre) {
-                if (!genreGroups[b.genre]) genreGroups[b.genre] = [];
-                genreGroups[b.genre].push(b);
-              }
-            });
-            const threads = Object.entries(genreGroups)
-              .filter(([, group]) => group.length >= 2)
-              .sort((a, b) => b[1].length - a[1].length)
-              .slice(0, 3);
 
-            if (threads.length === 0) return (
-              <p className="text-sm text-ink-muted italic">Add more books with shared genres to discover threads.</p>
-            );
+          {/* New Thread Form */}
+          <AnimatePresence>
+            {showNewThread && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden mb-4"
+              >
+                <div className="glass-card rounded-xl p-4 space-y-3">
+                  <input
+                    type="text"
+                    value={newThreadName}
+                    onChange={(e) => setNewThreadName(e.target.value)}
+                    placeholder="Thread name (e.g., Book Club 2026, Comfort Reads)"
+                    className="w-full px-3 py-2 bg-cream/50 border border-gold-light/30 rounded-lg text-sm text-ink"
+                  />
+                  <input
+                    type="text"
+                    value={newThreadDesc}
+                    onChange={(e) => setNewThreadDesc(e.target.value)}
+                    placeholder="Description (optional)"
+                    className="w-full px-3 py-2 bg-cream/50 border border-gold-light/30 rounded-lg text-sm text-ink"
+                  />
+                  <div>
+                    <p className="text-xs text-ink-muted mb-1.5">Icon</p>
+                    <div className="flex gap-2">
+                      {(Object.keys(threadIconSvgs) as Thread['icon'][]).map((icon) => (
+                        <button
+                          key={icon}
+                          onClick={() => setNewThreadIcon(icon)}
+                          className={`p-2 rounded-lg border transition-all ${newThreadIcon === icon ? 'bg-gold/10 border-gold/30 text-gold-dark' : 'border-gold-light/20 text-ink-muted hover:border-gold-light/40'}`}
+                        >
+                          {threadIconSvgs[icon]}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs text-ink-muted mb-1.5">Color</p>
+                    <div className="flex gap-2">
+                      {threadColors.map((c) => (
+                        <button
+                          key={c.name}
+                          onClick={() => setNewThreadColor(c.name)}
+                          className={`w-7 h-7 rounded-full bg-gradient-to-br ${c.class} border-2 transition-all ${newThreadColor === c.name ? 'border-ink scale-110' : 'border-transparent'}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => {
+                        if (!newThreadName.trim()) return;
+                        addThread({
+                          name: newThreadName.trim(),
+                          description: newThreadDesc.trim() || undefined,
+                          color: newThreadColor,
+                          icon: newThreadIcon,
+                          bookIds: [],
+                        });
+                        setNewThreadName('');
+                        setNewThreadDesc('');
+                        setNewThreadColor('gold');
+                        setNewThreadIcon('default');
+                        setShowNewThread(false);
+                      }}
+                      className="flex-1 py-2 bg-gradient-to-r from-gold to-amber text-white rounded-lg text-xs font-medium"
+                    >
+                      Create Thread
+                    </motion.button>
+                    <button onClick={() => setShowNewThread(false)} className="px-3 py-2 text-xs text-ink-muted">
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-            return (
-              <div className="space-y-3">
-                {threads.map(([genre, group]) => (
-                  <div
-                    key={genre}
-                    className="relative glass-card rounded-xl p-3 pl-5"
-                  >
-                    <div className="absolute left-2 top-3 bottom-3 w-px bg-gradient-to-b from-gold-light/50 via-gold/30 to-transparent" />
-                    <p className="text-xs font-medium text-gold-dark mb-2 uppercase tracking-wider">{genre}</p>
-                    <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1">
-                      {group.slice(0, 6).map((b) => (
-                        <Link key={b.id} href={`/book/${b.id}`} className="flex-shrink-0 group">
+          <div className="space-y-3">
+            {/* Custom threads */}
+            {threads.map((thread) => {
+              const color = threadColors.find(c => c.name === thread.color) || threadColors[0];
+              const threadBooks = thread.bookIds.map(id => books.find(b => b.id === id)).filter(Boolean);
+              const isManaging = managingThreadId === thread.id;
+
+              return (
+                <div key={thread.id} className={`relative glass-card rounded-xl p-3 pl-5 bg-gradient-to-r ${color.class} border ${color.border}`}>
+                  <div className={`absolute left-2 top-3 bottom-3 w-px bg-gradient-to-b ${color.text} opacity-30`} />
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className={color.text}>{threadIconSvgs[thread.icon]}</span>
+                      <p className={`text-xs font-medium ${color.text} uppercase tracking-wider`}>{thread.name}</p>
+                      <span className="text-[10px] text-ink-muted">({threadBooks.length})</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => setManagingThreadId(isManaging ? null : thread.id)}
+                        className="p-1 rounded text-ink-muted/50 hover:text-gold-dark transition-colors"
+                      >
+                        <Settings className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={() => deleteThread(thread.id)}
+                        className="p-1 rounded text-ink-muted/50 hover:text-rose transition-colors"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                  {thread.description && <p className="text-[10px] text-ink-muted mb-2 italic">{thread.description}</p>}
+
+                  {/* Manage books in thread */}
+                  <AnimatePresence>
+                    {isManaging && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden mb-2"
+                      >
+                        <div className="p-2 bg-cream/30 rounded-lg space-y-2">
+                          <input
+                            type="text"
+                            value={threadBookSearch}
+                            onChange={(e) => setThreadBookSearch(e.target.value)}
+                            placeholder="Search books to add..."
+                            className="w-full px-2 py-1.5 bg-white/50 border border-gold-light/20 rounded-md text-xs text-ink"
+                          />
+                          <div className="max-h-32 overflow-y-auto space-y-1">
+                            {books
+                              .filter(b => !thread.bookIds.includes(b.id))
+                              .filter(b => !threadBookSearch || b.title.toLowerCase().includes(threadBookSearch.toLowerCase()) || b.author.toLowerCase().includes(threadBookSearch.toLowerCase()))
+                              .slice(0, 8)
+                              .map(b => (
+                                <button
+                                  key={b.id}
+                                  onClick={() => { addBookToThread(thread.id, b.id); setThreadBookSearch(''); }}
+                                  className="w-full flex items-center gap-2 px-2 py-1 rounded text-left hover:bg-gold-light/10 transition-colors"
+                                >
+                                  <Plus className="w-3 h-3 text-gold-dark" />
+                                  <span className="text-xs text-ink truncate">{b.title}</span>
+                                  <span className="text-[10px] text-ink-muted ml-auto">{b.author}</span>
+                                </button>
+                              ))}
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1">
+                    {threadBooks.length > 0 ? threadBooks.slice(0, 8).map((b) => (
+                      <div key={b!.id} className="flex-shrink-0 group relative">
+                        <Link href={`/book/${b!.id}`}>
                           <div className="book-cover-glow w-12 h-[4.5rem] rounded-lg bg-gradient-to-br from-bark to-espresso overflow-hidden shadow-sm">
-                            {b.coverUrl ? (
-                              <img src={b.coverUrl} alt={b.title} className="w-full h-full object-cover" />
+                            {b!.coverUrl ? (
+                              <img src={b!.coverUrl} alt={b!.title} className="w-full h-full object-cover" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center">
                                 <BookOpen className="w-4 h-4 text-gold-light/30" />
                               </div>
                             )}
                           </div>
-                          <p className="text-[10px] text-ink-muted truncate w-12 mt-1 group-hover:text-gold-dark transition-colors">{b.title}</p>
+                          <p className="text-[10px] text-ink-muted truncate w-12 mt-1 group-hover:text-gold-dark transition-colors">{b!.title}</p>
                         </Link>
-                      ))}
-                    </div>
+                        {isManaging && (
+                          <button
+                            onClick={() => removeBookFromThread(thread.id, b!.id)}
+                            className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose text-white flex items-center justify-center"
+                          >
+                            <X className="w-2.5 h-2.5" />
+                          </button>
+                        )}
+                      </div>
+                    )) : (
+                      <p className="text-[10px] text-ink-muted italic py-2">Click <Settings className="w-3 h-3 inline" /> to add books to this thread.</p>
+                    )}
                   </div>
-                ))}
-              </div>
-            );
-          })()}
+                </div>
+              );
+            })}
+
+            {/* Auto-genre threads */}
+            {(() => {
+              const genreGroups: Record<string, typeof books> = {};
+              books.forEach(b => {
+                if (b.genre) {
+                  if (!genreGroups[b.genre]) genreGroups[b.genre] = [];
+                  genreGroups[b.genre].push(b);
+                }
+              });
+              const autoThreads = Object.entries(genreGroups)
+                .filter(([, group]) => group.length >= 2)
+                .sort((a, b) => b[1].length - a[1].length)
+                .slice(0, 3);
+
+              if (autoThreads.length === 0 && threads.length === 0) return (
+                <p className="text-sm text-ink-muted italic">Add more books with shared genres to discover threads, or create your own above.</p>
+              );
+
+              return autoThreads.map(([genre, group]) => (
+                <div key={genre} className="relative glass-card rounded-xl p-3 pl-5">
+                  <div className="absolute left-2 top-3 bottom-3 w-px bg-gradient-to-b from-gold-light/50 via-gold/30 to-transparent" />
+                  <p className="text-xs font-medium text-gold-dark mb-2 uppercase tracking-wider">{genre} <span className="text-ink-muted/50 normal-case">(auto)</span></p>
+                  <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1">
+                    {group.slice(0, 6).map((b) => (
+                      <Link key={b.id} href={`/book/${b.id}`} className="flex-shrink-0 group">
+                        <div className="book-cover-glow w-12 h-[4.5rem] rounded-lg bg-gradient-to-br from-bark to-espresso overflow-hidden shadow-sm">
+                          {b.coverUrl ? (
+                            <img src={b.coverUrl} alt={b.title} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <BookOpen className="w-4 h-4 text-gold-light/30" />
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-ink-muted truncate w-12 mt-1 group-hover:text-gold-dark transition-colors">{b.title}</p>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ));
+            })()}
+          </div>
         </motion.section>
+      )}
+
+      {/* Block print border between sections */}
+      {books.length > 0 && (
+        <div className="my-8">
+          <BlockPrintBorder className="h-12" />
+        </div>
       )}
 
       {/* Quick Stats Bar */}
@@ -555,7 +957,14 @@ export default function HomePage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8 }}
         >
-          <div className="glass-card rounded-2xl p-6 bg-gradient-to-br from-teal/5 to-sage-light/5">
+          <div className="glass-card rounded-2xl p-6 bg-gradient-to-br from-teal/5 to-sage-light/5 relative overflow-hidden">
+            {/* Decorative lotus corners */}
+            <div className="absolute -top-2 -left-2 w-16 h-16 opacity-40 pointer-events-none">
+              <ChintzFloral />
+            </div>
+            <div className="absolute -bottom-2 -right-2 w-16 h-16 opacity-40 pointer-events-none rotate-180">
+              <ChintzFloral />
+            </div>
             <h2 className="text-xl font-semibold text-ink flex items-center gap-2 mb-4" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
               <TrendingUp className="w-5 h-5 text-teal" />
               Quick Stats

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { isThisYear, isThisMonth, format, startOfYear, differenceInDays } from 'date-fns';
+import { MehndiDivider, LotusDivider, BlockPrintBorder, LotusProgressBar } from '@/components/IndianPatterns';
 
 const goalTypeConfig = {
   'books-per-year': { icon: BookOpen, label: 'Books per Year', unit: 'books', color: 'from-gold/10 to-amber/10', iconColor: 'text-gold-dark' },
@@ -137,11 +138,24 @@ export default function GoalsPage() {
         className="mb-6"
       >
         <h1 className="text-3xl font-bold text-ink flex items-center gap-3" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-          <Target className="w-8 h-8 text-gold" />
+          <Target className="w-8 h-8 text-copper" />
           Reading Goals
         </h1>
         <p className="text-ink-muted mt-1">Set targets, track progress, earn achievements</p>
+        <div className="mt-2">
+          <MehndiDivider className="h-4 opacity-50" />
+        </div>
       </motion.div>
+
+      {/* Decorative lotus divider */}
+      <div className="mb-6 -mt-2">
+        <LotusDivider className="h-12 opacity-80" />
+      </div>
+
+      {/* Block print border */}
+      <div className="mb-6">
+        <BlockPrintBorder className="h-6 opacity-60" />
+      </div>
 
       {/* Add Goal Button */}
       <motion.div
@@ -282,28 +296,14 @@ export default function GoalsPage() {
               </div>
 
               {/* Progress */}
-              <div className="flex items-baseline gap-2 mb-2">
+              <div className="flex items-baseline gap-2 mb-3">
                 <span className="text-3xl font-bold text-ink" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
                   {current}
                 </span>
                 <span className="text-ink-muted">/ {target} {config.unit}</span>
-                <span className="ml-auto text-lg font-bold text-gold-dark" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-                  {percentage}%
-                </span>
               </div>
 
-              <div className="h-3 bg-white/50 rounded-full overflow-hidden mb-2">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${percentage}%` }}
-                  transition={{ duration: 1, ease: 'easeOut' }}
-                  className={`h-full rounded-full progress-bar-glow ${
-                    isComplete
-                      ? 'bg-gradient-to-r from-gold to-amber'
-                      : 'bg-gradient-to-r from-forest to-sage'
-                  }`}
-                />
-              </div>
+              <LotusProgressBar progress={percentage} size="md" showPercentage className="mb-2" />
 
               {paceInfo && (
                 <p className="text-xs text-ink-muted">{paceInfo}</p>

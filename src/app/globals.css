@@ -197,10 +197,37 @@ body {
 /* Book card hover */
 .book-card {
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+}
+.book-card::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from 0deg,
+    var(--th-gold) 0%,
+    var(--th-amber) 20%,
+    transparent 40%,
+    transparent 60%,
+    var(--th-copper) 80%,
+    var(--th-gold) 100%
+  );
+  opacity: 0;
+  z-index: -1;
+  transition: opacity 0.4s ease;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+  padding: 1px;
+  border-radius: inherit;
 }
 .book-card:hover {
   transform: translateY(-8px) scale(1.02);
   box-shadow: var(--th-card-shadow);
+}
+.book-card:hover::before {
+  opacity: 0.3;
 }
 
 /* Subtle glow on book cover images */
@@ -235,6 +262,21 @@ body {
   background: var(--th-glass-bg);
   backdrop-filter: blur(20px);
   border: 1px solid var(--th-glass-border);
+}
+
+/* Indian-inspired subtle background pattern on body */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: 
+    radial-gradient(circle at 20% 30%, var(--th-gold) 0.5px, transparent 0.5px),
+    radial-gradient(circle at 80% 70%, var(--th-gold) 0.5px, transparent 0.5px),
+    radial-gradient(circle at 50% 50%, var(--th-amber) 0.3px, transparent 0.3px);
+  background-size: 120px 120px, 100px 100px, 80px 80px;
+  opacity: 0.03;
 }
 
 /* Selection color */

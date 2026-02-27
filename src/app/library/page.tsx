@@ -5,7 +5,6 @@ import { Book, ReadingStatus, SortOption, ViewMode } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   BookOpen,
-  Search,
   Filter,
   Grid3X3,
   List,
@@ -17,8 +16,9 @@ import {
   Library,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useMemo, Suspense } from 'react';
+import { useState, useMemo, Suspense, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { MehndiDivider, LotusDivider, JaliPattern, LotusIcon, BlockPrintBorder, LotusProgressBar } from '@/components/IndianPatterns';
 
 const statusLabels: Record<ReadingStatus | 'all', string> = {
   all: 'All Books',
@@ -53,6 +53,18 @@ function LibraryContent() {
   const [genreFilter, setGenreFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<SortOption>('dateAdded');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  // Track scroll progress for growing lotus
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = scrollHeight > 0 ? window.scrollY / scrollHeight : 0;
+      setScrollProgress(Math.min(progress, 1));
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
   const [showFilters, setShowFilters] = useState(false);
 
   const genres = useMemo(() => {
@@ -107,6 +119,53 @@ function LibraryContent() {
 
   return (
     <div className="p-4 md:p-8 max-w-6xl mx-auto">
+      {/* Growing Lotus Scroll Progress */}
+      {books.length > 0 && scrollProgress > 0.05 && (
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-cream/95 backdrop-blur-md rounded-full px-4 py-2 shadow-lg border border-gold/20"
+        >
+          <div className="relative w-16 h-1.5 bg-gold/20 rounded-full overflow-hidden">
+            <div 
+              className="absolute inset-y-0 left-0 bg-gradient-to-r from-gold/60 to-gold rounded-full transition-all duration-150"
+              style={{ width: `${scrollProgress * 100}%` }}
+            />
+          </div>
+          <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6 text-gold">
+            {/* Lotus that grows with scroll */}
+            <path
+              d={`M12 ${4 + (1 - scrollProgress) * 4}C${10 - scrollProgress * 2} 8 ${10 - scrollProgress * 2} 12 12 ${16 + scrollProgress * 2}C${14 + scrollProgress * 2} 12 ${14 + scrollProgress * 2} 8 12 ${4 + (1 - scrollProgress) * 4}Z`}
+              stroke="currentColor"
+              strokeWidth="1.2"
+              fill="currentColor"
+              fillOpacity={0.1 + scrollProgress * 0.2}
+              strokeLinejoin="round"
+            />
+            {scrollProgress > 0.3 && (
+              <>
+                <path
+                  d={`M12 ${16 + scrollProgress * 2}C${9 - scrollProgress * 3} 13 ${5 - scrollProgress * 2} 11 4 8C5 11 8 14 12 ${16 + scrollProgress * 2}Z`}
+                  stroke="currentColor"
+                  strokeWidth="1"
+                  fill="none"
+                  opacity={scrollProgress}
+                  strokeLinejoin="round"
+                />
+                <path
+                  d={`M12 ${16 + scrollProgress * 2}C${15 + scrollProgress * 3} 13 ${19 + scrollProgress * 2} 11 20 8C19 11 16 14 12 ${16 + scrollProgress * 2}Z`}
+                  stroke="currentColor"
+                  strokeWidth="1"
+                  fill="none"
+                  opacity={scrollProgress}
+                  strokeLinejoin="round"
+                />
+              </>
+            )}
+          </svg>
+        </motion.div>
+      )}
+
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
@@ -114,10 +173,16 @@ function LibraryContent() {
         className="mb-6"
       >
         <h1 className="text-3xl font-bold text-ink flex items-center gap-3" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-          <Library className="w-8 h-8 text-gold" />
+          <Library className="w-8 h-8 text-amber" />
           My Library
         </h1>
         <p className="text-ink-muted mt-1">{books.length} books in your collection</p>
+        <div className="mt-2">
+          <MehndiDivider className="h-4 opacity-50" />
+        </div>
+        <div className="mt-4">
+          <BlockPrintBorder className="h-6 opacity-50" />
+        </div>
       </motion.div>
 
       {/* Search & Filters */}
@@ -129,7 +194,7 @@ function LibraryContent() {
       >
         {/* Search bar */}
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" />
+          <LotusIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" />
           <input
             type="text"
             placeholder="Search by title, author, genre, or tag..."
@@ -429,13 +494,10 @@ function ListBookCard({ book, index, onToggleFavorite, relatedCount }: { book: B
             </div>
             {book.status === 'reading' && (
               <div className="mt-2">
-                <div className="flex items-center justify-between text-[10px] text-ink-muted mb-0.5">
+                <div className="text-[10px] text-ink-muted mb-0.5">
                   <span>Page {book.currentPage}/{book.totalPages}</span>
-                  <span>{progress}%</span>
                 </div>
-                <div className="h-1.5 bg-cream rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-gold to-amber rounded-full" style={{ width: `${progress}%` }} />
-                </div>
+                <LotusProgressBar progress={progress} size="sm" showPercentage />
               </div>
             )}
             {book.rating && (

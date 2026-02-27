@@ -16,10 +16,10 @@ import {
   Plus,
   Star,
   ArrowLeft,
-  Sparkles,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { MehndiDivider, LotusDivider, BlockPrintBorder } from '@/components/IndianPatterns';
 
 type AddMode = 'search' | 'isbn' | 'url' | 'manual';
 
@@ -175,26 +175,33 @@ export default function AddBookPage() {
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="text-center py-20"
+          className="text-center py-20 relative"
         >
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: 'spring', bounce: 0.5, delay: 0.1 }}
-            className="w-20 h-20 rounded-full bg-gradient-to-br from-forest to-sage mx-auto mb-6 flex items-center justify-center"
+            className="w-20 h-20 rounded-full bg-gradient-to-br from-forest to-sage mx-auto mb-6 flex items-center justify-center relative z-10"
           >
             <Check className="w-10 h-10 text-white" />
           </motion.div>
-          <h2 className="text-2xl font-bold text-ink mb-2" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+          <h2 className="text-2xl font-bold text-ink mb-2 relative z-10" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
             Book Added!
           </h2>
           <motion.div
             animate={{ y: [0, -5, 0] }}
             transition={{ duration: 2, repeat: Infinity }}
+            className="relative z-10"
           >
-            <Sparkles className="w-6 h-6 text-gold mx-auto mt-4" />
+            {/* Small animated lotus */}
+            <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6 text-gold mx-auto mt-4">
+              <ellipse cx="12" cy="12" rx="2.5" ry="6" fill="currentColor" fillOpacity="0.5" />
+              <ellipse cx="12" cy="12" rx="2.5" ry="5.5" fill="currentColor" fillOpacity="0.4" transform="rotate(35 12 12)" />
+              <ellipse cx="12" cy="12" rx="2.5" ry="5.5" fill="currentColor" fillOpacity="0.4" transform="rotate(-35 12 12)" />
+              <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+            </svg>
           </motion.div>
-          <p className="text-ink-muted mt-2">Redirecting to your book...</p>
+          <p className="text-ink-muted mt-2 relative z-10">Redirecting to your book...</p>
         </motion.div>
       </div>
     );
@@ -209,11 +216,24 @@ export default function AddBookPage() {
         className="mb-6"
       >
         <h1 className="text-3xl font-bold text-ink flex items-center gap-3" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-          <Plus className="w-8 h-8 text-gold" />
+          <Plus className="w-8 h-8 text-amber" />
           Add a Book
         </h1>
         <p className="text-ink-muted mt-1">Add to your collection via search, ISBN, URL, or manual entry</p>
+        <div className="mt-2">
+          <MehndiDivider className="h-4 opacity-50" />
+        </div>
       </motion.div>
+
+      {/* Decorative lotus divider */}
+      <div className="mb-6 -mt-2">
+        <LotusDivider className="h-12 opacity-80" />
+      </div>
+
+      {/* Block print border */}
+      <div className="mb-6 -mt-4">
+        <BlockPrintBorder className="h-6 opacity-50" />
+      </div>
 
       {/* Mode selector */}
       <motion.div

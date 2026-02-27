@@ -4,8 +4,8 @@ import { motion } from 'framer-motion';
 import { useMemo } from 'react';
 
 /**
- * Generates a minimalist lotus silhouette SVG path.
- * Varies between 3 styles: full lotus, single petal, and bud.
+ * Generates minimalist Indian-inspired SVG paths for floating particles.
+ * Includes lotus, paisley, leaf, bud, and mandala dot shapes.
  */
 function lotusFullPath(size: number) {
   const s = size;
@@ -15,6 +15,12 @@ function lotusFullPath(size: number) {
   const lp = `M${cx} ${base} C${cx - s * 0.2} ${s * 0.6}, ${cx - s * 0.35} ${s * 0.35}, ${cx - s * 0.28} ${s * 0.25} C${cx - s * 0.2} ${s * 0.45}, ${cx - s * 0.1} ${s * 0.65}, ${cx} ${base}Z`;
   const rp = `M${cx} ${base} C${cx + s * 0.2} ${s * 0.6}, ${cx + s * 0.35} ${s * 0.35}, ${cx + s * 0.28} ${s * 0.25} C${cx + s * 0.2} ${s * 0.45}, ${cx + s * 0.1} ${s * 0.65}, ${cx} ${base}Z`;
   return `${cp} ${lp} ${rp}`;
+}
+
+function paisleyPath(size: number) {
+  const s = size;
+  const cx = s / 2;
+  return `M${cx} ${s * 0.1} C${cx + s * 0.3} ${s * 0.2}, ${cx + s * 0.35} ${s * 0.5}, ${cx + s * 0.15} ${s * 0.75} C${cx} ${s * 0.9}, ${cx - s * 0.2} ${s * 0.8}, ${cx - s * 0.15} ${s * 0.6} C${cx - s * 0.1} ${s * 0.4}, ${cx - s * 0.05} ${s * 0.2}, ${cx} ${s * 0.1}Z`;
 }
 
 function lotusPetalPath(size: number) {
@@ -29,7 +35,13 @@ function lotusBudPath(size: number) {
   return `M${cx} ${s * 0.15} C${cx - s * 0.08} ${s * 0.35}, ${cx - s * 0.15} ${s * 0.6}, ${cx} ${s * 0.85} C${cx + s * 0.15} ${s * 0.6}, ${cx + s * 0.08} ${s * 0.35}, ${cx} ${s * 0.15}Z`;
 }
 
-const pathFns = [lotusFullPath, lotusPetalPath, lotusBudPath];
+function leafPath(size: number) {
+  const s = size;
+  const cx = s / 2;
+  return `M${cx} ${s * 0.05} C${cx + s * 0.25} ${s * 0.25}, ${cx + s * 0.2} ${s * 0.65}, ${cx} ${s * 0.95} C${cx - s * 0.2} ${s * 0.65}, ${cx - s * 0.25} ${s * 0.25}, ${cx} ${s * 0.05}Z M${cx} ${s * 0.15} L${cx} ${s * 0.85}`;
+}
+
+const pathFns = [lotusFullPath, paisleyPath, lotusPetalPath, lotusBudPath, leafPath];
 
 export default function FloatingParticles() {
   const particles = useMemo(() => {
@@ -43,7 +55,7 @@ export default function FloatingParticles() {
       tx: (Math.random() - 0.5) * 50,
       ty: -(Math.random() * 50 + 10),
       rotate: (Math.random() - 0.5) * 40,
-      variant: i % 3,
+      variant: i % 5,
     }));
   }, []);
 

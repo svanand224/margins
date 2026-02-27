@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useThemeStore } from '@/lib/themeStore';
 import LotusLogo from './LotusLogo';
+import { PaisleyBorder, ChintzFloral } from './IndianPatterns';
 
 const navItems = [
   { href: '/', icon: Home, label: 'Home' },
@@ -126,8 +127,14 @@ export default function Navigation() {
           </button>
 
           <div className="hidden lg:block">
+            <div className="mb-2">
+              <PaisleyBorder className="h-3 opacity-40" />
+            </div>
             <p className="text-xs text-ink-muted italic text-center">&ldquo;A reader lives a thousand lives.&rdquo;</p>
             <p className="text-xs text-gold-dark mt-1 text-center">— George R.R. Martin</p>
+            <div className="mt-2 flex justify-center opacity-20">
+              <ChintzFloral className="w-8 h-8" />
+            </div>
           </div>
         </div>
       </nav>

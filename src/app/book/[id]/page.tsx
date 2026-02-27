@@ -24,6 +24,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useState, useMemo, useRef, useCallback } from 'react';
 import { format, formatDistanceToNow } from 'date-fns';
 import Confetti from '@/components/Confetti';
+import { MehndiDivider, LotusDivider, OrnateFrame, BlockPrintBorder, LotusProgressBar } from '@/components/IndianPatterns';
 
 const statusLabels: Record<ReadingStatus, string> = {
   reading: 'Currently Reading',
@@ -58,6 +59,58 @@ export default function BookDetailPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const prevStatusRef = useRef(book?.status);
+
+  // Edit mode
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    title: '',
+    author: '',
+    isbn: '',
+    coverUrl: '',
+    totalPages: '',
+    genre: '',
+    notes: '',
+    tags: '',
+  });
+
+  const genres = [
+    'Fiction', 'Non-Fiction', 'Mystery', 'Thriller', 'Romance', 'Science Fiction',
+    'Fantasy', 'Horror', 'Historical Fiction', 'Literary Fiction', 'Biography',
+    'Memoir', 'Self-Help', 'Science', 'History', 'Philosophy', 'Poetry',
+    'Business', 'Psychology', 'Health', 'Travel', 'Cooking', 'Art',
+    'Young Adult', 'Children', 'Comics', 'Religion', 'Technology', 'Other',
+  ];
+
+  const startEditing = useCallback(() => {
+    if (!book) return;
+    setEditForm({
+      title: book.title,
+      author: book.author,
+      isbn: book.isbn || '',
+      coverUrl: book.coverUrl || '',
+      totalPages: String(book.totalPages),
+      genre: book.genre,
+      notes: book.notes || '',
+      tags: book.tags.join(', '),
+    });
+    setIsEditing(true);
+  }, [book]);
+
+  const handleSaveEdit = useCallback(() => {
+    if (!book) return;
+    if (!editForm.title.trim() || !editForm.author.trim()) return;
+    updateBook(book.id, {
+      title: editForm.title.trim(),
+      author: editForm.author.trim(),
+      isbn: editForm.isbn.trim() || undefined,
+      coverUrl: editForm.coverUrl.trim() || undefined,
+      totalPages: parseInt(editForm.totalPages) || book.totalPages,
+      genre: editForm.genre,
+      notes: editForm.notes.trim() || undefined,
+      tags: editForm.tags.split(',').map(t => t.trim()).filter(Boolean),
+    });
+    setIsEditing(false);
+  }, [book, editForm, updateBook]);
 
   // Wrapper to detect completion and trigger confetti
   const handleStatusChange = useCallback((status: ReadingStatus) => {
@@ -196,101 +249,222 @@ export default function BookDetailPage() {
 
         {/* Info */}
         <div className="flex-1 text-center sm:text-left">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <h1 className="text-2xl md:text-3xl font-bold text-ink mb-1" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-                {book.title}
-              </h1>
-              <p className="text-ink-muted text-lg mb-3">{book.author}</p>
-            </div>
-            <button
-              onClick={() => toggleFavorite(book.id)}
-              className="p-2 hover:bg-gold-light/10 rounded-full transition-colors"
-            >
-              <Heart className={`w-5 h-5 ${book.favorite ? 'text-rose fill-rose' : 'text-ink-muted'}`} />
-            </button>
-          </div>
-
-          {/* Metadata */}
-          <div className="flex flex-wrap gap-2 mb-4">
-            <span className={`px-3 py-1 rounded-full text-xs font-medium border ${statusColors[book.status]}`}>
-              {statusLabels[book.status]}
-            </span>
-            {book.genre && (
-              <span className="px-3 py-1 rounded-full text-xs font-medium bg-lavender/10 text-plum border border-lavender/20">
-                {book.genre}
-              </span>
-            )}
-            {book.totalPages > 0 && (
-              <span className="px-3 py-1 rounded-full text-xs font-medium bg-cream text-ink-muted border border-gold-light/20">
-                {book.totalPages} pages
-              </span>
-            )}
-          </div>
-
-          {/* Rating */}
-          <div className="flex items-center gap-1 mb-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <motion.button
-                key={i}
-                whileHover={{ scale: 1.2 }}
-                whileTap={{ scale: 0.9 }}
-                onMouseEnter={() => setHoverRating(i + 1)}
-                onMouseLeave={() => setHoverRating(0)}
-                onClick={() => handleRate(i + 1)}
+          <AnimatePresence mode="wait">
+            {isEditing ? (
+              <motion.div
+                key="edit-form"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                className="space-y-3"
               >
-                <Star
-                  className={`w-5 h-5 transition-colors ${
-                    i < (hoverRating || book.rating || rating)
-                      ? 'text-gold fill-gold'
-                      : 'text-gold-light/30'
-                  }`}
-                />
-              </motion.button>
-            ))}
-            {book.rating && <span className="text-xs text-ink-muted ml-2">{book.rating}/5</span>}
-          </div>
+                <div>
+                  <label className="block text-xs font-medium text-ink-muted mb-1">Title *</label>
+                  <input
+                    type="text"
+                    value={editForm.title}
+                    onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                    className="w-full px-3 py-2 bg-cream/50 border border-gold-light/30 rounded-xl text-sm text-ink"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-ink-muted mb-1">Author *</label>
+                  <input
+                    type="text"
+                    value={editForm.author}
+                    onChange={(e) => setEditForm({ ...editForm, author: e.target.value })}
+                    className="w-full px-3 py-2 bg-cream/50 border border-gold-light/30 rounded-xl text-sm text-ink"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-ink-muted mb-1">Total Pages</label>
+                    <input
+                      type="number"
+                      value={editForm.totalPages}
+                      onChange={(e) => setEditForm({ ...editForm, totalPages: e.target.value })}
+                      className="w-full px-3 py-2 bg-cream/50 border border-gold-light/30 rounded-xl text-sm text-ink"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-ink-muted mb-1">Genre</label>
+                    <select
+                      value={editForm.genre}
+                      onChange={(e) => setEditForm({ ...editForm, genre: e.target.value })}
+                      className="w-full px-3 py-2 bg-cream/50 border border-gold-light/30 rounded-xl text-sm text-ink"
+                    >
+                      {genres.map(g => <option key={g} value={g}>{g}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-ink-muted mb-1">Cover Image URL</label>
+                  <input
+                    type="url"
+                    value={editForm.coverUrl}
+                    onChange={(e) => setEditForm({ ...editForm, coverUrl: e.target.value })}
+                    placeholder="https://..."
+                    className="w-full px-3 py-2 bg-cream/50 border border-gold-light/30 rounded-xl text-sm text-ink"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-ink-muted mb-1">ISBN</label>
+                  <input
+                    type="text"
+                    value={editForm.isbn}
+                    onChange={(e) => setEditForm({ ...editForm, isbn: e.target.value })}
+                    className="w-full px-3 py-2 bg-cream/50 border border-gold-light/30 rounded-xl text-sm text-ink"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-ink-muted mb-1">Tags (comma-separated)</label>
+                  <input
+                    type="text"
+                    value={editForm.tags}
+                    onChange={(e) => setEditForm({ ...editForm, tags: e.target.value })}
+                    placeholder="classic, favorites, book-club"
+                    className="w-full px-3 py-2 bg-cream/50 border border-gold-light/30 rounded-xl text-sm text-ink"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-ink-muted mb-1">Notes</label>
+                  <textarea
+                    value={editForm.notes}
+                    onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                    rows={3}
+                    className="w-full px-3 py-2 bg-cream/50 border border-gold-light/30 rounded-xl text-sm text-ink resize-none"
+                  />
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleSaveEdit}
+                    className="flex-1 py-2 bg-gradient-to-r from-gold to-amber text-white rounded-xl text-sm font-medium flex items-center justify-center gap-1.5"
+                  >
+                    <Check className="w-4 h-4" /> Save Changes
+                  </motion.button>
+                  <button
+                    onClick={() => setIsEditing(false)}
+                    className="px-4 py-2 text-sm text-ink-muted hover:text-ink border border-gold-light/20 rounded-xl transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div key="book-info" initial={{ opacity: 1 }} exit={{ opacity: 0, y: -8 }}>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h1 className="text-2xl md:text-3xl font-bold text-ink mb-1" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+                      {book.title}
+                    </h1>
+                    <p className="text-ink-muted text-lg mb-3">{book.author}</p>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={startEditing}
+                      className="p-2 hover:bg-gold-light/10 rounded-full transition-colors"
+                      title="Edit book"
+                    >
+                      <Edit3 className={`w-4 h-4 text-ink-muted hover:text-gold-dark`} />
+                    </button>
+                    <button
+                      onClick={() => toggleFavorite(book.id)}
+                      className="p-2 hover:bg-gold-light/10 rounded-full transition-colors"
+                    >
+                      <Heart className={`w-5 h-5 ${book.favorite ? 'text-rose fill-rose' : 'text-ink-muted'}`} />
+                    </button>
+                  </div>
+                </div>
 
-          {/* Status change */}
-          <div className="flex flex-wrap gap-2">
-            {(['want-to-read', 'reading', 'completed', 'dnf'] as ReadingStatus[]).map((status) => (
-              <motion.button
-                key={status}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => handleStatusChange(status)}
-                className={`
-                  px-3 py-1.5 rounded-lg text-xs font-medium border transition-all
-                  ${book.status === status
-                    ? 'bg-gold/10 border-gold/30 text-gold-dark'
-                    : 'border-gold-light/20 text-ink-muted hover:border-gold-light/40'}
-                `}
-              >
-                {status === 'want-to-read' ? 'TBR' : status === 'reading' ? 'Reading' : status === 'completed' ? 'Completed' : 'DNF'}
-              </motion.button>
-            ))}
-          </div>
+                {/* Metadata */}
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium border ${statusColors[book.status]}`}>
+                    {statusLabels[book.status]}
+                  </span>
+                  {book.genre && (
+                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-lavender/10 text-plum border border-lavender/20">
+                      {book.genre}
+                    </span>
+                  )}
+                  {book.totalPages > 0 && (
+                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-cream text-ink-muted border border-gold-light/20">
+                      {book.totalPages} pages
+                    </span>
+                  )}
+                </div>
 
-          {/* Dates */}
-          <div className="flex flex-wrap gap-4 mt-4 text-xs text-ink-muted">
-            <span className="flex items-center gap-1">
-              <Calendar className="w-3.5 h-3.5" />
-              Added {format(new Date(book.dateAdded), 'MMM d, yyyy')}
-            </span>
-            {book.startDate && (
-              <span className="flex items-center gap-1">
-                <BookMarked className="w-3.5 h-3.5" />
-                Started {format(new Date(book.startDate), 'MMM d, yyyy')}
-              </span>
+                {/* Rating */}
+                <div className="flex items-center gap-1 mb-4">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <motion.button
+                      key={i}
+                      whileHover={{ scale: 1.2 }}
+                      whileTap={{ scale: 0.9 }}
+                      onMouseEnter={() => setHoverRating(i + 1)}
+                      onMouseLeave={() => setHoverRating(0)}
+                      onClick={() => handleRate(i + 1)}
+                    >
+                      <Star
+                        className={`w-5 h-5 transition-colors ${
+                          i < (hoverRating || book.rating || rating)
+                            ? 'text-gold fill-gold'
+                            : 'text-gold-light/30'
+                        }`}
+                      />
+                    </motion.button>
+                  ))}
+                  {book.rating && <span className="text-xs text-ink-muted ml-2">{book.rating}/5</span>}
+                </div>
+
+                {/* Status change */}
+                <div className="flex flex-wrap gap-2">
+                  {(['want-to-read', 'reading', 'completed', 'dnf'] as ReadingStatus[]).map((status) => (
+                    <motion.button
+                      key={status}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => handleStatusChange(status)}
+                      className={`
+                        px-3 py-1.5 rounded-lg text-xs font-medium border transition-all
+                        ${book.status === status
+                          ? 'bg-gold/10 border-gold/30 text-gold-dark'
+                          : 'border-gold-light/20 text-ink-muted hover:border-gold-light/40'}
+                      `}
+                    >
+                      {status === 'want-to-read' ? 'TBR' : status === 'reading' ? 'Reading' : status === 'completed' ? 'Completed' : 'DNF'}
+                    </motion.button>
+                  ))}
+                </div>
+
+                {/* Dates */}
+                <div className="flex flex-wrap gap-4 mt-4 text-xs text-ink-muted">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-3.5 h-3.5" />
+                    Added {format(new Date(book.dateAdded), 'MMM d, yyyy')}
+                  </span>
+                  {book.startDate && (
+                    <span className="flex items-center gap-1">
+                      <BookMarked className="w-3.5 h-3.5" />
+                      Started {format(new Date(book.startDate), 'MMM d, yyyy')}
+                    </span>
+                  )}
+                  {book.finishDate && (
+                    <span className="flex items-center gap-1">
+                      <Check className="w-3.5 h-3.5" />
+                      Finished {format(new Date(book.finishDate), 'MMM d, yyyy')}
+                    </span>
+                  )}
+                </div>
+              </motion.div>
             )}
-            {book.finishDate && (
-              <span className="flex items-center gap-1">
-                <Check className="w-3.5 h-3.5" />
-                Finished {format(new Date(book.finishDate), 'MMM d, yyyy')}
-              </span>
-            )}
-          </div>
+          </AnimatePresence>
         </div>
       </motion.div>
+
+      {/* Decorative divider */}
+      <div className="mb-4 -mt-2">
+        <LotusDivider className="h-12 opacity-70" />
+      </div>
 
       {/* Progress Section */}
       {book.totalPages > 0 && (
@@ -298,26 +472,16 @@ export default function BookDetailPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="glass-card rounded-2xl p-5 mb-6"
+          className="glass-card rounded-2xl p-5 mb-6 relative overflow-hidden"
         >
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-semibold text-ink" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
               Reading Progress
             </h2>
-            <span className="text-2xl font-bold text-gold-dark" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-              {progress}%
-            </span>
           </div>
 
-          {/* Progress bar */}
-          <div className="h-4 bg-cream rounded-full overflow-hidden mb-4">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 1, ease: 'easeOut' }}
-              className="h-full bg-gradient-to-r from-gold via-amber to-gold rounded-full progress-bar-glow relative"
-            />
-          </div>
+          {/* Lotus Progress bar */}
+          <LotusProgressBar progress={progress} size="lg" showPercentage className="mb-4" />
 
           <div className="flex items-center justify-between text-sm text-ink-muted mb-4">
             <span>Page {book.currentPage} of {book.totalPages}</span>
@@ -382,6 +546,11 @@ export default function BookDetailPage() {
           </div>
         </motion.section>
       )}
+
+      {/* Block print border */}
+      <div className="mb-4">
+        <BlockPrintBorder className="h-6 opacity-50" />
+      </div>
 
       {/* Reading Sessions */}
       <motion.section
