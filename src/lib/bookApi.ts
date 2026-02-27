@@ -8,6 +8,16 @@ interface OpenLibraryBook {
   subjects?: { name: string }[];
 }
 
+interface OpenLibrarySearchDoc {
+  title: string;
+  author_name?: string[];
+  isbn?: string[];
+  number_of_pages_median?: number;
+  cover_i?: number;
+  subject?: string[];
+  first_sentence?: string[];
+}
+
 interface GoogleBooksVolume {
   volumeInfo: {
     title: string;
@@ -25,7 +35,36 @@ interface GoogleBooksVolume {
 
 export async function fetchBookByISBN(isbn: string): Promise<Partial<Book> | null> {
   try {
-    // Try Google Books first for better cover images
+    // Try Open Library first (no API key / quota issues)
+    const olRes = await fetch(`https://openlibrary.org/isbn/${isbn}.json`);
+    if (olRes.ok) {
+      const olData: OpenLibraryBook = await olRes.json();
+
+      let authorName = 'Unknown Author';
+      if (olData.authors && olData.authors.length > 0) {
+        const authorKey = (olData as unknown as { authors: { key: string }[] }).authors[0].key;
+        try {
+          const authorRes = await fetch(`https://openlibrary.org${authorKey}.json`);
+          const authorData = await authorRes.json();
+          authorName = authorData.name || 'Unknown Author';
+        } catch {
+          // keep default
+        }
+      }
+
+      return {
+        title: olData.title,
+        author: authorName,
+        isbn,
+        totalPages: olData.number_of_pages || 0,
+        coverUrl: olData.covers
+          ? `https://covers.openlibrary.org/b/id/${olData.covers[0]}-L.jpg`
+          : '',
+        genre: olData.subjects?.[0]?.name || 'Fiction',
+      };
+    }
+
+    // Fallback to Google Books
     const googleRes = await fetch(
       `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`
     );
@@ -45,30 +84,7 @@ export async function fetchBookByISBN(isbn: string): Promise<Partial<Book> | nul
       };
     }
 
-    // Fallback to Open Library
-    const olRes = await fetch(`https://openlibrary.org/isbn/${isbn}.json`);
-    if (!olRes.ok) return null;
-    const olData: OpenLibraryBook = await olRes.json();
-
-    let authorName = 'Unknown Author';
-    if (olData.authors && olData.authors.length > 0) {
-      // Open Library returns author refs, need to fetch
-      const authorKey = (olData as unknown as { authors: { key: string }[] }).authors[0].key;
-      const authorRes = await fetch(`https://openlibrary.org${authorKey}.json`);
-      const authorData = await authorRes.json();
-      authorName = authorData.name || 'Unknown Author';
-    }
-
-    return {
-      title: olData.title,
-      author: authorName,
-      isbn,
-      totalPages: olData.number_of_pages || 0,
-      coverUrl: olData.covers
-        ? `https://covers.openlibrary.org/b/id/${olData.covers[0]}-L.jpg`
-        : '',
-      genre: olData.subjects?.[0]?.name || 'Fiction',
-    };
+    return null;
   } catch {
     return null;
   }
@@ -124,25 +140,22 @@ export async function fetchBookByURL(url: string): Promise<Partial<Book> | null>
 export async function fetchBookBySearch(query: string): Promise<Partial<Book> | null> {
   try {
     const res = await fetch(
-      `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=1`
+      `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=1&fields=title,author_name,isbn,number_of_pages_median,cover_i,subject,first_sentence`
     );
     const data = await res.json();
 
-    if (data.items && data.items.length > 0) {
-      const vol: GoogleBooksVolume = data.items[0];
-      const info = vol.volumeInfo;
-      const isbn = info.industryIdentifiers?.find(
-        (id) => id.type === 'ISBN_13' || id.type === 'ISBN_10'
-      )?.identifier;
-
+    if (data.docs && data.docs.length > 0) {
+      const doc: OpenLibrarySearchDoc = data.docs[0];
       return {
-        title: info.title,
-        author: info.authors?.join(', ') || 'Unknown Author',
-        isbn: isbn || '',
-        totalPages: info.pageCount || 0,
-        coverUrl: info.imageLinks?.thumbnail?.replace('http:', 'https:') || '',
-        genre: info.categories?.[0] || 'Fiction',
-        notes: info.description || '',
+        title: doc.title,
+        author: doc.author_name?.join(', ') || 'Unknown Author',
+        isbn: doc.isbn?.[0] || '',
+        totalPages: doc.number_of_pages_median || 0,
+        coverUrl: doc.cover_i
+          ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg`
+          : '',
+        genre: doc.subject?.[0] || 'Fiction',
+        notes: doc.first_sentence?.[0] || '',
       };
     }
     return null;
@@ -152,31 +165,27 @@ export async function fetchBookBySearch(query: string): Promise<Partial<Book> | 
 }
 
 export async function searchBooks(query: string): Promise<Partial<Book>[]> {
-  try {
-    const res = await fetch(
-      `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=5`
-    );
-    const data = await res.json();
+  const res = await fetch(
+    `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=8&fields=title,author_name,isbn,number_of_pages_median,cover_i,subject,first_sentence`
+  );
 
-    if (!data.items) return [];
-
-    return data.items.map((item: GoogleBooksVolume) => {
-      const info = item.volumeInfo;
-      const isbn = info.industryIdentifiers?.find(
-        (id) => id.type === 'ISBN_13' || id.type === 'ISBN_10'
-      )?.identifier;
-
-      return {
-        title: info.title,
-        author: info.authors?.join(', ') || 'Unknown Author',
-        isbn: isbn || '',
-        totalPages: info.pageCount || 0,
-        coverUrl: info.imageLinks?.thumbnail?.replace('http:', 'https:') || '',
-        genre: info.categories?.[0] || 'Fiction',
-        notes: info.description || '',
-      };
-    });
-  } catch {
-    return [];
+  if (!res.ok) {
+    throw new Error(`Search failed with status ${res.status}`);
   }
+
+  const data = await res.json();
+
+  if (!data.docs || data.docs.length === 0) return [];
+
+  return data.docs.map((doc: OpenLibrarySearchDoc) => ({
+    title: doc.title,
+    author: doc.author_name?.join(', ') || 'Unknown Author',
+    isbn: doc.isbn?.[0] || '',
+    totalPages: doc.number_of_pages_median || 0,
+    coverUrl: doc.cover_i
+      ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg`
+      : '',
+    genre: doc.subject?.[0] || 'Fiction',
+    notes: doc.first_sentence?.[0] || '',
+  }));
 }
