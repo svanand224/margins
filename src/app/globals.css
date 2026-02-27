@@ -1,26 +1,264 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ─── Day Mode: Reseda Green, Van Dyke, Isabelline, Pink Lavender ─── */
+:root,
+[data-theme="day"] {
+  --th-parchment: #F5F3EC;
+  --th-cream: #EBE8DE;
+  --th-warm-white: #FDFCF8;
+  --th-gold: #5C6030;
+  --th-gold-light: #8B8E52;
+  --th-gold-dark: #3F4420;
+  --th-amber: #C48DA0;
+  --th-copper: #A06880;
+  --th-forest: #4A6B3A;
+  --th-forest-light: #6E8E58;
+  --th-sage: #8BA06A;
+  --th-sage-light: #C8D4AA;
+  --th-bark: #3E2E26;
+  --th-bark-light: #5A463B;
+  --th-espresso: #2A1C16;
+  --th-ink: #3E2E26;
+  --th-ink-light: #5A463B;
+  --th-ink-muted: #7F7265;
+  --th-rose: #C25858;
+  --th-rose-light: #E0A8A8;
+  --th-teal: #4A7F7F;
+  --th-teal-light: #8AB8B8;
+  --th-plum: #8A5878;
+  --th-lavender: #C48DA0;
+
+  /* Effect colors */
+  --th-glass-bg: rgba(245, 243, 236, 0.78);
+  --th-glass-border: rgba(92, 96, 48, 0.2);
+  --th-card-shadow: 0 20px 40px rgba(62, 46, 38, 0.14), 0 0 30px rgba(92, 96, 48, 0.1);
+  --th-selection: rgba(92, 96, 48, 0.25);
+  --th-focus-ring: rgba(92, 96, 48, 0.2);
+  --th-particle-inner: rgba(92, 96, 48, 0.45);
+  --th-particle-outer: rgba(196, 141, 160, 0.25);
+  --th-shimmer: rgba(255, 255, 255, 0.35);
+  --th-status-reading: #4A6B3A;
+  --th-status-want: #4A7F7F;
+  --th-status-completed: #C48DA0;
+  --th-status-dnf: #C25858;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ─── Night Mode: Cream, Steel Blue, Burgundy, Dark ─── */
+[data-theme="night"] {
+  --th-parchment: #1A0905;
+  --th-cream: #2C1A12;
+  --th-warm-white: #3E2B20;
+  --th-gold: #94B1C8;
+  --th-gold-light: #506878;
+  --th-gold-dark: #B8D0E0;
+  --th-amber: #7A3048;
+  --th-copper: #8B2040;
+  --th-forest: #6A9A80;
+  --th-forest-light: #5A8A70;
+  --th-sage: #4A7A60;
+  --th-sage-light: #253530;
+  --th-bark: #5A1828;
+  --th-bark-light: #7A2A3E;
+  --th-espresso: #0D0403;
+  --th-ink: #E3DFCE;
+  --th-ink-light: #C8C4B2;
+  --th-ink-muted: #8A8478;
+  --th-rose: #9B3050;
+  --th-rose-light: #3D1520;
+  --th-teal: #94B1C8;
+  --th-teal-light: #354858;
+  --th-plum: #8A3858;
+  --th-lavender: #5A2840;
+
+  /* Effect colors */
+  --th-glass-bg: rgba(26, 9, 5, 0.82);
+  --th-glass-border: rgba(138, 32, 64, 0.22);
+  --th-card-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(138, 32, 64, 0.1);
+  --th-selection: rgba(148, 177, 200, 0.3);
+  --th-focus-ring: rgba(138, 32, 64, 0.3);
+  --th-particle-inner: rgba(148, 177, 200, 0.35);
+  --th-particle-outer: rgba(138, 32, 64, 0.3);
+  --th-shimmer: rgba(148, 177, 200, 0.1);
+  --th-status-reading: #6A9A80;
+  --th-status-want: #94B1C8;
+  --th-status-completed: #B8D0E0;
+  --th-status-dnf: #9B3050;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@theme {
+  --color-parchment: var(--th-parchment);
+  --color-cream: var(--th-cream);
+  --color-warm-white: var(--th-warm-white);
+  --color-gold: var(--th-gold);
+  --color-gold-light: var(--th-gold-light);
+  --color-gold-dark: var(--th-gold-dark);
+  --color-amber: var(--th-amber);
+  --color-copper: var(--th-copper);
+  --color-forest: var(--th-forest);
+  --color-forest-light: var(--th-forest-light);
+  --color-sage: var(--th-sage);
+  --color-sage-light: var(--th-sage-light);
+  --color-bark: var(--th-bark);
+  --color-bark-light: var(--th-bark-light);
+  --color-espresso: var(--th-espresso);
+  --color-ink: var(--th-ink);
+  --color-ink-light: var(--th-ink-light);
+  --color-ink-muted: var(--th-ink-muted);
+  --color-rose: var(--th-rose);
+  --color-rose-light: var(--th-rose-light);
+  --color-teal: var(--th-teal);
+  --color-teal-light: var(--th-teal-light);
+  --color-plum: var(--th-plum);
+  --color-lavender: var(--th-lavender);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  background-color: var(--color-parchment);
+  color: var(--color-ink);
+  min-height: 100dvh;
+  overflow-x: hidden;
+  transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-cream);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-gold-light);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gold);
+}
+
+@keyframes gentle-sway {
+  0%, 100% { transform: translateX(0) translateY(0); }
+  25% { transform: translateX(5px) translateY(-3px); }
+  50% { transform: translateX(-3px) translateY(-6px); }
+  75% { transform: translateX(4px) translateY(-2px); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes dust-mote {
+  0%, 100% { 
+    transform: translate(0, 0) scale(1);
+    opacity: 0;
+  }
+  20% { opacity: 0.8; }
+  80% { opacity: 0.4; }
+  50% { 
+    transform: translate(var(--tx, 30px), var(--ty, -50px)) scale(0.6);
+  }
+}
+
+.dust-mote {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--color-gold-light);
+  animation: dust-mote var(--duration, 8s) var(--delay, 0s) infinite ease-in-out;
+}
+
+/* Reading progress bar */
+.progress-bar-glow {
+  position: relative;
+  overflow: hidden;
+}
+.progress-bar-glow::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, var(--th-shimmer), transparent);
+  animation: shimmer 3s infinite;
+}
+
+/* Book card hover */
+.book-card {
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.book-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: var(--th-card-shadow);
+}
+
+/* Subtle glow on book cover images */
+.book-cover-glow {
+  position: relative;
+}
+.book-cover-glow::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from 0deg,
+    var(--th-gold) 0%,
+    var(--th-amber) 25%,
+    var(--th-rose) 50%,
+    var(--th-copper) 75%,
+    var(--th-gold) 100%
+  );
+  opacity: 0.22;
+  z-index: -1;
+  filter: blur(10px);
+  transition: opacity 0.4s ease, filter 0.4s ease;
+}
+.book-cover-glow:hover::after {
+  opacity: 0.4;
+  filter: blur(14px);
+}
+
+/* Glass morphism cards */
+.glass-card {
+  background: var(--th-glass-bg);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--th-glass-border);
+}
+
+/* Selection color */
+::selection {
+  background-color: var(--th-selection);
+  color: var(--color-ink);
+}
+
+/* Input styling */
+input, textarea, select {
+  font-family: 'Homemade Apple', cursive;
+  font-size: 0.925rem;
+  line-height: 1.6;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--color-gold) !important;
+  box-shadow: 0 0 0 3px var(--th-focus-ring);
+}
+
+/* Mobile nav safe area */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .mobile-nav {
+    padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+  }
 }
