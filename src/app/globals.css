@@ -53,22 +53,22 @@
   --th-gold-dark: #B8D0E0;
   --th-amber: #7A3048;
   --th-copper: #8B2040;
-  --th-forest: #6A9A80;
-  --th-forest-light: #5A8A70;
-  --th-sage: #4A7A60;
-  --th-sage-light: #253530;
+  --th-forest: #5AAA78;
+  --th-forest-light: #48906A;
+  --th-sage: #4A8A60;
+  --th-sage-light: #2A4A38;
   --th-bark: #5A1828;
   --th-bark-light: #7A2A3E;
   --th-espresso: #0D0403;
   --th-ink: #E3DFCE;
   --th-ink-light: #C8C4B2;
   --th-ink-muted: #8A8478;
-  --th-rose: #9B3050;
-  --th-rose-light: #3D1520;
-  --th-teal: #94B1C8;
-  --th-teal-light: #354858;
-  --th-plum: #8A3858;
-  --th-lavender: #5A2840;
+  --th-rose: #D0607A;
+  --th-rose-light: #4A2030;
+  --th-teal: #4AB8C8;
+  --th-teal-light: #2A5560;
+  --th-plum: #9868B8;
+  --th-lavender: #5A3878;
 
   /* Effect colors */
   --th-glass-bg: rgba(26, 9, 5, 0.82);

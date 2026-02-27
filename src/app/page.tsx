@@ -182,12 +182,12 @@ const threadIconSvgs: Record<Thread['icon'], ReactNode> = {
 };
 
 const threadColors = [
-  { name: 'gold', class: 'from-gold/15 to-amber/10', border: 'border-gold/25', text: 'text-gold-dark' },
-  { name: 'forest', class: 'from-forest/15 to-sage-light/10', border: 'border-forest/25', text: 'text-forest' },
-  { name: 'teal', class: 'from-teal/15 to-teal-light/10', border: 'border-teal/25', text: 'text-teal' },
-  { name: 'copper', class: 'from-copper/15 to-rose-light/10', border: 'border-copper/25', text: 'text-copper' },
-  { name: 'plum', class: 'from-plum/15 to-lavender/10', border: 'border-plum/25', text: 'text-plum' },
-  { name: 'rose', class: 'from-rose/15 to-rose-light/10', border: 'border-rose/25', text: 'text-rose' },
+  { name: 'gold', class: 'from-gold/30 to-amber/20', border: 'border-gold/40', text: 'text-gold-dark' },
+  { name: 'forest', class: 'from-forest/30 to-sage-light/20', border: 'border-forest/40', text: 'text-forest' },
+  { name: 'teal', class: 'from-teal/30 to-teal-light/20', border: 'border-teal/40', text: 'text-teal' },
+  { name: 'copper', class: 'from-copper/30 to-rose-light/20', border: 'border-copper/40', text: 'text-copper' },
+  { name: 'plum', class: 'from-plum/30 to-lavender/20', border: 'border-plum/40', text: 'text-plum' },
+  { name: 'rose', class: 'from-rose/30 to-rose-light/20', border: 'border-rose/40', text: 'text-rose' },
 ];
 
 const stagger = {
@@ -803,7 +803,7 @@ export default function HomePage() {
 
               return (
                 <div key={thread.id} className={`relative glass-card rounded-xl p-3 pl-5 bg-gradient-to-r ${color.class} border ${color.border}`}>
-                  <div className={`absolute left-2 top-3 bottom-3 w-px bg-gradient-to-b ${color.text} opacity-30`} />
+                  <div className={`absolute left-2 top-3 bottom-3 w-px bg-gradient-to-b ${color.text} opacity-50`} />
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <span className={color.text}>{threadIconSvgs[thread.icon]}</span>
