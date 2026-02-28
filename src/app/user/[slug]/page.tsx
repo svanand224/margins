@@ -273,57 +273,9 @@ export default function PublicProfilePage({
     setSending(true);
     const supabase = createClient();
     const { data, error } = await supabase
-      if (isFollowing) {
-        // Unfollow
-        await supabase
-          .from('follows')
-          .delete()
-          .eq('follower_id', user.id)
-          .eq('following_id', profile.id);
-
-        setIsFollowing(false);
-        setFollowerCount((c) => Math.max(0, c - 1));
-      } else {
-        // Follow
-        const { error } = await supabase.from('follows').insert({
-          follower_id: user.id,
-          following_id: profile.id,
-        });
-
-        if (!error) {
-          setIsFollowing(true);
-          setFollowerCount((c) => c + 1);
-
-          // Create notification
-          await supabase.from('notifications').insert({
-            user_id: profile.id,
-            type: 'new_follower',
-            data: {
-              follower_name: currentUserProfile?.reader_name,
-              follower_slug: currentUserProfile?.public_slug,
-              follower_avatar: currentUserProfile?.avatar_url,
-            },
-          });
-
-          // Create activity
-          await supabase.from('activities').insert({
-            user_id: user.id,
-            type: 'followed',
-            data: {
-              following_id: profile.id,
-              following_name: profile.reader_name,
-              following_slug: profile.public_slug,
-              following_avatar: profile.avatar_url,
-            },
-          });
-        }
-      }
-    setMessages(messages.filter((m) => m.id !== messageId));
-  };
-
-  // Calculate stats
-  const books = profile?.reading_data?.books || [];
-  const completedBooks = books.filter((b) => b.status === 'completed');
+      setSending(true);
+      const supabase = createClient();
+      // ...existing code for sending a DM message...
   const currentlyReading = books.filter((b) => b.status === 'reading');
   const wantToRead = books.filter((b) => b.status === 'want-to-read');
   const totalPages = completedBooks.reduce((sum, b) => sum + (b.totalPages || 0), 0);

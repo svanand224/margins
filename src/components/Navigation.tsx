@@ -18,6 +18,8 @@ import {
   Sparkles,
   Gift,
   Bell,
+    MessageCircle,
+    Newspaper,
 } from 'lucide-react';
 import { useThemeStore } from '@/lib/themeStore';
 import { useAuth } from '@/lib/auth';
@@ -28,11 +30,11 @@ import { PaisleyBorder, ChintzFloral } from './IndianPatterns';
 const navItems = [
   { href: '/', icon: Home, label: 'Home' },
   { href: '/library', icon: Library, label: 'Library' },
-  { href: '/dm', icon: Users, label: 'DMs' },
+    { href: '/dm', icon: MessageCircle, label: 'Messages' },
   { href: '/add', icon: PlusCircle, label: 'Add Book' },
   { href: '/goals', icon: Target, label: 'Goals' },
   { href: '/analytics', icon: BarChart3, label: 'Analytics' },
-  { href: '/feed', icon: Sparkles, label: 'Feed' },
+    { href: '/feed', icon: Newspaper, label: 'Feed' },
   { href: '/discover', icon: Users, label: 'Discover' },
   { href: '/recommendations', icon: Gift, label: 'Inbox' },
   { href: '/notifications', icon: Bell, label: 'Alerts' },
