@@ -140,12 +140,12 @@ export default function PublicProfilePage({
       // Fetch follow counts and lists
       const { count: followers, data: followersData } = await supabase
         .from('follows')
-        .select('id, follower:profiles!follows_follower_id (id, reader_name, avatar_url, public_slug)', { count: 'exact', head: false })
+        .select('id, follower:profiles!follows_follower_id_fkey (id, reader_name, avatar_url, public_slug)', { count: 'exact', head: false })
         .eq('following_id', profileData.id);
 
       const { count: following, data: followingData } = await supabase
         .from('follows')
-        .select('id, following:profiles!follows_following_id (id, reader_name, avatar_url, public_slug)', { count: 'exact', head: false })
+        .select('id, following:profiles!follows_following_id_fkey (id, reader_name, avatar_url, public_slug)', { count: 'exact', head: false })
         .eq('follower_id', profileData.id);
 
       setFollowerCount(followers || 0);

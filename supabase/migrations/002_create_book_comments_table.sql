@@ -27,7 +27,8 @@ create policy "Users can post book comments"
 drop policy if exists "Users can update own book comments" on public.book_comments;
 create policy "Users can update own book comments"
   on public.book_comments for update
-  using (auth.uid() = author_id);
+  using (auth.uid() = author_id)
+  with check (author_id = auth.uid());
 
 -- Users can delete their own comments
 drop policy if exists "Users can delete own book comments" on public.book_comments;
@@ -37,3 +38,9 @@ create policy "Users can delete own book comments"
 
 create index if not exists book_comments_book_id_idx on public.book_comments (book_id);
 create index if not exists book_comments_author_id_idx on public.book_comments (author_id);
+
+-- Auto-update timestamp for book_comments
+drop trigger if exists on_book_comment_updated on public.book_comments;
+create trigger on_book_comment_updated
+  before update on public.book_comments
+  for each row execute procedure public.handle_updated_at();
