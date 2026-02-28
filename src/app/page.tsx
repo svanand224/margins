@@ -218,109 +218,20 @@ export default function HomePage() {
   const [threadBookSearch, setThreadBookSearch] = useState('');
   const [managingThreadId, setManagingThreadId] = useState<string | null>(null);
   const { user } = useAuth();
-  type Recommendation = {
-    id: string;
-    book_title: string;
-    book_author?: string;
-    book_cover_url?: string;
-    message?: string;
-    from_user?: {
-      reader_name: string;
-    };
-  };
-  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
-  const [recLoading, setRecLoading] = useState(true);
-  const [recError, setRecError] = useState<string | null>(null);
-  // Minimal alerts: just a link to notifications page
+  // Recommendation and alerts logic removed
 
   // Fetch recommendations sent to the current user
   useEffect(() => {
-    const fetchRecommendations = async () => {
-      if (!isSupabaseConfigured() || !user) {
-        setRecError('Supabase not configured or user not logged in');
-        setRecLoading(false);
-        return;
-      }
-      setRecLoading(true);
-      try {
-        const supabase = createClient();
-        const { data, error } = await supabase
-          .from('recommendations')
-          .select(`
-            id,
-            book_title,
-            book_author,
-            book_cover_url,
-            message,
-            status,
-            created_at,
-            from_user:from_user_id (
-              id,
-              reader_name,
-              avatar_url,
-              public_slug
-            )
-          `)
-          .eq('to_user_id', user.id)
-          .eq('status', 'pending')
-          .order('created_at', { ascending: false })
-          .limit(20);
-        if (error) {
-          setRecError(error.message);
-          setRecommendations([]);
-        } else {
-          setRecommendations(
-            (data || []).map((rec) => ({
-              ...rec,
-              from_user: Array.isArray(rec.from_user) ? rec.from_user[0] : rec.from_user,
-            }))
-          );
-        }
-      } catch (err) {
-        setRecError('Failed to fetch recommendations');
-        setRecommendations([]);
-      }
-      setRecLoading(false);
-    };
-    fetchRecommendations();
-  }, [user]);
+  // Recommendation fetching logic removed
 
   // Accept recommendation handler
   const handleAcceptRec = async (rec: Recommendation) => {
-    try {
-      const supabase = createClient();
-      // Add book to user's library with status 'want-to-read'
-      if (!user) throw new Error('User not found');
-      await supabase.from('books').insert({
-        title: rec.book_title,
-        author: rec.book_author || '',
-        coverUrl: rec.book_cover_url || '',
-        status: 'want-to-read',
-        notes: '',
-        user_id: user.id,
-      });
-      // Mark recommendation as accepted
-      await supabase
-        .from('recommendations')
-        .update({ status: 'accepted' })
-        .eq('id', rec.id);
-      setRecommendations(recommendations.filter(r => r.id !== rec.id));
-    } catch (err) {
-      // Optionally handle error
-    }
+    // Recommendation accept handler removed
   };
 
   // Reject recommendation handler
   const handleRejectRec = async (rec: Recommendation) => {
-    setRecommendations(recommendations.filter(r => r.id !== rec.id));
-    // Optionally update status in Supabase
-    try {
-      const supabase = createClient();
-      await supabase
-        .from('recommendations')
-        .update({ status: 'dismissed' })
-        .eq('id', rec.id);
-    } catch {}
+    // Recommendation reject handler removed
   };
 
   // Cycle quotes every 8 seconds
