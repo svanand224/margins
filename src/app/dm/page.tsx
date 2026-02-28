@@ -94,7 +94,7 @@ export default function DirectMessagesPage() {
       `)
       .single();
     if (!error && data) {
-      setMessages([...messages, data]);
+      setMessages(prev => [...prev, data]);
       setNewMessage("");
     }
     setSending(false);
@@ -180,7 +180,14 @@ export default function DirectMessagesPage() {
               )}
               <span className="font-bold text-lg text-burgundy mb-1" style={{ fontFamily: "'Cormorant Garamond', serif" }}>{selectedUser.reader_name}</span>
               <span className="text-xs text-ink-muted mb-2">@{selectedUser.public_slug}</span>
-              <button className="px-4 py-1 rounded-xl text-xs font-medium text-parchment bg-gradient-to-r from-gold to-amber shadow hover:scale-105 transition-transform mb-2">View profile</button>
+              <div className="flex gap-2 mb-2">
+                <Link href={`/user/${selectedUser.public_slug}`} passHref legacyBehavior>
+                  <button className="px-4 py-1 rounded-xl text-xs font-medium text-parchment bg-gradient-to-r from-gold to-amber shadow hover:scale-105 transition-transform">View profile</button>
+                </Link>
+                <Link href={`/shelf/${selectedUser.public_slug}`} passHref legacyBehavior>
+                  <button className="px-4 py-1 rounded-xl text-xs font-medium text-parchment bg-gradient-to-r from-blue to-gold shadow hover:scale-105 transition-transform">Explore shelf</button>
+                </Link>
+              </div>
             </div>
             {/* Messages */}
             <div className="overflow-y-auto max-h-[60vh] px-2 py-4 sm:px-4 sm:py-6 space-y-4 bg-gradient-to-br from-cream/30 to-parchment/10 rounded-b-2xl">

@@ -273,51 +273,51 @@ export default function PublicProfilePage({
     setSending(true);
     const supabase = createClient();
     const { data, error } = await supabase
-      .from('dms')
-      .insert({
-        sender_id: user.id,
-        recipient_id: profile.id,
-        content: newMessage.trim(),
-      })
-      .select(`
-        id,
-        content,
-        created_at,
-        sender:sender_id (
-          id,
-          reader_name,
-          avatar_url,
-          public_slug
-        ),
-        recipient:recipient_id (
-          id,
-          reader_name,
-          avatar_url,
-          public_slug
-        )
-      `)
-      .single();
-    if (!error && data) {
-      setMessages([...messages, data]);
-      setNewMessage('');
-      // Optionally: create notification for new DM
-      await supabase.from('notifications').insert({
-        user_id: profile.id,
-        type: 'new_dm',
-        from_user_id: user.id,
-        data: {
-          from_name: currentUserProfile?.reader_name,
-          from_slug: currentUserProfile?.public_slug,
-          message_preview: newMessage.trim().slice(0, 100),
-        },
-      });
-    }
-    setSending(false);
-  };
+      if (isFollowing) {
+        // Unfollow
+        await supabase
+          .from('follows')
+          .delete()
+          .eq('follower_id', user.id)
+          .eq('following_id', profile.id);
 
-  const handleDeleteMessage = async (messageId: string) => {
-    const supabase = createClient();
-    await supabase.from('dms').delete().eq('id', messageId);
+        setIsFollowing(false);
+        setFollowerCount((c) => Math.max(0, c - 1));
+      } else {
+        // Follow
+        const { error } = await supabase.from('follows').insert({
+          follower_id: user.id,
+          following_id: profile.id,
+        });
+
+        if (!error) {
+          setIsFollowing(true);
+          setFollowerCount((c) => c + 1);
+
+          // Create notification
+          await supabase.from('notifications').insert({
+            user_id: profile.id,
+            type: 'new_follower',
+            data: {
+              follower_name: currentUserProfile?.reader_name,
+              follower_slug: currentUserProfile?.public_slug,
+              follower_avatar: currentUserProfile?.avatar_url,
+            },
+          });
+
+          // Create activity
+          await supabase.from('activities').insert({
+            user_id: user.id,
+            type: 'followed',
+            data: {
+              following_id: profile.id,
+              following_name: profile.reader_name,
+              following_slug: profile.public_slug,
+              following_avatar: profile.avatar_url,
+            },
+          });
+        }
+      }
     setMessages(messages.filter((m) => m.id !== messageId));
   };
 
