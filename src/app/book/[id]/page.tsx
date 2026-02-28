@@ -19,6 +19,8 @@ import {
   ChevronDown,
   BookMarked,
 } from 'lucide-react';
+import { MessageCircle } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';

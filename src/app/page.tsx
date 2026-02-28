@@ -268,7 +268,12 @@ export default function HomePage() {
           setRecError(error.message);
           setRecommendations([]);
         } else {
-          setRecommendations(data || []);
+          setRecommendations(
+            (data || []).map((rec) => ({
+              ...rec,
+              from_user: Array.isArray(rec.from_user) ? rec.from_user[0] : rec.from_user,
+            }))
+          );
         }
       } catch (err) {
         setRecError('Failed to fetch recommendations');
