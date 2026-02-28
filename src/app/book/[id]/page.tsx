@@ -283,6 +283,72 @@ export default function BookDetailPage() {
         </button>
       </motion.div>
 
+      {/* Book Discussion Section */}
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+        className="glass-card rounded-2xl p-5 mb-8 border-2 border-gold-light/30 bg-gradient-to-br from-amber/5 to-parchment/10"
+      >
+        <h2 className="text-xl font-bold text-forest mb-2 flex items-center gap-2" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+          <MessageCircle className="w-6 h-6 text-gold" /> Book Discussion
+        </h2>
+        <p className="text-ink-muted mb-4 text-sm">Join the open discussion for this book! Share your thoughts, ask questions, and connect with other readers below.</p>
+        {/* Comment input */}
+        {user ? (
+          <div className="mb-4">
+            <textarea
+              value={commentText}
+              onChange={e => setCommentText(e.target.value)}
+              placeholder="Write your comment..."
+              rows={3}
+              className="w-full px-4 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink placeholder:text-ink-muted focus:outline-none focus:border-gold resize-none"
+              style={{ fontFamily: "'Lora', Georgia, serif" }}
+              disabled={commentLoading}
+            />
+            <div className="flex justify-end mt-2">
+              <motion.button
+                whileTap={{ scale: 0.98 }}
+                onClick={handlePostComment}
+                disabled={!commentText.trim() || commentLoading}
+                className="px-5 py-2 rounded-xl text-sm font-medium text-parchment flex items-center gap-2 disabled:opacity-50 bg-forest"
+              >
+                {commentLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><MessageCircle className="w-4 h-4" /> Post</>}
+              </motion.button>
+            </div>
+          </div>
+        ) : (
+          <div className="mb-4 text-center text-ink-muted text-sm">
+            <Link href="/login" className="text-gold hover:text-gold-dark font-semibold">Sign in</Link> to join the discussion.
+          </div>
+        )}
+        {/* Comments list */}
+        <div className="space-y-4">
+          {comments.length === 0 ? (
+            <div className="text-center text-ink-muted py-6">No comments yet. Be the first to start the discussion!</div>
+          ) : (
+            comments.map(comment => (
+              <div key={comment.id} className="flex gap-3 items-start p-3 rounded-xl bg-cream/40 border border-gold-light/20">
+                {comment.author.avatar_url ? (
+                  <img src={comment.author.avatar_url} alt={comment.author.reader_name} className="w-10 h-10 rounded-full object-cover" />
+                ) : (
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold bg-gradient-to-br from-gold to-amber text-parchment">
+                    {comment.author.reader_name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-ink">{comment.author.reader_name}</span>
+                    <span className="text-xs text-ink-muted">{formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}</span>
+                  </div>
+                  <p className="text-sm text-ink-light mt-1 whitespace-pre-line">{comment.content}</p>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </motion.section>
+
       {/* Book Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}

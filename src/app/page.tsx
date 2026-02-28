@@ -229,20 +229,83 @@ export default function HomePage() {
     };
   };
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
-    // Accept recommendation handler
-    const handleAcceptRec = (rec: Recommendation) => {
-      // Add book to "Want to Read" shelf or similar logic
-      // ...existing code for adding book...
-      setRecommendations(recommendations.filter(r => r.id !== rec.id));
-    };
-
-    // Reject recommendation handler
-    const handleRejectRec = (rec: Recommendation) => {
-      // Remove recommendation from list
-      setRecommendations(recommendations.filter(r => r.id !== rec.id));
-    };
   const [recLoading, setRecLoading] = useState(true);
   const [recError, setRecError] = useState<string | null>(null);
+
+  // Fetch recommendations sent to the current user
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      if (!isSupabaseConfigured() || !user) {
+        setRecError('Supabase not configured or user not logged in');
+        setRecLoading(false);
+        return;
+      }
+      setRecLoading(true);
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from('recommendations')
+          .select(`
+            id,
+            book_title,
+            book_author,
+            book_cover_url,
+            message,
+            status,
+            created_at,
+            from_user:from_user_id (
+              id,
+              reader_name,
+              avatar_url,
+              public_slug
+            )
+          `)
+          .eq('to_user_id', user.id)
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false })
+          .limit(20);
+        if (error) {
+          setRecError(error.message);
+          setRecommendations([]);
+        } else {
+          setRecommendations(data || []);
+        }
+      } catch (err) {
+        setRecError('Failed to fetch recommendations');
+        setRecommendations([]);
+      }
+      setRecLoading(false);
+    };
+    fetchRecommendations();
+  }, [user]);
+
+  // Accept recommendation handler
+  const handleAcceptRec = async (rec: Recommendation) => {
+    // Add book to "Want to Read" shelf or similar logic
+    // ...existing code for adding book...
+    setRecommendations(recommendations.filter(r => r.id !== rec.id));
+    // Optionally update status in Supabase
+    try {
+      const supabase = createClient();
+      await supabase
+        .from('recommendations')
+        .update({ status: 'accepted' })
+        .eq('id', rec.id);
+    } catch {}
+  };
+
+  // Reject recommendation handler
+  const handleRejectRec = async (rec: Recommendation) => {
+    setRecommendations(recommendations.filter(r => r.id !== rec.id));
+    // Optionally update status in Supabase
+    try {
+      const supabase = createClient();
+      await supabase
+        .from('recommendations')
+        .update({ status: 'dismissed' })
+        .eq('id', rec.id);
+    } catch {}
+  };
 
   // Cycle quotes every 8 seconds
   useEffect(() => {
