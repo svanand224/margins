@@ -180,7 +180,17 @@ export default function PublicProfilePage({
         >
           Profile Not Found
         </h1>
-        <p className="text-ink-muted mb-6">This profile doesn&apos;t exist or isn&apos;t public.</p>
+        <p className="text-ink-muted mb-2">
+          {notFound
+            ? 'This profile does not exist, is not public, or the link is incorrect.'
+            : 'No profile data was returned. This may be a Supabase error or the profile is private.'}
+        </p>
+        <div className="text-xs text-ink-muted mb-6">
+          <strong>Debug info:</strong><br />
+          Slug: {typeof slug === 'string' ? slug : JSON.stringify(slug)}<br />
+          shelf_public required: true<br />
+          Supabase configured: {isSupabaseConfigured() ? 'Yes' : 'No'}
+        </div>
         <Link
           href="/"
           className="flex items-center gap-2 text-gold hover:text-gold-dark transition-colors"
