@@ -52,7 +52,6 @@ interface Comment {
     public_slug: string | null;
   };
 }
-
 export default function PublicProfilePage({
   params,
 }: {
