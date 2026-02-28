@@ -261,6 +261,28 @@ export default function ProfilePage() {
     { icon: Star, label: 'Favorites', value: favoriteBooks, color: 'var(--th-rose)' },
   ];
 
+  // Delete account handler
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+    setSaving(true);
+    try {
+      const res = await fetch('/api/delete-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      });
+      if (res.ok) {
+        await signOut();
+        router.replace('/goodbye');
+      } else {
+        alert('Account deletion failed.');
+      }
+    } catch (err) {
+      alert('Error deleting account.');
+    }
+    setSaving(false);
+  };
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 md:py-12">
       {/* Back link */}
@@ -728,11 +750,7 @@ export default function ProfilePage() {
                     Cancel
                   </button>
                   <button
-                    onClick={async () => {
-                      // In production, call a server action to delete the account
-                      // For now, just sign out
-                      await handleSignOut();
-                    }}
+                    onClick={handleDeleteAccount}
                     className="px-4 py-1.5 rounded-lg text-xs font-medium bg-rose/10 text-rose border border-rose/20 hover:bg-rose/20 transition-colors"
                   >
                     Yes, Delete Everything
