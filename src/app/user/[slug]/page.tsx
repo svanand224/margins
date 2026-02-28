@@ -591,7 +591,5 @@ export default function PublicProfilePage({
   );
 }
 
-}
-
-// Extra closing brace to balance the file (fixes EOF parsing error)
+// ...existing code...
 
