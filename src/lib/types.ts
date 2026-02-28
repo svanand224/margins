@@ -56,4 +56,7 @@ export interface Thread {
   bookIds: string[];
   isAutoGenre?: boolean; // auto-generated from genre grouping
   createdAt: string;
+  coverUrl?: string;
+  author?: string;
+  genre?: string;
 }

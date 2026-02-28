@@ -96,6 +96,15 @@ function LibraryContent() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Toggle favorite status for a book
+  const toggleFavorite = (id: string) => {
+    setBooks(prevBooks =>
+      prevBooks.map(book =>
+        book.id === id ? { ...book, favorite: !book.favorite } : book
+      )
+    );
+  };
+
   const genres = useMemo(() => {
     const genreSet = new Set(books.map(b => b.genre).filter(Boolean));
     return Array.from(genreSet).sort();
@@ -398,7 +407,7 @@ function GridBookCard({ book, index, onToggleFavorite, relatedCount }: { book: B
   const progress = book.totalPages > 0 ? Math.round((book.currentPage / book.totalPages) * 100) : 0;
 
   return (
-    return (
+    <>
       <motion.div
         layout
         initial={{ opacity: 0, scale: 0.9 }}
@@ -419,8 +428,25 @@ function GridBookCard({ book, index, onToggleFavorite, relatedCount }: { book: B
               )}
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-ink truncate">{book.title}</p>
+              {/* Info */}
+              <h3 className="text-sm font-semibold text-ink truncate">{book.title}</h3>
               <p className="text-xs text-ink-muted truncate">{book.author}</p>
+              {book.rating && (
+                <div className="flex gap-0.5 mt-1">
+                  {Array.from({ length: 5 }).map((_, s) => (
+                    <Star
+                      key={s}
+                      className={`w-3 h-3 ${s < book.rating! ? 'text-gold fill-gold' : 'text-gold-light/30'}`}
+                    />
+                  ))}
+                </div>
+              )}
+              {relatedCount > 0 && (
+                <div className="flex items-center gap-1 mt-1.5 text-[10px] text-ink-muted/60">
+                  <svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 5 C3 2, 7 2, 10 5" stroke="currentColor" strokeWidth="1" fill="none" /></svg>
+                  {relatedCount} thread{relatedCount > 1 ? 's' : ''}
+                </div>
+              )}
               {/* Debug: Show book id */}
               <p className="text-[10px] text-rose-700">ID: {book.id}</p>
               {/* ...existing code... */}
@@ -428,54 +454,29 @@ function GridBookCard({ book, index, onToggleFavorite, relatedCount }: { book: B
           </div>
         </Link>
       </motion.div>
-
-            {/* Favorite button */}
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onToggleFavorite(book.id);
-              }}
-              className="absolute top-2 right-2 p-1 rounded-full bg-white/20 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <Heart
-                className={`w-3.5 h-3.5 ${book.favorite ? 'text-rose fill-rose' : 'text-white'}`}
-              />
-            </button>
-
-            {/* Progress bar at bottom */}
-            {book.status === 'reading' && (
-              <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/20">
-                <div
-                  className="h-full bg-gradient-to-r from-gold to-amber"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Info */}
-          <h3 className="text-sm font-semibold text-ink truncate">{book.title}</h3>
-          <p className="text-xs text-ink-muted truncate">{book.author}</p>
-          {book.rating && (
-            <div className="flex gap-0.5 mt-1">
-              {Array.from({ length: 5 }).map((_, s) => (
-                <Star
-                  key={s}
-                  className={`w-3 h-3 ${s < book.rating! ? 'text-gold fill-gold' : 'text-gold-light/30'}`}
-                />
-              ))}
-            </div>
-          )}
-          {relatedCount > 0 && (
-            <div className="flex items-center gap-1 mt-1.5 text-[10px] text-ink-muted/60">
-              <svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 5 C3 2, 7 2, 10 5" stroke="currentColor" strokeWidth="1" fill="none" /></svg>
-              {relatedCount} thread{relatedCount > 1 ? 's' : ''}
-            </div>
-          )}
+      {/* Favorite button */}
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onToggleFavorite(book.id);
+        }}
+        className="absolute top-2 right-2 p-1 rounded-full bg-white/20 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"
+      >
+        <Heart
+          className={`w-3.5 h-3.5 ${book.favorite ? 'text-rose fill-rose' : 'text-white'}`}
+        />
+      </button>
+      {/* Progress bar at bottom */}
+      {book.status === 'reading' && (
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/20">
+          <div
+            className="h-full bg-gradient-to-r from-gold to-amber"
+            style={{ width: `${progress}%` }}
+          />
         </div>
-      </Link>
-    </motion.div>
+      )}
+    </>
   );
 }
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useMemo } from 'react';
+import { useEffect, useState } from 'react';
 
 /**
  * Generates minimalist Indian-inspired SVG paths for floating particles.
@@ -43,9 +43,10 @@ function leafPath(size: number) {
 
 const pathFns = [lotusFullPath, paisleyPath, lotusPetalPath, lotusBudPath, leafPath];
 
-export default function FloatingParticles() {
-  const particles = useMemo(() => {
-    return Array.from({ length: 16 }, (_, i) => ({
+function FloatingParticles() {
+  const [particles, setParticles] = useState<Array<any>>([]);
+  useEffect(() => {
+    setParticles(Array.from({ length: 16 }, (_, i) => ({
       id: i,
       left: `${Math.random() * 100}%`,
       top: `${Math.random() * 100}%`,
@@ -56,7 +57,7 @@ export default function FloatingParticles() {
       ty: -(Math.random() * 50 + 10),
       rotate: (Math.random() - 0.5) * 40,
       variant: i % 5,
-    }));
+    })));
   }, []);
 
   return (
@@ -98,3 +99,5 @@ export default function FloatingParticles() {
     </div>
   );
 }
+
+export default FloatingParticles;

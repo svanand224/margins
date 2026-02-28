@@ -504,6 +504,16 @@ export default function HomePage() {
                               <span>Page {book.currentPage} of {book.totalPages}</span>
                             </div>
                             <LotusProgressBar progress={progress} size="sm" showPercentage />
+                              {book.rating && (
+                                <div className="flex gap-0.5 mt-1">
+                                  {Array.from({ length: 5 }).map((_, s) => (
+                                    <Lucide.Star
+                                      key={s}
+                                      className={`w-3 h-3 ${s < book.rating! ? 'text-gold fill-gold' : 'text-gold-light/30'}`}
+                                    />
+                                  ))}
+                                </div>
+                              )}
                           </div>
                         </div>
                       </div>
@@ -514,6 +524,76 @@ export default function HomePage() {
             })}
           </div>
         </motion.section>
+      )}
+
+      {/* To Be Read (TBR) Section */}
+      {stats.reading.length > 0 && stats.totalBooks > 0 && (
+        (() => {
+          const tbrBooks = books.filter(b => b.status === 'want-to-read');
+          if (tbrBooks.length === 0) return null;
+          return (
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.45 }}
+              className="mb-8"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-ink flex items-center gap-2" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+                  <Lucide.Book className="w-5 h-5 text-teal" />
+                  To Be Read
+                </h2>
+                <Link href="/library?status=want-to-read" className="text-sm text-gold-dark hover:text-gold flex items-center gap-1 transition-colors">
+                  View all <Lucide.ChevronRight className="w-4 h-4" />
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {tbrBooks.slice(0, 3).map((book, i) => (
+                  <motion.div
+                    key={book.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 + i * 0.1 }}
+                  >
+                    <Link href={`/book/${book.id}`}>
+                      <div className="book-card glass-card rounded-2xl p-4 cursor-pointer">
+                        <div className="flex gap-4">
+                          <div className="book-cover-glow w-16 h-24 rounded-lg bg-gradient-to-br from-bark to-espresso flex-shrink-0 overflow-hidden shadow-lg">
+                            {book.coverUrl ? (
+                              <img
+                                src={book.coverUrl}
+                                alt={book.title}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Lucide.BookOpen className="w-6 h-6 text-gold-light/50" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-ink text-sm truncate">{book.title}</h3>
+                            <p className="text-xs text-ink-muted truncate">{book.author}</p>
+                              {book.rating && (
+                                <div className="flex gap-0.5 mt-1">
+                                  {Array.from({ length: 5 }).map((_, s) => (
+                                    <Lucide.Star
+                                      key={s}
+                                      className={`w-3 h-3 ${s < book.rating! ? 'text-gold fill-gold' : 'text-gold-light/30'}`}
+                                    />
+                                  ))}
+                                </div>
+                              )}
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.section>
+          );
+        })()
       )}
 
       {/* Lotus Divider before Year Goal */}
