@@ -28,9 +28,16 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     const fetchNotifications = async () => {
-      if (!isSupabaseConfigured() || !user) {
+      if (!isSupabaseConfigured()) {
+        setError('Supabase is not configured.');
+        setLoading(false);
+        return;
+      }
+      if (!user) {
+        setError('You must be logged in to view your notifications.');
         setLoading(false);
         return;
       }

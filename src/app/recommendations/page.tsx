@@ -37,9 +37,16 @@ export default function RecommendationsPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'pending' | 'all'>('pending');
 
+  const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     const fetchRecommendations = async () => {
-      if (!isSupabaseConfigured() || !user) {
+      if (!isSupabaseConfigured()) {
+        setError('Supabase is not configured.');
+        setLoading(false);
+        return;
+      }
+      if (!user) {
+        setError('You must be logged in to view your recommendations.');
         setLoading(false);
         return;
       }

@@ -34,9 +34,16 @@ export default function FeedPage() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     const fetchFeed = async () => {
-      if (!isSupabaseConfigured() || !user) {
+      if (!isSupabaseConfigured()) {
+        setError('Supabase is not configured.');
+        setLoading(false);
+        return;
+      }
+      if (!user) {
+        setError('You must be logged in to view your feed.');
         setLoading(false);
         return;
       }

@@ -34,9 +34,11 @@ export default function DiscoverPage() {
   const [searching, setSearching] = useState(false);
 
   // Load featured/recent public profiles on mount
+  const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     const fetchPublicProfiles = async () => {
       if (!isSupabaseConfigured()) {
+        setError('Supabase is not configured.');
         setLoading(false);
         return;
       }
