@@ -265,20 +265,7 @@ export default function NotificationsPage() {
                     </div>
                   </div>
                 );
-                  >
-                    {content.link ? (
-                      <Link
-                        href={content.link}
-                        className={`${cardClasses} cursor-pointer hover:bg-cream/40`}
-                        style={cardStyle}
-                      >
-                        {cardContent}
-                      </Link>
-                    ) : (
-                      <div className={cardClasses} style={cardStyle}>
-                        {cardContent}
-                      </div>
-                    )}
+                  // Removed stray '>' and duplicate block
                   </motion.div>
                 );
               })}
