@@ -283,6 +283,15 @@ export default function ProfilePage() {
     setSaving(false);
   };
 
+  // Skeleton loader for profile
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-gold" />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 md:py-12">
       {/* Back link */}

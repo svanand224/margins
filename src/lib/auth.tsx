@@ -52,7 +52,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .select('id, reader_name, email, avatar_url, bio, favorite_genre, public_slug, shelf_public, created_at, updated_at')
       .eq('id', userId)
       .single();
-
     if (data) {
       setProfile(data as UserProfile);
     }
@@ -60,7 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshProfile = useCallback(async () => {
     if (user) {
-      await fetchProfile(user.id);
+      fetchProfile(user.id); // Don't await, fetch in background
     }
   }, [user, fetchProfile]);
 
@@ -81,10 +80,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data: { session } } = await supabaseRef.current!.auth.getSession();
       const currentUser = session?.user ?? null;
       setUser(currentUser);
+      setLoading(false); // UI is ready instantly
       if (currentUser) {
-        await fetchProfile(currentUser.id);
+        fetchProfile(currentUser.id); // Fetch profile in background
       }
-      setLoading(false);
     };
     getSession();
 
@@ -93,12 +92,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       async (_event, session) => {
         const currentUser = session?.user ?? null;
         setUser(currentUser);
+        setLoading(false); // UI is ready instantly
         if (currentUser) {
-          await fetchProfile(currentUser.id);
+          fetchProfile(currentUser.id); // Fetch profile in background
         } else {
           setProfile(null);
         }
-        setLoading(false);
       }
     );
 
