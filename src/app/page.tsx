@@ -385,50 +385,7 @@ export default function HomePage() {
   return (
     <div className="p-4 md:p-8 max-w-6xl mx-auto">
       {/* Alerts Preview */}
-      {recentAlerts.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-6"
-        >
-          <div className="glass-card rounded-2xl p-4 bg-gradient-to-br from-rose/10 to-gold/5 border border-gold-light/30">
-            <div className="flex items-center gap-2 mb-2">
-              <Lucide.Bell className="w-5 h-5 text-rose" />
-              <span className="font-semibold text-ink">Recent Alerts</span>
-              <Link href="/notifications" className="ml-auto text-xs text-gold-dark hover:text-gold transition-colors">View all</Link>
-            </div>
-            <div className="space-y-2">
-              {recentAlerts.map((alert) => (
-                <div key={alert.id} className="flex items-center gap-2 text-sm text-ink-muted">
-                  <span className="font-medium text-ink">{alert.type.replace('new_', '').replace('_', ' ')}</span>
-                  <span className="truncate">{alert.data?.from_name || alert.data?.follower_name || 'Alert'}</span>
-                  <span className="ml-auto text-xs">{new Date(alert.created_at).toLocaleDateString()}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </motion.div>
-      )}
-      {/* Toast notification for new alerts */}
-      {toastAlert && (
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 40 }}
-          className="fixed bottom-8 right-8 z-50"
-        >
-          <Link href="/notifications">
-            <div className="glass-card rounded-xl px-5 py-3 shadow-lg bg-gradient-to-br from-rose/20 to-gold/10 border border-gold-light/30 flex items-center gap-3 cursor-pointer">
-              <Lucide.Bell className="w-6 h-6 text-rose animate-bounce" />
-              <div>
-                <div className="font-semibold text-ink">New Alert</div>
-                <div className="text-sm text-ink-muted">{toastAlert.type.replace('new_', '').replace('_', ' ')} from {toastAlert.data?.from_name || toastAlert.data?.follower_name || 'Alert'}</div>
-              </div>
-            </div>
-          </Link>
-        </motion.div>
-      )}
+      {/* Alerts and toast notifications removed for minimalistic UI */}
       {/* Hero greeting */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
