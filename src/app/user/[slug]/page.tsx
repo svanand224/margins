@@ -115,8 +115,8 @@ export default function PublicProfilePage({
     // ...removed recommendation logic...
 
     const { error } = await supabase.from('recommendations').insert({
-      from_user_id: user.id,
-      to_user_id: profile.id,
+      from_user_id: user?.id,
+      to_user_id: profile?.id,
       book_title: recommendBook.title.trim(),
       book_author: recommendBook.author.trim() || null,
       message: recommendBook.message.trim() || null,
@@ -125,9 +125,9 @@ export default function PublicProfilePage({
     if (!error) {
       // Create notification
       await supabase.from('notifications').insert({
-        user_id: profile.id,
+        user_id: profile?.id,
         type: 'new_recommendation',
-        from_user_id: user.id,
+        from_user_id: user?.id,
         data: {
           from_name: currentUserProfile?.reader_name,
           from_slug: currentUserProfile?.public_slug,
@@ -451,7 +451,5 @@ export default function PublicProfilePage({
     </div>
   );
 }
-
-// ...existing code...
 
 
