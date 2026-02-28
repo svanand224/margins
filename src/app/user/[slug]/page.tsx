@@ -40,7 +40,6 @@ interface PublicProfile {
     dailyLogs?: Record<string, { pagesRead: number; minutesRead: number }>;
   };
   created_at: string;
-}
 interface Comment {
   id: string;
   content: string;
