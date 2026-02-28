@@ -292,6 +292,7 @@ export default function RecommendationsPage() {
                             {rec.from_user?.reader_name ?? 'Unknown User'}
                           </span>
                         )}
+                      </div>
 
                       {/* Actions */}
                       {rec.status === 'pending' ? (
