@@ -206,6 +206,13 @@ export default function PublicProfilePage({
 
   return (
     <div className="min-h-screen pb-24 md:pb-8">
+      {/* Debug: Show raw book data only in development */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="bg-amber/10 text-xs p-2 mb-2 rounded-xl">
+          <strong>Debug: Raw books data</strong>
+          <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{JSON.stringify(books, null, 2)}</pre>
+        </div>
+      )}
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -446,4 +453,5 @@ export default function PublicProfilePage({
 }
 
 // ...existing code...
+
 
