@@ -235,7 +235,7 @@ export default function NotificationsPage() {
                         {notifications.map((n) => (
                           <li key={n.id} className="border-b border-gold-light/20 py-2 text-sm text-ink">
                             {n.type.replace('new_', '').replace('_', ' ')}
-                            {n.data && n.data.from_name && <> from <span className="font-semibold">{n.data.from_name}</span></>}
+                             {typeof n.data === 'object' && n.data && 'from_name' in n.data && n.data.from_name ? <> from <span className="font-semibold">{String(n.data.from_name)}</span></> : null}
                             <span className="ml-2 text-xs text-ink-muted">{new Date(n.created_at).toLocaleString()}</span>
                           </li>
                         ))}
