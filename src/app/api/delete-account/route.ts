@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 
 // POST /api/delete-account
 export async function POST(req: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { userId } = await req.json();
 
   if (!userId) {
