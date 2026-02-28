@@ -232,7 +232,15 @@ export default function HomePage() {
   const [recLoading, setRecLoading] = useState(true);
   const [recError, setRecError] = useState<string | null>(null);
   // Alerts preview state
-  const [recentAlerts, setRecentAlerts] = useState([]);
+  type Notification = {
+    id: string;
+    type: string;
+    from_user_id: string | null;
+    data: Record<string, unknown>;
+    read: boolean;
+    created_at: string;
+  };
+  const [recentAlerts, setRecentAlerts] = useState<Notification[]>([]);
   const [toastAlert, setToastAlert] = useState(null);
   const toastTimeout = useRef(null);
   useEffect(() => {
