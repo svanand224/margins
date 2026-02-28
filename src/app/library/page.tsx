@@ -43,17 +43,47 @@ export default function LibraryPage() {
   );
 }
 
+import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
+
 function LibraryContent() {
-  const { books, toggleFavorite } = useBookStore();
   const searchParams = useSearchParams();
   const initialStatus = (searchParams.get('status') as ReadingStatus | null) || 'all';
 
+  const [books, setBooks] = useState<Book[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<ReadingStatus | 'all'>(initialStatus);
   const [genreFilter, setGenreFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<SortOption>('dateAdded');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Fetch books from Supabase for the logged-in user
+  useEffect(() => {
+    async function fetchBooks() {
+      if (!isSupabaseConfigured()) {
+        setLoading(false);
+        return;
+      }
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('reading_data')
+        .eq('id', user.id)
+        .single();
+      if (profile && profile.reading_data && Array.isArray(profile.reading_data.books)) {
+        setBooks(profile.reading_data.books);
+      }
+      setLoading(false);
+    }
+    fetchBooks();
+  }, []);
 
   // Track scroll progress for growing lotus
   useEffect(() => {
@@ -65,7 +95,6 @@ function LibraryContent() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-  const [showFilters, setShowFilters] = useState(false);
 
   const genres = useMemo(() => {
     const genreSet = new Set(books.map(b => b.genre).filter(Boolean));
@@ -369,34 +398,36 @@ function GridBookCard({ book, index, onToggleFavorite, relatedCount }: { book: B
   const progress = book.totalPages > 0 ? Math.round((book.currentPage / book.totalPages) * 100) : 0;
 
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      transition={{ delay: Math.min(index * 0.03, 0.3) }}
-    >
-      <Link href={`/book/${book.id}`}>
-        <div className="book-card group cursor-pointer">
-          {/* Cover */}
-          <div className="book-cover-glow relative w-full aspect-[2/3] rounded-xl bg-gradient-to-br from-bark to-espresso overflow-hidden shadow-lg mb-2">
-            {book.coverUrl ? (
-              <img src={book.coverUrl} alt={book.title} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center p-3">
-                <div className="text-center">
-                  <BookOpen className="w-8 h-8 text-gold-light/30 mx-auto mb-2" />
-                  <p className="text-gold-light/50 text-xs leading-tight">{book.title}</p>
+    return (
+      <motion.div
+        layout
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        transition={{ delay: Math.min(index * 0.03, 0.3) }}
+      >
+        <Link href={`/book/${book.id}`}>
+          <div className="book-card group cursor-pointer">
+            {/* Cover */}
+            <div className="book-cover-glow relative w-full aspect-[2/3] rounded-xl bg-gradient-to-br from-bark to-espresso overflow-hidden shadow-lg mb-2">
+              {book.coverUrl ? (
+                <img src={book.coverUrl} alt={book.title} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <BookOpen className="w-4 h-4 text-gold-light/30" />
                 </div>
-              </div>
-            )}
-            {/* Overlay on hover */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            
-            {/* Status badge */}
-            <div className={`absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-medium border ${statusColors[book.status]}`}>
-              {book.status === 'want-to-read' ? 'TBR' : book.status === 'reading' ? 'Reading' : book.status === 'completed' ? 'Done' : 'DNF'}
+              )}
             </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-ink truncate">{book.title}</p>
+              <p className="text-xs text-ink-muted truncate">{book.author}</p>
+              {/* Debug: Show book id */}
+              <p className="text-[10px] text-rose-700">ID: {book.id}</p>
+              {/* ...existing code... */}
+            </div>
+          </div>
+        </Link>
+      </motion.div>
 
             {/* Favorite button */}
             <button
