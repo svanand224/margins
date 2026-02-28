@@ -241,7 +241,7 @@ export default function FeedPage() {
                 >
                   <div className="flex gap-3">
                     {/* Avatar */}
-                    {activity.user.public_slug ? (
+                    {activity.user && activity.user.public_slug ? (
                       <Link href={`/user/${activity.user.public_slug}`}>
                         {activity.user.avatar_url ? (
                           <img
@@ -261,7 +261,7 @@ export default function FeedPage() {
                           </div>
                         )}
                       </Link>
-                    ) : activity.user.avatar_url ? (
+                    ) : activity.user && activity.user.avatar_url ? (
                       <img
                         src={activity.user.avatar_url}
                         alt={activity.user.reader_name}
@@ -275,7 +275,7 @@ export default function FeedPage() {
                           color: 'var(--th-parchment)',
                         }}
                       >
-                        {(activity.user.reader_name || 'U').charAt(0).toUpperCase()}
+                        {(activity.user?.reader_name || 'U').charAt(0).toUpperCase()}
                       </div>
                     )}
 

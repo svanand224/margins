@@ -274,17 +274,15 @@ export default function RecommendationsPage() {
                                   color: 'var(--th-parchment)',
                                 }}
                               >
-                                {(rec.from_user.reader_name || 'U').charAt(0).toUpperCase()}
+                                {(rec.from_user?.reader_name || 'U').charAt(0).toUpperCase()}
                               </div>
                             )}
                             <span className="text-sm text-ink-muted group-hover:text-gold transition-colors">
                               from {rec.from_user.reader_name}
                             </span>
                           </Link>
-                        ) : (
-                          <span className="text-sm text-ink-muted">
-                            from {rec.from_user.reader_name}
-                          </span>
+                         ) : (
+                           <span className="text-sm text-ink-muted">{rec.from_user?.reader_name || 'Unknown User'}</span>
                         )}
                         <span className="text-xs text-ink-muted">• {formatTime(rec.created_at)}</span>
                       </div>
