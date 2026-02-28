@@ -52,11 +52,7 @@ export default function PublicProfilePage({ params }: { params: { slug: string }
   const [showFollowing, setShowFollowing] = useState(false);
   const [followersList, setFollowersList] = useState<any[]>([]);
   const [followingList, setFollowingList] = useState<any[]>([]);
-
-  // Recommendation modal
-  const [showRecommendModal, setShowRecommendModal] = useState(false);
-  const [recommendBook, setRecommendBook] = useState({ title: '', author: '', message: '' });
-  // Book recommendation message state removed
+}
   const [recommendLoading, setRecommendLoading] = useState(false);
   const [recommendSuccess, setRecommendSuccess] = useState(false);
 
