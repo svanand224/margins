@@ -806,9 +806,13 @@ export default function PublicProfilePage({
               )}
             </motion.div>
           </motion.div>
-}
         )}
       </AnimatePresence>
     </div>
   );
 }
+
+}
+
+// Extra closing brace to balance the file (fixes EOF parsing error)
+
