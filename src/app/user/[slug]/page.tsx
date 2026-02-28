@@ -39,7 +39,10 @@ interface PublicProfile {
     dailyLogs?: Record<string, { pagesRead: number; minutesRead: number }>;
   };
 }
-}
+export default function PublicProfilePage({ params }: { params: { slug: string } }) {
+  const { slug } = params;
+  const { user, profile: currentUserProfile } = useAuth();
+  const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -58,7 +61,7 @@ interface PublicProfile {
   // Recommendation modal
   const [showRecommendModal, setShowRecommendModal] = useState(false);
   const [recommendBook, setRecommendBook] = useState({ title: '', author: '', message: '' });
-    // Book recommendation message state removed
+  // Book recommendation message state removed
   const [recommendLoading, setRecommendLoading] = useState(false);
   const [recommendSuccess, setRecommendSuccess] = useState(false);
 
