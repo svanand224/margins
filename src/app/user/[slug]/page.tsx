@@ -35,14 +35,9 @@ interface PublicProfile {
     books?: Book[];
     goals?: { pagesPerDay?: number; booksPerYear?: number };
     dailyLogs?: Record<string, { pagesRead: number; minutesRead: number }>;
-  };
-  created_at: string;
-}
-export default function PublicProfilePage({
-  params,
-}: {
-  params: { slug: string };
-}) {
+  }
+
+export default function PublicProfilePage({ params }: { params: { slug: string } }) {
   const { slug } = params;
   const { user, profile: currentUserProfile } = useAuth();
   const [profile, setProfile] = useState<PublicProfile | null>(null);
@@ -163,7 +158,7 @@ export default function PublicProfilePage({
         <Loader2 className="w-8 h-8 animate-spin text-gold" />
       </div>
     );
-  // ...end of file
+  }
   if (notFound || !profile) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6">
@@ -194,22 +189,20 @@ export default function PublicProfilePage({
         </Link>
       </div>
     );
+  }
   const isOwnProfile = user?.id === profile.id;
 
+  // Main render
   return (
     <div className="min-h-screen pb-24 md:pb-8">
+      {/* Debug: Show raw book data only in development */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="bg-amber/10 text-xs p-2 mb-2 rounded-xl">
+          <strong>Debug: Raw books data</strong>
+          <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{JSON.stringify(books, null, 2)}</pre>
+        </div>
+      )}
       <>
-        </>
-      <>
-        </>
-      <>
-        {/* Debug: Show raw book data only in development */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="bg-amber/10 text-xs p-2 mb-2 rounded-xl">
-            <strong>Debug: Raw books data</strong>
-            <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{JSON.stringify(books, null, 2)}</pre>
-          </div>
-        )}
         <motion.section initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="glass-card mx-4 mt-4 rounded-2xl p-6 md:mx-auto md:max-w-2xl">
           <div className="flex items-start gap-4">
             {/* Avatar */}
@@ -233,148 +226,120 @@ export default function PublicProfilePage({
 
             {/* Info */}
             <div className="flex-1">
-                {completedBooks.length > 0 && (
-                  <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mx-4 mt-6 md:mx-auto md:max-w-2xl">
-                    <h2
-                      className="text-lg font-semibold text-ink mb-3 flex items-center gap-2"
-                      style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
-                    >
-                      <Trophy className="w-5 h-5 text-forest" />
-                      Completed ({completedBooks.length})
-                    </h2>
-                    <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
-                      {completedBooks.slice(0, 12).map((book) => (
-                        <div key={book.id} className="group relative">
-                          {book.coverUrl ? (
-                            <img
-                              src={book.coverUrl}
-                              alt={book.title}
-                              className="w-full aspect-[2/3] object-cover rounded-lg shadow-sm"
-                            />
-                          ) : (
-                            <div className="w-full aspect-[2/3] rounded-lg bg-gradient-to-br from-gold/20 to-amber/20 flex items-center justify-center">
-                              <BookOpen className="w-6 h-6 text-gold/50" />
-                            </div>
-                          )}
-                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center p-1">
-                            <p className="text-white text-[10px] text-center line-clamp-3">{book.title}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </motion.section>
-                )}
-          <div className="text-center p-3 rounded-xl bg-cream/50">
-            <Library className="w-4 h-4 mx-auto text-gold mb-1" />
-            <div className="text-lg font-bold text-ink">{books.length}</div>
-            <div className="text-xs text-ink-muted">Books</div>
+              <div className="text-center p-3 rounded-xl bg-cream/50">
+                <Library className="w-4 h-4 mx-auto text-gold mb-1" />
+                <div className="text-lg font-bold text-ink">{books.length}</div>
+                <div className="text-xs text-ink-muted">Books</div>
+              </div>
+              <div className="text-center p-3 rounded-xl bg-cream/50">
+                <Trophy className="w-4 h-4 mx-auto text-forest mb-1" />
+                <div className="text-lg font-bold text-ink">{completedBooks.length}</div>
+                <div className="text-xs text-ink-muted">Read</div>
+              </div>
+              <div className="text-center p-3 rounded-xl bg-cream/50">
+                <BookOpen className="w-4 h-4 mx-auto text-amber mb-1" />
+                <div className="text-lg font-bold text-ink">{totalPages.toLocaleString()}</div>
+                <div className="text-xs text-ink-muted">Pages</div>
+              </div>
+              <div className="text-center p-3 rounded-xl bg-cream/50">
+                <Star className="w-4 h-4 mx-auto text-gold mb-1" />
+                <div className="text-lg font-bold text-ink">{avgRating.toFixed(1)}</div>
+                <div className="text-xs text-ink-muted">Avg</div>
+              </div>
+            </div>
           </div>
-          <div className="text-center p-3 rounded-xl bg-cream/50">
-            <Trophy className="w-4 h-4 mx-auto text-forest mb-1" />
-            <div className="text-lg font-bold text-ink">{completedBooks.length}</div>
-            <div className="text-xs text-ink-muted">Read</div>
-          </div>
-          <div className="text-center p-3 rounded-xl bg-cream/50">
-            <BookOpen className="w-4 h-4 mx-auto text-amber mb-1" />
-            <div className="text-lg font-bold text-ink">{totalPages.toLocaleString()}</div>
-              <div className="text-xs text-ink-muted">Pages</div>
-          </div>
-          <div className="text-center p-3 rounded-xl bg-cream/50">
-            <Star className="w-4 h-4 mx-auto text-gold mb-1" />
-            <div className="text-lg font-bold text-ink">{avgRating.toFixed(1)}</div>
-            <div className="text-xs text-ink-muted">Avg</div>
-          </div>
-        </div>
-      </motion.section>
-      <>
+        </motion.section>
         {/* Currently Reading */}
         <motion.section initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="glass-card mx-4 mt-4 rounded-2xl p-6 md:mx-auto md:max-w-2xl">
-      
-        <h2
-          className="text-lg font-semibold text-ink mb-3 flex items-center gap-2"
-          style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
-        >
-          <Clock className="w-5 h-5 text-amber" />
-          Currently Reading
-        </h2>
-        {currentlyReading.length > 0 ? (
-          <div className="flex gap-3 overflow-x-auto pb-2">
-            {currentlyReading.map((book) => (
-              <div
-                key={book.id}
-                className="flex-shrink-0 w-28 glass-card rounded-xl p-2"
-              >
-                {book.coverUrl ? (
-                  <img
-                    src={book.coverUrl}
-                    alt={book.title}
-                    className="w-full h-40 object-cover rounded-lg"
-                  />
-                ) : (
-                  <div className="w-full h-40 rounded-lg bg-gradient-to-br from-gold/20 to-amber/20 flex items-center justify-center">
-                    <BookOpen className="w-8 h-8 text-gold/50" />
-                  </div>
-                )}
-                <p className="text-xs text-ink mt-2 line-clamp-2 font-medium">{book.title}</p>
-                {book.currentPage && book.totalPages && (
-                  <div className="mt-1">
-                    <div className="h-1 bg-cream rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-gold to-amber rounded-full"
-                        style={{ width: `${(book.currentPage / book.totalPages) * 100}%` }}
-                      />
-                    </div>
-                    <p className="text-[10px] text-ink-muted mt-0.5">
-                      {Math.round((book.currentPage / book.totalPages) * 100)}%
-                    </p>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-ink-muted text-sm">No books currently being read.</div>
-        )}
-      <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mx-4 mt-6 md:mx-auto md:max-w-2xl">
-        <h2
-          className="text-lg font-semibold text-ink mb-3 flex items-center gap-2"
-          style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
-        >
-          <Trophy className="w-5 h-5 text-forest" />
-          Completed ({completedBooks.length})
-        </h2>
-        {completedBooks.length > 0 ? (
-          <>
-            <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
-              {completedBooks.slice(0, 12).map((book) => (
-                <div key={book.id} className="group relative">
+          <h2
+            className="text-lg font-semibold text-ink mb-3 flex items-center gap-2"
+            style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+          >
+            <Clock className="w-5 h-5 text-amber" />
+            Currently Reading
+          </h2>
+          {currentlyReading.length > 0 ? (
+            <div className="flex gap-3 overflow-x-auto pb-2">
+              {currentlyReading.map((book) => (
+                <div
+                  key={book.id}
+                  className="flex-shrink-0 w-28 glass-card rounded-xl p-2"
+                >
                   {book.coverUrl ? (
                     <img
                       src={book.coverUrl}
                       alt={book.title}
-                      className="w-full aspect-[2/3] object-cover rounded-lg shadow-sm"
+                      className="w-full h-40 object-cover rounded-lg"
                     />
                   ) : (
-                    <div className="w-full aspect-[2/3] rounded-lg bg-gradient-to-br from-gold/20 to-amber/20 flex items-center justify-center">
-                      <BookOpen className="w-6 h-6 text-gold/50" />
+                    <div className="w-full h-40 rounded-lg bg-gradient-to-br from-gold/20 to-amber/20 flex items-center justify-center">
+                      <BookOpen className="w-8 h-8 text-gold/50" />
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center p-1">
-                    <p className="text-white text-[10px] text-center line-clamp-3">{book.title}</p>
-                  </div>
+                  <p className="text-xs text-ink mt-2 line-clamp-2 font-medium">{book.title}</p>
+                  {book.currentPage && book.totalPages && (
+                    <div className="mt-1">
+                      <div className="h-1 bg-cream rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-gold to-amber rounded-full"
+                          style={{ width: `${(book.currentPage / book.totalPages) * 100}%` }}
+                        />
+                      </div>
+                      <p className="text-[10px] text-ink-muted mt-0.5">
+                        {Math.round((book.currentPage / book.totalPages) * 100)}%
+                      </p>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
-            {completedBooks.length > 12 && (
-              <p className="text-center text-xs text-ink-muted mt-3">
-                +{completedBooks.length - 12} more books
-              </p>
-            )}
-          </>
-        ) : (
-          <div className="text-ink-muted text-sm">No completed books yet.</div>
-        )}
-      <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="mx-4 mt-6 md:mx-auto md:max-w-2xl">
+          ) : (
+            <div className="text-ink-muted text-sm">No books currently being read.</div>
+          )}
+        </motion.section>
+        {/* Completed Books */}
+        <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mx-4 mt-6 md:mx-auto md:max-w-2xl">
+          <h2
+            className="text-lg font-semibold text-ink mb-3 flex items-center gap-2"
+            style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+          >
+            <Trophy className="w-5 h-5 text-forest" />
+            Completed ({completedBooks.length})
+          </h2>
+          {completedBooks.length > 0 ? (
+            <>
+              <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
+                {completedBooks.slice(0, 12).map((book) => (
+                  <div key={book.id} className="group relative">
+                    {book.coverUrl ? (
+                      <img
+                        src={book.coverUrl}
+                        alt={book.title}
+                        className="w-full aspect-[2/3] object-cover rounded-lg shadow-sm"
+                      />
+                    ) : (
+                      <div className="w-full aspect-[2/3] rounded-lg bg-gradient-to-br from-gold/20 to-amber/20 flex items-center justify-center">
+                        <BookOpen className="w-6 h-6 text-gold/50" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center p-1">
+                      <p className="text-white text-[10px] text-center line-clamp-3">{book.title}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {completedBooks.length > 12 && (
+                <p className="text-center text-xs text-ink-muted mt-3">
+                  +{completedBooks.length - 12} more books
+                </p>
+              )}
+            </>
+          ) : (
+            <div className="text-ink-muted text-sm">No completed books yet.</div>
+          )}
+        </motion.section>
+        {/* Want to Read */}
+        <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="mx-4 mt-6 md:mx-auto md:max-w-2xl">
           <h2
             className="text-lg font-semibold text-ink mb-3 flex items-center gap-2"
             style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
@@ -403,13 +368,9 @@ export default function PublicProfilePage({
             ))}
           </div>
         </motion.section>
-      )}
-
-      {/* ...existing code... */}
-
+      </>
       {/* Recommend Book Modal */}
       {/* ...existing code... */}
-      </>
     </div>
   );
 }
