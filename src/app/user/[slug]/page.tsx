@@ -228,15 +228,12 @@ export default function PublicProfilePage({
               className="text-2xl font-bold text-ink"
               style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
             >
-              {profile.reader_name}
+              {profile.reader_name || 'Unknown Reader'}
             </h1>
-            <p className="text-sm text-ink-muted">@{profile.public_slug}</p>
-            {profile.bio && (
-              <p className="text-ink-muted text-sm mt-1" style={{ fontFamily: "'Lora', Georgia, serif" }}>
-                {profile.bio}
-              </p>
-            )}
-
+            <p className="text-sm text-ink-muted">@{profile.public_slug || 'unknown'}</p>
+            <p className="text-ink-muted text-sm mt-1" style={{ fontFamily: "'Lora', Georgia, serif" }}>
+              {profile.bio ? profile.bio : 'No bio provided.'}
+            </p>
             {/* ...existing code... */}
           </div>
         </div>
@@ -244,58 +241,19 @@ export default function PublicProfilePage({
         {/* Action Buttons */}
         {user && !isOwnProfile && (
           <div className="flex gap-2 mt-4">
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={handleFollow}
-              disabled={followLoading}
-              className={`flex-1 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
-                isFollowing
-                  ? 'bg-cream/50 border border-gold-light/30 text-ink hover:bg-cream'
-                  : 'text-parchment'
-              }`}
-              style={
-                !isFollowing
-                  ? { background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }
-                  : undefined
-              }
-            >
-              {followLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : isFollowing ? (
-                <>
-                  <UserCheck className="w-4 h-4" />
-                  Following
-                </>
-              ) : (
-                <>
-                  <UserPlus className="w-4 h-4" />
-                  Follow
-                </>
-              )}
-            </motion.button>
-
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowRecommendModal(true)}
-              className="py-2.5 px-4 rounded-xl text-sm font-medium bg-forest/10 text-forest hover:bg-forest/20 flex items-center gap-2 transition-colors"
-            >
-              <Gift className="w-4 h-4" />
-              Recommend
-            </motion.button>
+            {/* ...existing code... */}
           </div>
         )}
 
         {/* Genre & Join Date */}
         <div className="flex items-center gap-4 mt-4 pt-4 border-t border-gold-light/20 text-xs text-ink-muted">
-          {profile.favorite_genre && (
-            <span className="flex items-center gap-1">
-              <BookMarked className="w-3 h-3" />
-              {profile.favorite_genre}
-            </span>
-          )}
+          <span className="flex items-center gap-1">
+            <BookMarked className="w-3 h-3" />
+            {profile.favorite_genre ? profile.favorite_genre : 'No favorite genre'}
+          </span>
           <span className="flex items-center gap-1">
             <Calendar className="w-3 h-3" />
-            Joined {new Date(profile.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+            Joined {profile.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Unknown'}
           </span>
         </div>
 
@@ -325,20 +283,20 @@ export default function PublicProfilePage({
       </motion.div>
 
       {/* Currently Reading */}
-      {currentlyReading.length > 0 && (
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mx-4 mt-6 md:mx-auto md:max-w-2xl"
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="mx-4 mt-6 md:mx-auto md:max-w-2xl"
+      >
+        <h2
+          className="text-lg font-semibold text-ink mb-3 flex items-center gap-2"
+          style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
         >
-          <h2
-            className="text-lg font-semibold text-ink mb-3 flex items-center gap-2"
-            style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
-          >
-            <Clock className="w-5 h-5 text-amber" />
-            Currently Reading
-          </h2>
+          <Clock className="w-5 h-5 text-amber" />
+          Currently Reading
+        </h2>
+        {currentlyReading.length > 0 ? (
           <div className="flex gap-3 overflow-x-auto pb-2">
             {currentlyReading.map((book) => (
               <div
@@ -373,57 +331,63 @@ export default function PublicProfilePage({
               </div>
             ))}
           </div>
-        </motion.section>
-      )}
+        ) : (
+          <div className="text-ink-muted text-sm">No books currently being read.</div>
+        )}
+      </motion.section>
 
       {/* Completed Books */}
-      {completedBooks.length > 0 && (
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="mx-4 mt-6 md:mx-auto md:max-w-2xl"
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="mx-4 mt-6 md:mx-auto md:max-w-2xl"
+      >
+        <h2
+          className="text-lg font-semibold text-ink mb-3 flex items-center gap-2"
+          style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
         >
-          <h2
-            className="text-lg font-semibold text-ink mb-3 flex items-center gap-2"
-            style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
-          >
-            <Trophy className="w-5 h-5 text-forest" />
-            Completed ({completedBooks.length})
-          </h2>
-          <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
-            {completedBooks.slice(0, 12).map((book) => (
-              <div key={book.id} className="group relative">
-                {book.coverUrl ? (
-                  <img
-                    src={book.coverUrl}
-                    alt={book.title}
-                    className="w-full aspect-[2/3] object-cover rounded-lg shadow-sm"
-                  />
-                ) : (
-                  <div className="w-full aspect-[2/3] rounded-lg bg-gradient-to-br from-gold/20 to-amber/20 flex items-center justify-center">
-                    <BookOpen className="w-6 h-6 text-gold/50" />
+          <Trophy className="w-5 h-5 text-forest" />
+          Completed ({completedBooks.length})
+        </h2>
+        {completedBooks.length > 0 ? (
+          <>
+            <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
+              {completedBooks.slice(0, 12).map((book) => (
+                <div key={book.id} className="group relative">
+                  {book.coverUrl ? (
+                    <img
+                      src={book.coverUrl}
+                      alt={book.title}
+                      className="w-full aspect-[2/3] object-cover rounded-lg shadow-sm"
+                    />
+                  ) : (
+                    <div className="w-full aspect-[2/3] rounded-lg bg-gradient-to-br from-gold/20 to-amber/20 flex items-center justify-center">
+                      <BookOpen className="w-6 h-6 text-gold/50" />
+                    </div>
+                  )}
+                  {book.rating && (
+                    <div className="absolute bottom-1 right-1 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                      <Star className="w-2.5 h-2.5 fill-gold text-gold" />
+                      {book.rating}
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center p-1">
+                    <p className="text-white text-[10px] text-center line-clamp-3">{book.title}</p>
                   </div>
-                )}
-                {book.rating && (
-                  <div className="absolute bottom-1 right-1 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-                    <Star className="w-2.5 h-2.5 fill-gold text-gold" />
-                    {book.rating}
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center p-1">
-                  <p className="text-white text-[10px] text-center line-clamp-3">{book.title}</p>
                 </div>
-              </div>
-            ))}
-          </div>
-          {completedBooks.length > 12 && (
-            <p className="text-center text-xs text-ink-muted mt-3">
-              +{completedBooks.length - 12} more books
-            </p>
-          )}
-        </motion.section>
-      )}
+              ))}
+            </div>
+            {completedBooks.length > 12 && (
+              <p className="text-center text-xs text-ink-muted mt-3">
+                +{completedBooks.length - 12} more books
+              </p>
+            )}
+          </>
+        ) : (
+          <div className="text-ink-muted text-sm">No completed books yet.</div>
+        )}
+      </motion.section>
 
       {/* Want to Read */}
       {wantToRead.length > 0 && (
