@@ -186,7 +186,7 @@ export default function PublicProfilePage({
         .eq('following_id', profile.id);
 
       setIsFollowing(false);
-      setFollowerCount((c) => c - 1);
+      setFollowerCount((c) => Math.max(0, c - 1));
     } else {
       // Follow
       const { error } = await supabase.from('follows').insert({
