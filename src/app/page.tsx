@@ -289,6 +289,7 @@ export default function HomePage() {
     try {
       const supabase = createClient();
       // Add book to user's library with status 'want-to-read'
+      if (!user) throw new Error('User not found');
       await supabase.from('books').insert({
         title: rec.book_title,
         author: rec.book_author || '',
