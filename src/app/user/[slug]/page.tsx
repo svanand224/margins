@@ -23,6 +23,8 @@ import {
   Gift,
   X,
 } from 'lucide-react';
+import { Book } from '@/lib/types';
+import Link from 'next/link';
 interface PublicProfile {
   id: string;
   reader_name: string;
@@ -35,7 +37,8 @@ interface PublicProfile {
     books?: Book[];
     goals?: { pagesPerDay?: number; booksPerYear?: number };
     dailyLogs?: Record<string, { pagesRead: number; minutesRead: number }>;
-  }
+  };
+}
 
 export default function PublicProfilePage({ params }: { params: { slug: string } }) {
   const { slug } = params;
