@@ -811,13 +811,6 @@ export default function PublicProfilePage({
     </div>
   );
 }
-                      )}
-                    </motion.button>
-                  </div>
-                </>
-              )}
-            </motion.div>
-          </motion.div>
         )}
       </AnimatePresence>
     </div>
