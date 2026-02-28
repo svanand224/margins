@@ -275,10 +275,7 @@ export default function RecommendationsPage() {
                               />
                             ) : (
                               <div
-                                className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-                                style={{
-                                  background: 'linear-gradient(135deg, var(--th-gold), var(--th-amber))',
-                                }}
+                                className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-gradient-to-br from-gold to-amber text-parchment"
                               >
                                 {(rec.from_user.reader_name || 'U').charAt(0).toUpperCase()}
                               </div>

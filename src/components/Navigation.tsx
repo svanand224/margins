@@ -28,6 +28,7 @@ import { PaisleyBorder, ChintzFloral } from './IndianPatterns';
 const navItems = [
   { href: '/', icon: Home, label: 'Home' },
   { href: '/library', icon: Library, label: 'Library' },
+  { href: '/dm', icon: Users, label: 'DMs' },
   { href: '/add', icon: PlusCircle, label: 'Add Book' },
   { href: '/goals', icon: Target, label: 'Goals' },
   { href: '/analytics', icon: BarChart3, label: 'Analytics' },
