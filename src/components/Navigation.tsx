@@ -178,8 +178,8 @@ export default function Navigation() {
       </nav>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-cream/90 backdrop-blur-xl border-t border-gold-light/30 z-50 mobile-nav transition-colors duration-500">
-        <div className="flex items-center justify-around px-2 pt-2 pb-2">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-cream/90 backdrop-blur-xl border-t border-gold-light/30 z-50 mobile-nav transition-colors duration-500" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className="flex items-center justify-start px-2 pt-2 pb-2 overflow-x-auto scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
           {navItems.map((item) => {
             const isActive = pathname === item.href || 
               (item.href !== '/' && pathname.startsWith(item.href));
@@ -188,7 +188,7 @@ export default function Navigation() {
                 <motion.div
                   whileTap={{ scale: 0.9 }}
                   className={`
-                    flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl relative
+                    flex flex-col items-center gap-1 px-4 py-2 rounded-xl relative min-w-[56px]
                     ${isActive ? 'text-gold-dark' : 'text-ink-muted'}
                   `}
                 >
@@ -199,8 +199,8 @@ export default function Navigation() {
                       transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
                     />
                   )}
-                  <item.icon className="w-5 h-5" />
-                  <span className="text-[10px] font-medium">{item.label}</span>
+                  <item.icon className="w-6 h-6" />
+                  <span className="text-xs font-medium">{item.label}</span>
                 </motion.div>
               </Link>
             );
@@ -209,22 +209,22 @@ export default function Navigation() {
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={toggleTheme}
-            className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl text-ink-muted"
+            className="flex flex-col items-center gap-1 px-4 py-2 rounded-xl text-ink-muted min-w-[56px]"
             aria-label={isNight ? 'Switch to day mode' : 'Switch to night mode'}
           >
-            {isNight ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            <span className="text-[10px] font-medium">{isNight ? 'Day' : 'Night'}</span>
+            {isNight ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
+            <span className="text-xs font-medium">{isNight ? 'Day' : 'Night'}</span>
           </motion.button>
           {/* Mobile sign out */}
           {user && (
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={handleSignOut}
-              className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl text-ink-muted"
+              className="flex flex-col items-center gap-1 px-4 py-2 rounded-xl text-ink-muted min-w-[56px]"
               aria-label="Sign out"
             >
-              <LogOut className="w-5 h-5" />
-              <span className="text-[10px] font-medium">Sign Out</span>
+              <LogOut className="w-6 h-6" />
+              <span className="text-xs font-medium">Sign Out</span>
             </motion.button>
           )}
         </div>

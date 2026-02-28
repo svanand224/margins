@@ -127,7 +127,7 @@ export default function DirectMessagesPage() {
 
   return (
     <div className="min-h-screen pb-24 md:pb-8">
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mx-4 mt-8 md:mx-auto md:max-w-2xl">
+      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mx-2 mt-4 sm:mx-auto sm:max-w-2xl w-full">
         <h2 className="text-lg font-semibold text-ink mb-4 flex items-center gap-2" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
           <MessageCircle className="w-5 h-5 text-gold" />
           Direct Messages
@@ -135,17 +135,18 @@ export default function DirectMessagesPage() {
         <p className="text-ink-muted mb-6 text-sm">Connect with fellow readers, make friends, and discuss books or anything else! Your inbox is private and encourages extended conversation.</p>
 
         {/* Inbox: list of conversations */}
-        <div className="mb-8">
+        <div className="mb-8 w-full">
           <h3 className="text-sm font-semibold text-ink mb-2">Inbox</h3>
           {inbox.length === 0 ? (
             <div className="text-center text-ink-muted py-6">No conversations yet. Find a reader and start a chat!</div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-2 w-full">
               {inbox.map(({ user: other, last }) => (
                 <button
                   key={other.id}
                   onClick={() => setSelectedUser(other)}
                   className={`w-full flex items-center gap-3 p-3 rounded-xl glass-card border border-gold-light/20 hover:bg-cream/40 transition-colors ${selectedUser?.id === other.id ? 'bg-amber/10 border-gold' : ''}`}
+                  style={{ minWidth: 0, fontSize: '1rem', padding: '0.75rem' }}
                 >
                   {other.avatar_url ? (
                     <img src={other.avatar_url} alt={other.reader_name} className="w-10 h-10 rounded-full object-cover" />
@@ -167,9 +168,9 @@ export default function DirectMessagesPage() {
 
         {/* Conversation view */}
         {selectedUser ? (
-          <div className="glass-card rounded-2xl p-0 mb-6 border-2 border-gold-light/30 bg-gradient-to-br from-parchment/40 to-amber/10 shadow-lg">
+          <div className="glass-card rounded-2xl p-0 mb-6 border-2 border-gold-light/30 bg-gradient-to-br from-parchment/40 to-amber/10 shadow-lg w-full">
             {/* Whimsical Header */}
-            <div className="flex flex-col items-center justify-center py-6 px-4 border-b border-gold-light/20 bg-gradient-to-br from-burgundy/10 to-blue/10 rounded-t-2xl">
+            <div className="flex flex-col items-center justify-center py-4 px-2 sm:py-6 sm:px-4 border-b border-gold-light/20 bg-gradient-to-br from-burgundy/10 to-blue/10 rounded-t-2xl">
               {selectedUser.avatar_url ? (
                 <img src={selectedUser.avatar_url} alt={selectedUser.reader_name} className="w-16 h-16 rounded-full object-cover border-4 border-gold shadow-md mb-2" />
               ) : (
@@ -182,7 +183,7 @@ export default function DirectMessagesPage() {
               <button className="px-4 py-1 rounded-xl text-xs font-medium text-parchment bg-gradient-to-r from-gold to-amber shadow hover:scale-105 transition-transform mb-2">View profile</button>
             </div>
             {/* Messages */}
-            <div className="overflow-y-auto max-h-96 px-4 py-6 space-y-4 bg-gradient-to-br from-cream/30 to-parchment/10 rounded-b-2xl">
+            <div className="overflow-y-auto max-h-[60vh] px-2 py-4 sm:px-4 sm:py-6 space-y-4 bg-gradient-to-br from-cream/30 to-parchment/10 rounded-b-2xl">
               {messages.filter(m => (m.sender.id === selectedUser.id || m.recipient.id === selectedUser.id)).map(message => (
                 <motion.div key={message.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
                   className={`flex gap-2 items-end ${user.id === message.sender.id ? "justify-end" : "justify-start"}`}
@@ -209,12 +210,12 @@ export default function DirectMessagesPage() {
               ))}
             </div>
             {/* Message input bar */}
-            <div className="flex items-center gap-2 px-4 py-4 border-t border-gold-light/20 bg-gradient-to-r from-cream/40 to-parchment/20 rounded-b-2xl">
+            <div className="flex items-center gap-2 px-2 py-3 sm:px-4 sm:py-4 border-t border-gold-light/20 bg-gradient-to-r from-cream/40 to-parchment/20 rounded-b-2xl">
               <textarea
                 value={newMessage}
                 onChange={e => setNewMessage(e.target.value)}
                 placeholder="Type a whimsical message..."
-                className="flex-1 p-3 rounded-xl bg-cream/60 border border-gold-light/30 text-ink text-sm resize-none focus:outline-none focus:border-gold shadow"
+                className="flex-1 p-2 rounded-xl bg-cream/60 border border-gold-light/30 text-ink text-sm resize-none focus:outline-none focus:border-gold shadow"
                 style={{ fontFamily: "'Lora', Georgia, serif" }}
                 rows={2}
                 disabled={sending}
