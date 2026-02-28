@@ -51,8 +51,9 @@ export default function DirectMessagesPage() {
       if (dmsError) {
         console.error('Failed fetching dms:', dmsError);
         // If the DMs table doesn't exist or request is malformed, mark service unavailable
-        const status = (dmsError && (dmsError.status || dmsError.statusCode)) || null;
-        if (status === 404 || status === 400) setServiceAvailable(false);
+        const errAny = dmsError as any;
+        const status = (errAny && (errAny.status || errAny.statusCode || errAny.code)) || null;
+        if (status === 404 || status === 400 || status === '404' || status === '400') setServiceAvailable(false);
       }
       if (dmsData) {
         // filter out malformed records that lack sender/recipient
@@ -110,8 +111,9 @@ export default function DirectMessagesPage() {
       .single();
     if (error) {
       console.error('send message error', error);
-      const status = (error && (error.status || error.statusCode)) || null;
-      if (status === 404 || status === 400) setServiceAvailable(false);
+      const errAny = error as any;
+      const status = (errAny && (errAny.status || errAny.statusCode || errAny.code)) || null;
+      if (status === 404 || status === 400 || status === '404' || status === '400') setServiceAvailable(false);
     }
     if (data) {
       // data should be an object (single) — append defensively
