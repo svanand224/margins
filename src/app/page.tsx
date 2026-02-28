@@ -286,17 +286,26 @@ export default function HomePage() {
 
   // Accept recommendation handler
   const handleAcceptRec = async (rec: Recommendation) => {
-    // Add book to "Want to Read" shelf or similar logic
-    // ...existing code for adding book...
-    setRecommendations(recommendations.filter(r => r.id !== rec.id));
-    // Optionally update status in Supabase
     try {
       const supabase = createClient();
+      // Add book to user's library with status 'want-to-read'
+      await supabase.from('books').insert({
+        title: rec.book_title,
+        author: rec.book_author || '',
+        coverUrl: rec.book_cover_url || '',
+        status: 'want-to-read',
+        notes: '',
+        user_id: user.id,
+      });
+      // Mark recommendation as accepted
       await supabase
         .from('recommendations')
         .update({ status: 'accepted' })
         .eq('id', rec.id);
-    } catch {}
+      setRecommendations(recommendations.filter(r => r.id !== rec.id));
+    } catch (err) {
+      // Optionally handle error
+    }
   };
 
   // Reject recommendation handler

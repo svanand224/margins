@@ -90,8 +90,18 @@ export default function RecommendationsPage() {
   }, [user, filter]);
 
   const handleAccept = async (rec: Recommendation) => {
+    if (!user) return;
     const supabase = createClient();
-
+    // Add book to user's library with status 'want-to-read'
+    await supabase.from('books').insert({
+      title: rec.book_title,
+      author: rec.book_author || '',
+      coverUrl: rec.book_cover_url || '',
+      status: 'want-to-read',
+      notes: '',
+      user_id: user!.id,
+    });
+    // Mark recommendation as accepted
     await supabase
       .from('recommendations')
       .update({ status: 'accepted' })
