@@ -220,19 +220,7 @@ export default function HomePage() {
   const { user } = useAuth();
   // Recommendation and alerts logic removed
 
-  // Fetch recommendations sent to the current user
-  useEffect(() => {
-  // Recommendation fetching logic removed
-
-  // Accept recommendation handler
-  const handleAcceptRec = async (rec: Recommendation) => {
-    // Recommendation accept handler removed
-  };
-
-  // Reject recommendation handler
-  const handleRejectRec = async (rec: Recommendation) => {
-    // Recommendation reject handler removed
-  };
+  // ...existing code...
 
   // Cycle quotes every 8 seconds
   useEffect(() => {
@@ -995,52 +983,7 @@ export default function HomePage() {
       )}
 
       {/* Recommended to You */}
-      <section className="mt-8">
-        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-          <Lucide.Gift className="w-6 h-6 text-gold" /> Recommended to You
-        </h2>
-        {recLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Lucide.Loader2 className="w-8 h-8 animate-spin text-gold" />
-          </div>
-        ) : recommendations.length === 0 ? (
-          <div className="text-center py-8 text-ink-muted">No new recommendations.</div>
-        ) : (
-          <div className="grid gap-6">
-            {recommendations.map(rec => (
-              <div key={rec.id} className="glass-card rounded-xl p-6 flex gap-4 items-center">
-                {rec.book_cover_url ? (
-                  <img src={rec.book_cover_url} alt={rec.book_title} className="w-16 h-24 object-cover rounded-lg" />
-                ) : (
-                  <div className="w-16 h-24 rounded-lg bg-gradient-to-br from-gold/20 to-amber/20 flex items-center justify-center">
-                    <Lucide.BookOpen className="w-8 h-8 text-gold/50" />
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-ink line-clamp-1">{rec.book_title}</h3>
-                  {rec.book_author && <p className="text-xs text-ink-muted">{rec.book_author}</p>}
-                  {rec.message && <p className="text-xs text-ink-muted mt-1">{rec.message}</p>}
-                  <div className="mt-2 flex gap-2">
-                    <button
-                      className="px-4 py-2 rounded-xl bg-forest text-parchment font-semibold flex items-center gap-2 hover:bg-forest/80 transition-colors"
-                      onClick={() => handleAcceptRec(rec)}
-                    >
-                      <Lucide.Check className="w-4 h-4" /> Accept
-                    </button>
-                    <button
-                      className="px-4 py-2 rounded-xl bg-rose text-parchment font-semibold flex items-center gap-2 hover:bg-rose/80 transition-colors"
-                      onClick={() => handleRejectRec(rec)}
-                    >
-                      <Lucide.X className="w-4 h-4" /> Reject
-                    </button>
-                  </div>
-                  <div className="mt-1 text-xs text-ink-muted">From: {rec.from_user?.reader_name}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+      {/* ...existing code... */}
     </div>
   );
 }
