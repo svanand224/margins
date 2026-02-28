@@ -46,7 +46,7 @@ const genres = [
 ];
 
 export default function ProfilePage() {
-  const { user, profile, signOut, refreshProfile } = useAuth();
+  const { user, profile, loading, signOut, refreshProfile } = useAuth();
   const router = useRouter();
   const books = useBookStore((s) => s.books);
   const readerName = useBookStore((s) => s.readerName);
