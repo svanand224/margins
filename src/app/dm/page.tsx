@@ -24,7 +24,8 @@ export default function DirectMessagesPage() {
         return;
       }
       const supabase = createClient();
-      const { data: dmsData } = await supabase
+      try {
+      const { data: dmsData, error: dmsError } = await supabase
         .from("dms")
         .select(`
           id,
@@ -46,19 +47,29 @@ export default function DirectMessagesPage() {
         .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
         .order("created_at", { ascending: true })
         .limit(200);
+      if (dmsError) {
+        console.error('Failed fetching dms:', dmsError);
+      }
       if (dmsData) {
-        setMessages(dmsData);
+        // filter out malformed records that lack sender/recipient
+        const cleaned = dmsData.filter((m: any) => m && m.sender && m.recipient);
+        setMessages(cleaned);
         // Build inbox: unique users you've messaged or received from
         const usersMap: Record<string, any> = {};
-        dmsData.forEach((msg: any) => {
+        cleaned.forEach((msg: any) => {
           const other = msg.sender.id === user.id ? msg.recipient : msg.sender;
+          if (!other) return;
           if (!usersMap[other.id] || new Date(msg.created_at) > new Date(usersMap[other.id].last.created_at)) {
             usersMap[other.id] = { user: other, last: msg };
           }
         });
         setInbox(Object.values(usersMap));
       }
-      setLoading(false);
+      } catch (err) {
+        console.error('fetchMessages error', err);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchMessages();
   }, [user]);
@@ -93,7 +104,11 @@ export default function DirectMessagesPage() {
         )
       `)
       .single();
-    if (!error && data) {
+    if (error) {
+      console.error('send message error', error);
+    }
+    if (data) {
+      // data should be an object (single) — append defensively
       setMessages(prev => [...prev, data]);
       setNewMessage("");
     }
@@ -191,22 +206,22 @@ export default function DirectMessagesPage() {
             </div>
             {/* Messages */}
             <div className="overflow-y-auto max-h-[60vh] px-2 py-4 sm:px-4 sm:py-6 space-y-4 bg-gradient-to-br from-cream/30 to-parchment/10 rounded-b-2xl">
-              {messages.filter(m => (m.sender.id === selectedUser.id || m.recipient.id === selectedUser.id)).map(message => (
+              {messages.filter(m => (m.sender?.id === selectedUser.id || m.recipient?.id === selectedUser.id)).map(message => (
                 <motion.div key={message.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
                   className={`flex gap-2 items-end ${user.id === message.sender.id ? "justify-end" : "justify-start"}`}
                 >
                   {user.id !== message.sender.id && (
-                    message.sender.avatar_url ? (
+                    message.sender?.avatar_url ? (
                       <img src={message.sender.avatar_url} alt={message.sender.reader_name} className="w-8 h-8 rounded-full object-cover border-2 border-gold" />
                     ) : (
                       <div className="w-8 h-8 rounded-full flex items-center justify-center text-base font-bold bg-gradient-to-br from-gold to-amber text-parchment border-2 border-gold">
-                        {message.sender.reader_name.charAt(0).toUpperCase()}
+                        {message.sender?.reader_name?.charAt(0).toUpperCase()}
                       </div>
                     )
                   )}
                   <div className={`rounded-2xl px-4 py-2 max-w-xs break-words shadow-md ${user.id === message.sender.id ? "bg-gradient-to-br from-burgundy/80 to-blue/60 text-parchment" : "bg-gradient-to-br from-gold/30 to-amber/20 text-ink"}`} style={{ fontFamily: "'Lora', Georgia, serif" }}>
-                    <span className="block text-xs mb-1 opacity-70">{new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                    {message.content}
+                    <span className="block text-xs mb-1 opacity-70">{message.created_at ? new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</span>
+                    {typeof message.content === 'string' ? message.content : JSON.stringify(message.content)}
                   </div>
                   {user.id === message.sender.id && (
                     <button onClick={() => handleDeleteMessage(message.id)} className="ml-2 text-ink-muted hover:text-red-500 transition-colors">
