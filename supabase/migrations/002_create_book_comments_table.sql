@@ -23,10 +23,16 @@ create policy "Users can post book comments"
   on public.book_comments for insert
   with check (auth.uid() = author_id);
 
--- Users can update/delete their own comments
-drop policy if exists "Users can manage own book comments" on public.book_comments;
-create policy "Users can manage own book comments"
-  on public.book_comments for update, delete
+-- Users can update their own comments
+drop policy if exists "Users can update own book comments" on public.book_comments;
+create policy "Users can update own book comments"
+  on public.book_comments for update
+  using (auth.uid() = author_id);
+
+-- Users can delete their own comments
+drop policy if exists "Users can delete own book comments" on public.book_comments;
+create policy "Users can delete own book comments"
+  on public.book_comments for delete
   using (auth.uid() = author_id);
 
 create index if not exists book_comments_book_id_idx on public.book_comments (book_id);
