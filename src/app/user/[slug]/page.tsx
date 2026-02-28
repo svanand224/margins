@@ -126,7 +126,7 @@ export default function PublicProfilePage({
           .select('id')
           .eq('follower_id', user.id)
           .eq('following_id', profileData.id)
-          .single();
+          .maybeSingle();
 
         setIsFollowing(!!followData);
       }
