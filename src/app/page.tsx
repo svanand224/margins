@@ -2,7 +2,6 @@
 
 import { useBookStore } from '@/lib/store';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
   BookOpen,
   BookMarked,
   Trophy,
@@ -17,6 +16,9 @@ import {
   X,
   Settings,
   Trash2,
+  Gift,
+  Loader2,
+  Check,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState, useEffect, useCallback, type ReactNode } from 'react';
@@ -28,25 +30,7 @@ import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 
 /** Animated Lotus SVG for empty states */
 function FloatingLotus({ className = '' }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-      {/* Center petal */}
-      <motion.path
-        d="M60 10C52 30 50 50 60 75C70 50 68 30 60 10Z"
-        stroke="var(--th-gold)"
-        strokeWidth="1.5"
-        fill="var(--th-gold)"
-        fillOpacity="0.1"
-        strokeLinejoin="round"
-        initial={{ pathLength: 0, opacity: 0 }}
-        animate={{ pathLength: 1, opacity: 1 }}
-        transition={{ duration: 1.5, ease: 'easeOut' }}
-      />
-      {/* Inner teardrop */}
-      <motion.path
-        d="M60 28C56 40 55 55 60 65C65 55 64 40 60 28Z"
-        stroke="var(--th-gold-dark)"
-        strokeWidth="0.8"
+  import * as Lucide from 'lucide-react';
         fill="none"
         initial={{ pathLength: 0 }}
         animate={{ pathLength: 1 }}
@@ -243,7 +227,29 @@ export default function HomePage() {
   const [threadBookSearch, setThreadBookSearch] = useState('');
   const [managingThreadId, setManagingThreadId] = useState<string | null>(null);
   const { user } = useAuth();
-  const [recommendations, setRecommendations] = useState([]);
+  type Recommendation = {
+    id: string;
+    book_title: string;
+    book_author?: string;
+    book_cover_url?: string;
+    message?: string;
+    from_user?: {
+      reader_name: string;
+    };
+  };
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+    // Accept recommendation handler
+    const handleAcceptRec = (rec: Recommendation) => {
+      // Add book to "Want to Read" shelf or similar logic
+      // ...existing code for adding book...
+      setRecommendations(recommendations.filter(r => r.id !== rec.id));
+    };
+
+    // Reject recommendation handler
+    const handleRejectRec = (rec: Recommendation) => {
+      // Remove recommendation from list
+      setRecommendations(recommendations.filter(r => r.id !== rec.id));
+    };
   const [recLoading, setRecLoading] = useState(true);
   const [recError, setRecError] = useState<string | null>(null);
 
@@ -1008,11 +1014,11 @@ export default function HomePage() {
       {/* Recommended to You */}
       <section className="mt-8">
         <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-          <Gift className="w-6 h-6 text-gold" /> Recommended to You
+          <Lucide.Gift className="w-6 h-6 text-gold" /> Recommended to You
         </h2>
         {recLoading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-8 h-8 animate-spin text-gold" />
+            <Lucide.Loader2 className="w-8 h-8 animate-spin text-gold" />
           </div>
         ) : recommendations.length === 0 ? (
           <div className="text-center py-8 text-ink-muted">No new recommendations.</div>
@@ -1024,7 +1030,7 @@ export default function HomePage() {
                   <img src={rec.book_cover_url} alt={rec.book_title} className="w-16 h-24 object-cover rounded-lg" />
                 ) : (
                   <div className="w-16 h-24 rounded-lg bg-gradient-to-br from-gold/20 to-amber/20 flex items-center justify-center">
-                    <BookOpen className="w-8 h-8 text-gold/50" />
+                    <Lucide.BookOpen className="w-8 h-8 text-gold/50" />
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
@@ -1036,13 +1042,13 @@ export default function HomePage() {
                       className="px-4 py-2 rounded-xl bg-forest text-parchment font-semibold flex items-center gap-2 hover:bg-forest/80 transition-colors"
                       onClick={() => handleAcceptRec(rec)}
                     >
-                      <Check className="w-4 h-4" /> Accept
+                      <Lucide.Check className="w-4 h-4" /> Accept
                     </button>
                     <button
                       className="px-4 py-2 rounded-xl bg-rose text-parchment font-semibold flex items-center gap-2 hover:bg-rose/80 transition-colors"
                       onClick={() => handleRejectRec(rec)}
                     >
-                      <X className="w-4 h-4" /> Reject
+                      <Lucide.X className="w-4 h-4" /> Reject
                     </button>
                   </div>
                   <div className="mt-1 text-xs text-ink-muted">From: {rec.from_user?.reader_name}</div>
