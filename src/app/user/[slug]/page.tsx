@@ -73,6 +73,10 @@ export default function PublicProfilePage({
   const [followerCount, setFollowerCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [followLoading, setFollowLoading] = useState(false);
+  const [showFollowers, setShowFollowers] = useState(false);
+  const [showFollowing, setShowFollowing] = useState(false);
+  const [followersList, setFollowersList] = useState<any[]>([]);
+  const [followingList, setFollowingList] = useState<any[]>([]);
 
   // Recommendation modal
   const [showRecommendModal, setShowRecommendModal] = useState(false);
@@ -135,19 +139,21 @@ export default function PublicProfilePage({
         }
       }
 
-      // Fetch follow counts
-      const { count: followers } = await supabase
+      // Fetch follow counts and lists
+      const { count: followers, data: followersData } = await supabase
         .from('follows')
-        .select('*', { count: 'exact', head: true })
+        .select('id, follower:profiles!follows_follower_id (id, reader_name, avatar_url, public_slug)', { count: 'exact', head: false })
         .eq('following_id', profileData.id);
 
-      const { count: following } = await supabase
+      const { count: following, data: followingData } = await supabase
         .from('follows')
-        .select('*', { count: 'exact', head: true })
+        .select('id, following:profiles!follows_following_id (id, reader_name, avatar_url, public_slug)', { count: 'exact', head: false })
         .eq('follower_id', profileData.id);
 
       setFollowerCount(followers || 0);
       setFollowingCount(following || 0);
+      setFollowersList((followersData || []).map(f => f.follower));
+      setFollowingList((followingData || []).map(f => f.following));
 
       // Check if current user follows this profile
       if (user) {
@@ -402,17 +408,77 @@ export default function PublicProfilePage({
               </p>
             )}
 
-            {/* Follow Stats */}
+            {/* Follow Stats - clickable */}
             <div className="flex items-center gap-4 mt-2 text-sm">
-              <span className="text-ink">
+              <button onClick={() => setShowFollowers(true)} className="text-ink hover:text-gold transition-colors">
                 <strong>{followerCount}</strong>{' '}
                 <span className="text-ink-muted">followers</span>
-              </span>
-              <span className="text-ink">
+              </button>
+              <button onClick={() => setShowFollowing(true)} className="text-ink hover:text-gold transition-colors">
                 <strong>{followingCount}</strong>{' '}
                 <span className="text-ink-muted">following</span>
-              </span>
+              </button>
             </div>
+
+            {/* Followers Modal - fully implemented */}
+            <AnimatePresence>
+              {showFollowers && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowFollowers(false)}>
+                  <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="w-full max-w-md glass-card rounded-2xl p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
+                    <h3 className="text-xl font-bold text-burgundy mb-4 flex items-center gap-2" style={{ fontFamily: "'Cormorant Garamond', serif" }}><Users className="w-6 h-6 text-gold" /> Followers</h3>
+                    {followersList.length === 0 ? (
+                      <div className="text-center text-ink-muted">No followers yet.</div>
+                    ) : (
+                      <div className="space-y-3">
+                        {followersList.map(f => (
+                          <Link key={f.id} href={`/user/${f.public_slug}`} className="flex items-center gap-3 p-2 rounded-xl hover:bg-cream/40 transition-colors">
+                            {f.avatar_url ? (
+                              <img src={f.avatar_url} alt={f.reader_name} className="w-10 h-10 rounded-full object-cover border-2 border-gold" />
+                            ) : (
+                              <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold bg-gradient-to-br from-gold to-amber text-parchment border-2 border-gold">
+                                {f.reader_name.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                            <span className="font-semibold text-burgundy">{f.reader_name}</span>
+                            <span className="text-xs text-ink-muted">@{f.public_slug}</span>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Following Modal - fully implemented */}
+            <AnimatePresence>
+              {showFollowing && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowFollowing(false)}>
+                  <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="w-full max-w-md glass-card rounded-2xl p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
+                    <h3 className="text-xl font-bold text-burgundy mb-4 flex items-center gap-2" style={{ fontFamily: "'Cormorant Garamond', serif" }}><Users className="w-6 h-6 text-gold" /> Following</h3>
+                    {followingList.length === 0 ? (
+                      <div className="text-center text-ink-muted">Not following anyone yet.</div>
+                    ) : (
+                      <div className="space-y-3">
+                        {followingList.map(f => (
+                          <Link key={f.id} href={`/user/${f.public_slug}`} className="flex items-center gap-3 p-2 rounded-xl hover:bg-cream/40 transition-colors">
+                            {f.avatar_url ? (
+                              <img src={f.avatar_url} alt={f.reader_name} className="w-10 h-10 rounded-full object-cover border-2 border-gold" />
+                            ) : (
+                              <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold bg-gradient-to-br from-gold to-amber text-parchment border-2 border-gold">
+                                {f.reader_name.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                            <span className="font-semibold text-burgundy">{f.reader_name}</span>
+                            <span className="text-xs text-ink-muted">@{f.public_slug}</span>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 

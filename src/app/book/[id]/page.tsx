@@ -88,14 +88,14 @@ export default function BookDetailPage() {
   const startEditing = useCallback(() => {
     if (!book) return;
     setEditForm({
-      title: book.title,
-      author: book.author,
-      isbn: book.isbn || '',
-      coverUrl: book.coverUrl || '',
-      totalPages: String(book.totalPages),
-      genre: book.genre,
-      notes: book.notes || '',
-      tags: book.tags.join(', '),
+      title: book!.title,
+      author: book!.author,
+      isbn: book!.isbn || '',
+      coverUrl: book!.coverUrl || '',
+      totalPages: String(book!.totalPages),
+      genre: book!.genre,
+      notes: book!.notes || '',
+      tags: book!.tags.join(', '),
     });
     setIsEditing(true);
   }, [book]);
@@ -103,12 +103,12 @@ export default function BookDetailPage() {
   const handleSaveEdit = useCallback(() => {
     if (!book) return;
     if (!editForm.title.trim() || !editForm.author.trim()) return;
-    updateBook(book.id, {
+    updateBook(book!.id, {
       title: editForm.title.trim(),
       author: editForm.author.trim(),
       isbn: editForm.isbn.trim() || undefined,
       coverUrl: editForm.coverUrl.trim() || undefined,
-      totalPages: parseInt(editForm.totalPages) || book.totalPages,
+      totalPages: parseInt(editForm.totalPages) || book!.totalPages,
       genre: editForm.genre,
       notes: editForm.notes.trim() || undefined,
       tags: editForm.tags.split(',').map(t => t.trim()).filter(Boolean),
@@ -119,8 +119,8 @@ export default function BookDetailPage() {
   // Wrapper to detect completion and trigger confetti
   const handleStatusChange = useCallback((status: ReadingStatus) => {
     if (!book) return;
-    const wasNotCompleted = book.status !== 'completed';
-    updateStatus(book.id, status);
+    const wasNotCompleted = book!.status !== 'completed';
+    updateStatus(book!.id, status);
     if (status === 'completed' && wasNotCompleted) {
       setShowConfetti(true);
     }
@@ -128,8 +128,8 @@ export default function BookDetailPage() {
 
   const handleProgressWithConfetti = useCallback((id: string, page: number) => {
     if (!book) return;
-    const wasNotCompleted = book.status !== 'completed';
-    const willComplete = page >= book.totalPages && book.status === 'reading';
+    const wasNotCompleted = book!.status !== 'completed';
+    const willComplete = page >= book!.totalPages && book!.status === 'reading';
     updateProgress(id, page);
     if (willComplete && wasNotCompleted) {
       setShowConfetti(true);
@@ -157,11 +157,11 @@ export default function BookDetailPage() {
     );
   }
 
-  const progress = book.totalPages > 0 ? Math.round((book.currentPage / book.totalPages) * 100) : 0;
-  const pagesLeft = book.totalPages - book.currentPage;
-  const totalSessionMinutes = book.sessions.reduce((s, sess) => s + sess.minutesSpent, 0);
-  const totalSessionPages = book.sessions.reduce((s, sess) => s + sess.pagesRead, 0);
-  const avgPagesPerSession = book.sessions.length > 0 ? Math.round(totalSessionPages / book.sessions.length) : 0;
+  const progress = book!.totalPages > 0 ? Math.round((book!.currentPage / book!.totalPages) * 100) : 0;
+  const pagesLeft = book!.totalPages - book!.currentPage;
+  const totalSessionMinutes = book!.sessions.reduce((s, sess) => s + sess.minutesSpent, 0);
+  const totalSessionPages = book!.sessions.reduce((s, sess) => s + sess.pagesRead, 0);
+  const avgPagesPerSession = book!.sessions.length > 0 ? Math.round(totalSessionPages / book!.sessions.length) : 0;
 
   const handleUpdateProgress = () => {
     const page = parseInt(progressInput);
@@ -285,69 +285,75 @@ export default function BookDetailPage() {
         </button>
       </motion.div>
 
-      {/* Book Discussion Section */}
+      {/* Whimsical Book Discussion Section - moved to top */}
       <motion.section
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
-        className="glass-card rounded-2xl p-5 mb-8 border-2 border-gold-light/30 bg-gradient-to-br from-amber/5 to-parchment/10"
+        transition={{ delay: 0.05 }}
+        className="glass-card rounded-2xl p-0 mb-10 border-2 border-gold-light/30 bg-gradient-to-br from-burgundy/10 to-blue/10 shadow-lg"
       >
-        <h2 className="text-xl font-bold text-forest mb-2 flex items-center gap-2" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-          <MessageCircle className="w-6 h-6 text-gold" /> Book Discussion
-        </h2>
-        <p className="text-ink-muted mb-4 text-sm">Join the open discussion for this book! Share your thoughts, ask questions, and connect with other readers below.</p>
-        {/* Comment input */}
-        {user ? (
-          <div className="mb-4">
-            <textarea
-              value={commentText}
-              onChange={e => setCommentText(e.target.value)}
-              placeholder="Write your comment..."
-              rows={3}
-              className="w-full px-4 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink placeholder:text-ink-muted focus:outline-none focus:border-gold resize-none"
-              style={{ fontFamily: "'Lora', Georgia, serif" }}
-              disabled={commentLoading}
-            />
-            <div className="flex justify-end mt-2">
-              <motion.button
-                whileTap={{ scale: 0.98 }}
-                onClick={handlePostComment}
-                disabled={!commentText.trim() || commentLoading}
-                className="px-5 py-2 rounded-xl text-sm font-medium text-parchment flex items-center gap-2 disabled:opacity-50 bg-forest"
-              >
-                {commentLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><MessageCircle className="w-4 h-4" /> Post</>}
-              </motion.button>
-            </div>
-          </div>
-        ) : (
-          <div className="mb-4 text-center text-ink-muted text-sm">
-            <Link href="/login" className="text-gold hover:text-gold-dark font-semibold">Sign in</Link> to join the discussion.
-          </div>
-        )}
-        {/* Comments list */}
-        <div className="space-y-4">
-          {comments.length === 0 ? (
-            <div className="text-center text-ink-muted py-6">No comments yet. Be the first to start the discussion!</div>
-          ) : (
-            comments.map(comment => (
-              <div key={comment.id} className="flex gap-3 items-start p-3 rounded-xl bg-cream/40 border border-gold-light/20">
-                {comment.author.avatar_url ? (
-                  <img src={comment.author.avatar_url} alt={comment.author.reader_name} className="w-10 h-10 rounded-full object-cover" />
-                ) : (
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold bg-gradient-to-br from-gold to-amber text-parchment">
-                    {comment.author.reader_name.charAt(0).toUpperCase()}
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-ink">{comment.author.reader_name}</span>
-                    <span className="text-xs text-ink-muted">{formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}</span>
-                  </div>
-                  <p className="text-sm text-ink-light mt-1 whitespace-pre-line">{comment.content}</p>
-                </div>
+        <div className="flex flex-col items-center justify-center py-6 px-4 border-b border-gold-light/20 bg-gradient-to-br from-gold/10 to-amber/10 rounded-t-2xl">
+          <MessageCircle className="w-10 h-10 text-gold mb-2" />
+          <h2 className="text-2xl font-bold text-burgundy mb-1" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+            Book Discussion
+          </h2>
+          <p className="text-ink-muted mb-2 text-sm">Share your thoughts, ask questions, and connect with other readers below!</p>
+        </div>
+        <div className="px-4 py-6 bg-gradient-to-br from-cream/30 to-parchment/10 rounded-b-2xl">
+          {/* Comment input */}
+          {user ? (
+            <div className="mb-6">
+              <textarea
+                value={commentText}
+                onChange={e => setCommentText(e.target.value)}
+                placeholder="Write a whimsical comment..."
+                rows={3}
+                className="w-full px-4 py-3 rounded-xl bg-cream/60 border border-gold-light/30 text-ink placeholder:text-ink-muted focus:outline-none focus:border-gold resize-none shadow"
+                style={{ fontFamily: "'Lora', Georgia, serif" }}
+                disabled={commentLoading}
+              />
+              <div className="flex justify-end mt-2">
+                <motion.button
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handlePostComment}
+                  disabled={!commentText.trim() || commentLoading}
+                  className="px-5 py-2 rounded-xl text-sm font-medium text-parchment flex items-center gap-2 disabled:opacity-50 shadow-lg"
+                  style={{ background: "linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))" }}
+                >
+                  {commentLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><MessageCircle className="w-4 h-4" /> Post</>}
+                </motion.button>
               </div>
-            ))
+            </div>
+          ) : (
+            <div className="mb-6 text-center text-ink-muted text-sm">
+              <Link href="/login" className="text-gold hover:text-gold-dark font-semibold">Sign in</Link> to join the discussion.
+            </div>
           )}
+          {/* Comments list */}
+          <div className="space-y-4">
+            {comments.length === 0 ? (
+              <div className="text-center text-ink-muted py-6">No comments yet. Be the first to start the discussion!</div>
+            ) : (
+              comments.map(comment => (
+                <div key={comment.id} className="flex gap-3 items-start p-3 rounded-xl bg-gradient-to-br from-cream/40 to-parchment/20 border border-gold-light/20 shadow">
+                  {comment.author.avatar_url ? (
+                    <img src={comment.author.avatar_url} alt={comment.author.reader_name} className="w-10 h-10 rounded-full object-cover border-2 border-gold" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold bg-gradient-to-br from-gold to-amber text-parchment border-2 border-gold">
+                      {comment.author.reader_name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-burgundy">{comment.author.reader_name}</span>
+                      <span className="text-xs text-ink-muted">{formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}</span>
+                    </div>
+                    <p className="text-sm text-ink-light mt-1 whitespace-pre-line" style={{ fontFamily: "'Lora', Georgia, serif" }}>{comment.content}</p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </motion.section>
 
@@ -365,13 +371,13 @@ export default function BookDetailPage() {
             transition={{ delay: 0.1 }}
             className="book-cover-glow w-40 h-60 rounded-2xl bg-gradient-to-br from-bark to-espresso overflow-hidden shadow-2xl"
           >
-            {book.coverUrl ? (
-              <img src={book.coverUrl} alt={book.title} className="w-full h-full object-cover" />
+            {book!.coverUrl ? (
+              <img src={book!.coverUrl} alt={book!.title} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center p-4">
                 <div className="text-center">
                   <BookOpen className="w-10 h-10 text-gold-light/30 mx-auto mb-2" />
-                  <p className="text-gold-light/50 text-xs">{book.title}</p>
+                  <p className="text-gold-light/50 text-xs">{book!.title}</p>
                 </div>
               </div>
             )}
@@ -487,9 +493,9 @@ export default function BookDetailPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <h1 className="text-2xl md:text-3xl font-bold text-ink mb-1" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-                      {book.title}
+                      {book!.title}
                     </h1>
-                    <p className="text-ink-muted text-lg mb-3">{book.author}</p>
+                    <p className="text-ink-muted text-lg mb-3">{book!.author}</p>
                   </div>
                   <div className="flex items-center gap-1">
                     <button
@@ -500,27 +506,27 @@ export default function BookDetailPage() {
                       <Edit3 className={`w-4 h-4 text-ink-muted hover:text-gold-dark`} />
                     </button>
                     <button
-                      onClick={() => toggleFavorite(book.id)}
+                      onClick={() => toggleFavorite(book!.id)}
                       className="p-2 hover:bg-gold-light/10 rounded-full transition-colors"
                     >
-                      <Heart className={`w-5 h-5 ${book.favorite ? 'text-rose fill-rose' : 'text-ink-muted'}`} />
+                      <Heart className={`w-5 h-5 ${book!.favorite ? 'text-rose fill-rose' : 'text-ink-muted'}`} />
                     </button>
                   </div>
                 </div>
 
                 {/* Metadata */}
                 <div className="flex flex-wrap gap-2 mb-4">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium border ${statusColors[book.status]}`}>
-                    {statusLabels[book.status]}
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium border ${statusColors[book!.status]}`}> 
+                    {statusLabels[book!.status]}
                   </span>
-                  {book.genre && (
+                  {book!.genre && (
                     <span className="px-3 py-1 rounded-full text-xs font-medium bg-lavender/10 text-plum border border-lavender/20">
-                      {book.genre}
+                      {book!.genre}
                     </span>
                   )}
-                  {book.totalPages > 0 && (
+                  {book!.totalPages > 0 && (
                     <span className="px-3 py-1 rounded-full text-xs font-medium bg-cream text-ink-muted border border-gold-light/20">
-                      {book.totalPages} pages
+                      {book!.totalPages} pages
                     </span>
                   )}
                 </div>
@@ -538,14 +544,14 @@ export default function BookDetailPage() {
                     >
                       <Star
                         className={`w-5 h-5 transition-colors ${
-                          i < (hoverRating || book.rating || rating)
+                          i < (hoverRating || book!.rating || rating)
                             ? 'text-gold fill-gold'
                             : 'text-gold-light/30'
                         }`}
                       />
                     </motion.button>
                   ))}
-                  {book.rating && <span className="text-xs text-ink-muted ml-2">{book.rating}/5</span>}
+                  {book!.rating && <span className="text-xs text-ink-muted ml-2">{book!.rating}/5</span>}
                 </div>
 
                 {/* Status change */}
@@ -557,7 +563,7 @@ export default function BookDetailPage() {
                       onClick={() => handleStatusChange(status)}
                       className={`
                         px-3 py-1.5 rounded-lg text-xs font-medium border transition-all
-                        ${book.status === status
+                        ${book!.status === status
                           ? 'bg-gold/10 border-gold/30 text-gold-dark'
                           : 'border-gold-light/20 text-ink-muted hover:border-gold-light/40'}
                       `}
@@ -571,18 +577,18 @@ export default function BookDetailPage() {
                 <div className="flex flex-wrap gap-4 mt-4 text-xs text-ink-muted">
                   <span className="flex items-center gap-1">
                     <Calendar className="w-3.5 h-3.5" />
-                    Added {format(new Date(book.dateAdded), 'MMM d, yyyy')}
+                    Added {format(new Date(book!.dateAdded), 'MMM d, yyyy')}
                   </span>
-                  {book.startDate && (
+                  {book!.startDate && (
                     <span className="flex items-center gap-1">
                       <BookMarked className="w-3.5 h-3.5" />
-                      Started {format(new Date(book.startDate), 'MMM d, yyyy')}
+                      Started {format(new Date(book!.startDate!), 'MMM d, yyyy')}
                     </span>
                   )}
-                  {book.finishDate && (
+                  {book!.finishDate && (
                     <span className="flex items-center gap-1">
                       <Check className="w-3.5 h-3.5" />
-                      Finished {format(new Date(book.finishDate), 'MMM d, yyyy')}
+                      Finished {format(new Date(book!.finishDate!), 'MMM d, yyyy')}
                     </span>
                   )}
                 </div>
@@ -598,7 +604,7 @@ export default function BookDetailPage() {
       </div>
 
       {/* Progress Section */}
-      {book.totalPages > 0 && (
+      {book!.totalPages > 0 && (
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -615,7 +621,7 @@ export default function BookDetailPage() {
           <LotusProgressBar progress={progress} size="lg" showPercentage className="mb-4" />
 
           <div className="flex items-center justify-between text-sm text-ink-muted mb-4">
-            <span>Page {book.currentPage} of {book.totalPages}</span>
+            <span>Page {book!.currentPage} of {book!.totalPages}</span>
             <span>{pagesLeft} pages remaining</span>
           </div>
 
@@ -627,9 +633,9 @@ export default function BookDetailPage() {
                   type="number"
                   value={progressInput}
                   onChange={(e) => setProgressInput(e.target.value)}
-                  placeholder={String(book.currentPage)}
+                  placeholder={String(book!.currentPage)}
                   min={0}
-                  max={book.totalPages}
+                  max={book!.totalPages}
                   onKeyDown={(e) => e.key === 'Enter' && handleUpdateProgress()}
                   className="flex-1 px-3 py-2 bg-cream/50 border border-gold-light/30 rounded-lg text-sm"
                   autoFocus
@@ -659,14 +665,14 @@ export default function BookDetailPage() {
                 </motion.button>
                 <span className="text-xs text-ink-muted">±10 pages</span>
                 <button
-                  onClick={() => { setEditingProgress(true); setProgressInput(String(book.currentPage)); }}
+                  onClick={() => { setEditingProgress(true); setProgressInput(String(book!.currentPage)); }}
                   className="ml-auto text-xs text-gold-dark hover:text-gold flex items-center gap-1 transition-colors"
                 >
                   <Edit3 className="w-3 h-3" /> Set page
                 </button>
-                {book.status === 'reading' && (
+                {book!.status === 'reading' && (
                   <button
-                    onClick={() => handleProgressWithConfetti(book.id, book.totalPages)}
+                    onClick={() => handleProgressWithConfetti(book!.id, book!.totalPages)}
                     className="text-xs text-forest hover:text-forest-light flex items-center gap-1 transition-colors"
                   >
                     <Check className="w-3 h-3" /> Mark done
@@ -705,10 +711,10 @@ export default function BookDetailPage() {
         </div>
 
         {/* Session stats */}
-        {book.sessions.length > 0 && (
+        {book!.sessions.length > 0 && (
           <div className="grid grid-cols-3 gap-3 mb-4">
             <div className="text-center p-2 bg-cream/50 rounded-lg">
-              <p className="text-lg font-bold text-ink" style={{ fontFamily: "'Cormorant Garamond', serif" }}>{book.sessions.length}</p>
+              <p className="text-lg font-bold text-ink" style={{ fontFamily: "'Cormorant Garamond', serif" }}>{book!.sessions.length}</p>
               <p className="text-[10px] text-ink-muted">Sessions</p>
             </div>
             <div className="text-center p-2 bg-cream/50 rounded-lg">
@@ -785,9 +791,9 @@ export default function BookDetailPage() {
         </AnimatePresence>
 
         {/* Session list */}
-        {book.sessions.length > 0 ? (
+        {book!.sessions.length > 0 ? (
           <div className="space-y-2 max-h-64 overflow-y-auto">
-            {[...book.sessions].reverse().map((session) => (
+            {[...book!.sessions].reverse().map((session) => (
               <div key={session.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-cream/50 transition-colors group">
                 <div className="w-8 h-8 rounded-full bg-gold-light/20 flex items-center justify-center flex-shrink-0">
                   <Clock className="w-3.5 h-3.5 text-gold-dark" />
@@ -802,7 +808,7 @@ export default function BookDetailPage() {
                   </p>
                 </div>
                 <button
-                  onClick={() => deleteSession(book.id, session.id)}
+                  onClick={() => deleteSession(book!.id, session.id)}
                   className="p-1 opacity-0 group-hover:opacity-100 text-rose/40 hover:text-rose transition-all"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -826,10 +832,10 @@ export default function BookDetailPage() {
           Notes & Review
         </h2>
 
-        {book.notes && (
+        {book!.notes && (
           <div className="mb-4">
             <p className="text-xs text-ink-muted mb-1">Notes</p>
-            <p className="text-sm text-ink-light leading-relaxed">{book.notes}</p>
+            <p className="text-sm text-ink-light leading-relaxed">{book!.notes}</p>
           </div>
         )}
 
@@ -856,12 +862,12 @@ export default function BookDetailPage() {
               </button>
             </div>
           </div>
-        ) : book.review ? (
+        ) : book!.review ? (
           <div>
             <p className="text-xs text-ink-muted mb-1">Review</p>
-            <p className="text-sm text-ink-light leading-relaxed italic">{book.review}</p>
+            <p className="text-sm text-ink-light leading-relaxed italic">{book!.review}</p>
             <button
-              onClick={() => { setReviewText(book.review || ''); setShowReviewForm(true); }}
+              onClick={() => { setReviewText(book!.review || ''); setShowReviewForm(true); }}
               className="text-xs text-gold-dark mt-2 flex items-center gap-1"
             >
               <Edit3 className="w-3 h-3" /> Edit review
@@ -878,7 +884,7 @@ export default function BookDetailPage() {
       </motion.section>
 
       {/* Tags */}
-      {book.tags.length > 0 && (
+      {book!.tags.length > 0 && (
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -886,7 +892,7 @@ export default function BookDetailPage() {
           className="mb-6"
         >
           <div className="flex flex-wrap gap-2">
-            {book.tags.map(tag => (
+            {book!.tags.map(tag => (
               <span key={tag} className="px-3 py-1 rounded-full text-xs bg-sage-light/20 text-forest border border-sage/20">
                 #{tag}
               </span>
@@ -898,11 +904,11 @@ export default function BookDetailPage() {
       {/* Related Reads — books sharing genre or tags */}
       {(() => {
         const related = books
-          .filter(b => b.id !== book.id)
+          .filter(b => b.id !== book!.id)
           .map(b => {
             let score = 0;
-            if (b.genre && b.genre === book.genre) score += 2;
-            const sharedTags = b.tags.filter(t => book.tags.includes(t));
+            if (b.genre && b.genre === book!.genre) score += 2;
+            const sharedTags = b.tags.filter(t => book!.tags.includes(t));
             score += sharedTags.length;
             return { book: b, score, sharedTags };
           })
@@ -952,7 +958,7 @@ export default function BookDetailPage() {
                       <p className="text-sm font-medium text-ink truncate group-hover:text-gold-dark transition-colors">{r.book.title}</p>
                       <p className="text-xs text-ink-muted truncate">{r.book.author}</p>
                       <div className="flex flex-wrap gap-1 mt-1">
-                        {r.book.genre === book.genre && (
+                        {r.book.genre === book!.genre && (
                           <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gold/10 text-gold-dark">{r.book.genre}</span>
                         )}
                         {r.sharedTags.slice(0, 2).map(t => (

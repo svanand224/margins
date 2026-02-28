@@ -167,47 +167,54 @@ export default function DirectMessagesPage() {
 
         {/* Conversation view */}
         {selectedUser ? (
-          <div className="glass-card rounded-xl p-4 mb-4">
-            <div className="flex items-center gap-3 mb-3">
+          <div className="glass-card rounded-2xl p-0 mb-6 border-2 border-gold-light/30 bg-gradient-to-br from-parchment/40 to-amber/10 shadow-lg">
+            {/* Whimsical Header */}
+            <div className="flex flex-col items-center justify-center py-6 px-4 border-b border-gold-light/20 bg-gradient-to-br from-burgundy/10 to-blue/10 rounded-t-2xl">
               {selectedUser.avatar_url ? (
-                <img src={selectedUser.avatar_url} alt={selectedUser.reader_name} className="w-10 h-10 rounded-full object-cover" />
+                <img src={selectedUser.avatar_url} alt={selectedUser.reader_name} className="w-16 h-16 rounded-full object-cover border-4 border-gold shadow-md mb-2" />
               ) : (
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold bg-gradient-to-br from-gold to-amber text-parchment">
+                <div className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold bg-gradient-to-br from-gold to-amber text-parchment border-4 border-gold shadow-md mb-2">
                   {selectedUser.reader_name.charAt(0).toUpperCase()}
                 </div>
               )}
-              <span className="font-semibold text-ink text-lg">{selectedUser.reader_name}</span>
+              <span className="font-bold text-lg text-burgundy mb-1" style={{ fontFamily: "'Cormorant Garamond', serif" }}>{selectedUser.reader_name}</span>
+              <span className="text-xs text-ink-muted mb-2">@{selectedUser.public_slug}</span>
+              <button className="px-4 py-1 rounded-xl text-xs font-medium text-parchment bg-gradient-to-r from-gold to-amber shadow hover:scale-105 transition-transform mb-2">View profile</button>
             </div>
-            <div className="overflow-y-auto max-h-96 space-y-3 mb-4">
+            {/* Messages */}
+            <div className="overflow-y-auto max-h-96 px-4 py-6 space-y-4 bg-gradient-to-br from-cream/30 to-parchment/10 rounded-b-2xl">
               {messages.filter(m => (m.sender.id === selectedUser.id || m.recipient.id === selectedUser.id)).map(message => (
-                <motion.div key={message.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className={`rounded-xl p-3 flex gap-3 items-start ${user.id === message.sender.id ? "bg-cream/80 justify-end" : "bg-amber/10"}`} style={{ boxShadow: user.id === message.sender.id ? '0 2px 8px rgba(255, 193, 7, 0.08)' : 'none' }}>
-                  {message.sender.avatar_url ? (
-                    <img src={message.sender.avatar_url} alt={message.sender.reader_name} className="w-8 h-8 rounded-full object-cover" />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-base font-bold bg-gradient-to-br from-gold to-amber text-parchment">
-                      {message.sender.reader_name.charAt(0).toUpperCase()}
-                    </div>
+                <motion.div key={message.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                  className={`flex gap-2 items-end ${user.id === message.sender.id ? "justify-end" : "justify-start"}`}
+                >
+                  {user.id !== message.sender.id && (
+                    message.sender.avatar_url ? (
+                      <img src={message.sender.avatar_url} alt={message.sender.reader_name} className="w-8 h-8 rounded-full object-cover border-2 border-gold" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-base font-bold bg-gradient-to-br from-gold to-amber text-parchment border-2 border-gold">
+                        {message.sender.reader_name.charAt(0).toUpperCase()}
+                      </div>
+                    )
                   )}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-ink">{message.sender.reader_name}</span>
-                      <span className="text-xs text-ink-muted">{new Date(message.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
-                    </div>
-                    <p className="text-sm text-ink-light mt-1 whitespace-pre-line" style={{ fontFamily: "'Lora', Georgia, serif" }}>{message.content}</p>
+                  <div className={`rounded-2xl px-4 py-2 max-w-xs break-words shadow-md ${user.id === message.sender.id ? "bg-gradient-to-br from-burgundy/80 to-blue/60 text-parchment" : "bg-gradient-to-br from-gold/30 to-amber/20 text-ink"}`} style={{ fontFamily: "'Lora', Georgia, serif" }}>
+                    <span className="block text-xs mb-1 opacity-70">{new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    {message.content}
                   </div>
-                  <button onClick={() => handleDeleteMessage(message.id)} className="text-ink-muted hover:text-red-500 transition-colors">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  {user.id === message.sender.id && (
+                    <button onClick={() => handleDeleteMessage(message.id)} className="ml-2 text-ink-muted hover:text-red-500 transition-colors">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </motion.div>
               ))}
             </div>
-            {/* Message input */}
-            <div className="flex gap-2 mt-2">
+            {/* Message input bar */}
+            <div className="flex items-center gap-2 px-4 py-4 border-t border-gold-light/20 bg-gradient-to-r from-cream/40 to-parchment/20 rounded-b-2xl">
               <textarea
                 value={newMessage}
                 onChange={e => setNewMessage(e.target.value)}
-                placeholder="Type your message..."
-                className="flex-1 p-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm resize-none focus:outline-none focus:border-gold"
+                placeholder="Type a whimsical message..."
+                className="flex-1 p-3 rounded-xl bg-cream/60 border border-gold-light/30 text-ink text-sm resize-none focus:outline-none focus:border-gold shadow"
                 style={{ fontFamily: "'Lora', Georgia, serif" }}
                 rows={2}
                 disabled={sending}
@@ -216,7 +223,7 @@ export default function DirectMessagesPage() {
                 whileTap={{ scale: 0.95 }}
                 onClick={handleSendMessage}
                 disabled={!newMessage.trim() || sending}
-                className="px-4 py-2 rounded-xl text-sm font-medium text-parchment flex items-center gap-2 disabled:opacity-50"
+                className="px-4 py-2 rounded-xl text-sm font-medium text-parchment flex items-center gap-2 disabled:opacity-50 shadow-lg"
                 style={{ background: "linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))" }}
               >
                 {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Send className="w-4 h-4" />Send</>}
