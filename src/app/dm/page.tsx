@@ -15,6 +15,7 @@ export default function DirectMessagesPage() {
   const [sending, setSending] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [inbox, setInbox] = useState<any[]>([]);
+  const [serviceAvailable, setServiceAvailable] = useState(true);
 
   // Fetch all DMs and build inbox
   useEffect(() => {
@@ -49,6 +50,9 @@ export default function DirectMessagesPage() {
         .limit(200);
       if (dmsError) {
         console.error('Failed fetching dms:', dmsError);
+        // If the DMs table doesn't exist or request is malformed, mark service unavailable
+        const status = (dmsError && (dmsError.status || dmsError.statusCode)) || null;
+        if (status === 404 || status === 400) setServiceAvailable(false);
       }
       if (dmsData) {
         // filter out malformed records that lack sender/recipient
@@ -106,6 +110,8 @@ export default function DirectMessagesPage() {
       .single();
     if (error) {
       console.error('send message error', error);
+      const status = (error && (error.status || error.statusCode)) || null;
+      if (status === 404 || status === 400) setServiceAvailable(false);
     }
     if (data) {
       // data should be an object (single) — append defensively
@@ -232,6 +238,9 @@ export default function DirectMessagesPage() {
               ))}
             </div>
             {/* Message input bar */}
+            {!serviceAvailable && (
+              <div className="p-4 bg-rose/10 text-rose-dark text-sm rounded-b-2xl text-center">Messaging is temporarily unavailable — backend endpoint returned an error. Check your Supabase schema or run the migration.</div>
+            )}
             <div className="flex items-center gap-2 px-2 py-3 sm:px-4 sm:py-4 border-t border-gold-light/20 bg-gradient-to-r from-cream/40 to-parchment/20 rounded-b-2xl">
               <textarea
                 value={newMessage}
@@ -240,12 +249,12 @@ export default function DirectMessagesPage() {
                 className="flex-1 p-2 rounded-xl bg-cream/60 border border-gold-light/30 text-ink text-sm resize-none focus:outline-none focus:border-gold shadow"
                 style={{ fontFamily: "'Lora', Georgia, serif" }}
                 rows={2}
-                disabled={sending}
+                disabled={sending || !serviceAvailable}
               />
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={handleSendMessage}
-                disabled={!newMessage.trim() || sending}
+                disabled={!newMessage.trim() || sending || !serviceAvailable}
                 className="px-4 py-2 rounded-xl text-sm font-medium text-parchment flex items-center gap-2 disabled:opacity-50 shadow-lg"
                 style={{ background: "linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))" }}
               >
