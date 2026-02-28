@@ -231,38 +231,16 @@ export default function NotificationsPage() {
                     ) : notifications.length === 0 ? (
                       <div className="text-center py-8 text-ink-muted">No alerts yet.</div>
                     ) : (
-                      <div className="space-y-4">
-                        {notifications.map((n) => {
-                          const content = getNotificationContent(n);
-                          return (
-                            <motion.div
-                              key={n.id}
-                              initial={{ opacity: 0, y: 20 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ duration: 0.4 }}
-                              className="glass-card rounded-xl border border-gold-light/30 bg-gradient-to-br from-rose/10 to-gold/5 p-4 flex items-center gap-3 shadow-sm"
-                            >
-                              {getNotificationIcon(n.type)}
-                              <div className="flex-1 min-w-0">
-                                <div className="font-medium text-ink truncate">{content.text}</div>
-                                {content.link && (
-                                  <Link href={content.link} className="text-xs text-gold-dark hover:text-gold transition-colors">View</Link>
-                                )}
-                                <div className="text-xs text-ink-muted mt-1">{new Date(n.created_at).toLocaleString()}</div>
-                              </div>
-                              <button onClick={() => handleDelete(n.id)} className="p-2 rounded hover:bg-rose/10 text-rose">
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </motion.div>
-                          );
-                        })}
-                      </div>
+                      <ul className="space-y-2">
+                        {notifications.map((n) => (
+                          <li key={n.id} className="border-b border-gold-light/20 py-2 text-sm text-ink">
+                            {n.type.replace('new_', '').replace('_', ' ')}
+                            {n.data && n.data.from_name && <> from <span className="font-semibold">{n.data.from_name}</span></>}
+                            <span className="ml-2 text-xs text-ink-muted">{new Date(n.created_at).toLocaleString()}</span>
+                          </li>
+                        ))}
+                      </ul>
                     )}
-                    <div className="mt-8 flex justify-end">
-                      <button onClick={handleClearAll} className="px-4 py-2 rounded-xl bg-rose text-parchment font-semibold flex items-center gap-2 hover:bg-rose/80 transition-colors">
-                        <Trash2 className="w-4 h-4" /> Clear All
-                      </button>
-                    </div>
                   </div>
                 );
               })}

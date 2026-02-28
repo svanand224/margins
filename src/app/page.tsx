@@ -231,58 +231,7 @@ export default function HomePage() {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [recLoading, setRecLoading] = useState(true);
   const [recError, setRecError] = useState<string | null>(null);
-  // Alerts preview state
-  type Notification = {
-    id: string;
-    type: string;
-    from_user_id: string | null;
-    data: Record<string, unknown>;
-    read: boolean;
-    created_at: string;
-  };
-  const [recentAlerts, setRecentAlerts] = useState<Notification[]>([]);
-  const [toastAlert, setToastAlert] = useState(null);
-  const toastTimeout = useRef(null);
-  useEffect(() => {
-    let isMounted = true;
-    const fetchAlerts = async () => {
-      if (!isSupabaseConfigured() || !user) return;
-      const supabase = createClient();
-      const { data } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(3);
-      if (isMounted) setRecentAlerts(data || []);
-    };
-    fetchAlerts();
-    // Poll for new alerts every 30 seconds
-    const poll = setInterval(async () => {
-      if (!isSupabaseConfigured() || !user) return;
-      const supabase = createClient();
-      const { data } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1);
-      if (data && data.length > 0) {
-        const latest = data[0];
-        if (!recentAlerts.length || latest.id !== recentAlerts[0].id) {
-          setToastAlert(latest);
-          setRecentAlerts((prev) => [latest, ...prev.slice(0,2)]);
-          if (toastTimeout.current) clearTimeout(toastTimeout.current);
-          toastTimeout.current = setTimeout(() => setToastAlert(null), 5000);
-        }
-      }
-    }, 30000);
-    return () => {
-      isMounted = false;
-      clearInterval(poll);
-      if (toastTimeout.current) clearTimeout(toastTimeout.current);
-    };
-  }, [user, recentAlerts]);
+  // Minimal alerts: just a link to notifications page
 
   // Fetch recommendations sent to the current user
   useEffect(() => {
