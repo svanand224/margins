@@ -10,16 +10,24 @@ export default async function BookPage({ params }: { params: { id: string } }) {
   }
 
   const supabase = createClient();
-  // Find the profile that contains this book
-  const { data: profile, error } = await supabase
+  // Fetch all profiles and search for the book by ID
+  const { data: profiles, error } = await supabase
     .from('profiles')
-    .select('reader_name, reading_data')
-    .contains('reading_data', { books: [{ id: params.id }] })
-    .single();
+    .select('reader_name, reading_data');
 
-  let book: Book | undefined;
-  if (profile && profile.reading_data && Array.isArray(profile.reading_data.books)) {
-    book = profile.reading_data.books.find((b: Book) => b.id === params.id);
+  let book: Book | undefined = undefined;
+  let owner: string | undefined = undefined;
+  if (profiles && Array.isArray(profiles)) {
+    for (const profile of profiles) {
+      if (profile.reading_data && Array.isArray(profile.reading_data.books)) {
+        const found = profile.reading_data.books.find((b: Book) => b.id === params.id);
+        if (found) {
+          book = found;
+          owner = profile.reader_name;
+          break;
+        }
+      }
+    }
   }
 
   // Debug output for params and query result
@@ -30,12 +38,14 @@ export default async function BookPage({ params }: { params: { id: string } }) {
           <strong>Debug:</strong>
           <div>params.id: {params.id}</div>
           <div>error: {error ? JSON.stringify(error) : 'none'}</div>
+          <div>profiles: {profiles ? profiles.length : 'none'}</div>
           <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{JSON.stringify(book, null, 2)}</pre>
         </div>
         {book ? (
           <>
             <h1 className="text-3xl font-bold mb-2">{book.title}</h1>
             <p className="text-lg text-ink-muted mb-4">by {book.author || 'Unknown Author'}</p>
+            {owner && <div className="text-sm text-ink-muted mb-2">Owner: {owner}</div>}
             {book.coverUrl && (
               <img src={book.coverUrl} alt={book.title} className="w-40 h-60 object-cover rounded-lg mb-4" />
             )}
@@ -45,7 +55,7 @@ export default async function BookPage({ params }: { params: { id: string } }) {
             <div className="mt-6 text-ink">{book.notes || 'No notes for this book.'}</div>
           </>
         ) : (
-          <div className="text-rose-700">Book not found.</div>
+          <div className="text-rose-700">Book not found in any profile.</div>
         )}
       </div>
     );
@@ -57,15 +67,16 @@ export default async function BookPage({ params }: { params: { id: string } }) {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-2">{book.title}</h1>
-      <p className="text-lg text-ink-muted mb-4">by {book.author || 'Unknown Author'}</p>
-      {book.coverUrl && (
-        <img src={book.coverUrl} alt={book.title} className="w-40 h-60 object-cover rounded-lg mb-4" />
+      <h1 className="text-3xl font-bold mb-2">{book!.title}</h1>
+      <p className="text-lg text-ink-muted mb-4">by {book!.author || 'Unknown Author'}</p>
+      {owner && <div className="text-sm text-ink-muted mb-2">Owner: {owner}</div>}
+      {book!.coverUrl && (
+        <img src={book!.coverUrl} alt={book!.title} className="w-40 h-60 object-cover rounded-lg mb-4" />
       )}
-      <div className="text-sm text-ink-muted mb-2">Status: {book.status}</div>
-      <div className="text-sm text-ink-muted mb-2">Pages: {book.totalPages || '—'}</div>
-      <div className="text-sm text-ink-muted mb-2">Rating: {book.rating ? book.rating.toFixed(1) : '—'}</div>
-      <div className="mt-6 text-ink">{book.notes || 'No notes for this book.'}</div>
+      <div className="text-sm text-ink-muted mb-2">Status: {book!.status}</div>
+      <div className="text-sm text-ink-muted mb-2">Pages: {book!.totalPages || '—'}</div>
+      <div className="text-sm text-ink-muted mb-2">Rating: {book!.rating ? book!.rating.toFixed(1) : '—'}</div>
+      <div className="mt-6 text-ink">{book!.notes || 'No notes for this book.'}</div>
     </div>
   );
 }
