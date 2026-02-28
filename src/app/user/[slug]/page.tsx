@@ -47,11 +47,6 @@ export default function PublicProfilePage({ params }: { params: { slug: string }
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   // DM state removed
-
-  // Social state
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [followerCount, setFollowerCount] = useState(0);
-  const [followingCount, setFollowingCount] = useState(0);
   const [followLoading, setFollowLoading] = useState(false);
   const [showFollowers, setShowFollowers] = useState(false);
   const [showFollowing, setShowFollowing] = useState(false);
