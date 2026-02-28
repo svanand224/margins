@@ -25,6 +25,8 @@ import { useState, useMemo, useRef, useCallback } from 'react';
 import { format, formatDistanceToNow } from 'date-fns';
 import Confetti from '@/components/Confetti';
 import { MehndiDivider, LotusDivider, OrnateFrame, BlockPrintBorder, LotusProgressBar } from '@/components/IndianPatterns';
+import { useAuth } from '@/lib/auth';
+import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 
 const statusLabels: Record<ReadingStatus, string> = {
   reading: 'Currently Reading',
@@ -204,6 +206,47 @@ export default function BookDetailPage() {
   const handleDelete = () => {
     deleteBook(book.id);
     router.push('/library');
+  };
+
+  const { user } = useAuth();
+  const [comments, setComments] = useState([]);
+  const [commentText, setCommentText] = useState('');
+  const [commentLoading, setCommentLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchComments = async () => {
+      if (!isSupabaseConfigured()) return;
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('book_comments')
+        .select('id, content, created_at, author:author_id (id, reader_name, avatar_url, public_slug)')
+        .eq('book_id', params.id)
+        .order('created_at', { ascending: false });
+      setComments(data || []);
+    };
+    fetchComments();
+  }, [params.id]);
+
+  const handlePostComment = async () => {
+    if (!user || !commentText.trim()) return;
+    setCommentLoading(true);
+    const supabase = createClient();
+    await supabase
+      .from('book_comments')
+      .insert({
+        book_id: params.id,
+        author_id: user.id,
+        content: commentText.trim(),
+      });
+    setCommentText('');
+    setCommentLoading(false);
+    // Refresh comments
+    const { data } = await supabase
+      .from('book_comments')
+      .select('id, content, created_at, author:author_id (id, reader_name, avatar_url, public_slug)')
+      .eq('book_id', params.id)
+      .order('created_at', { ascending: false });
+    setComments(data || []);
   };
 
   return (

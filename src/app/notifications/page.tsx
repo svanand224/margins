@@ -86,13 +86,13 @@ export default function NotificationsPage() {
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'new_follower':
-        return <UserPlus className="w-5 h-5 text-blue-500" />;
+        return <UserPlus className="w-5 h-5" style={{ color: 'var(--th-gold)' }} />;
       case 'new_recommendation':
-        return <Gift className="w-5 h-5 text-forest" />;
+        return <Gift className="w-5 h-5" style={{ color: 'var(--th-forest)' }} />;
       case 'new_comment':
-        return <MessageCircle className="w-5 h-5 text-gold" />;
+        return <MessageCircle className="w-5 h-5" style={{ color: 'var(--th-amber)' }} />;
       default:
-        return <Bell className="w-5 h-5 text-gold" />;
+        return <Bell className="w-5 h-5" style={{ color: 'var(--th-gold-dark)' }} />;
     }
   };
 
@@ -257,8 +257,11 @@ export default function NotificationsPage() {
                 );
 
                 const cardClasses = `glass-card rounded-xl p-4 flex items-start gap-3 transition-colors ${
-                  !notification.read ? 'border-l-4 border-gold' : ''
+                  !notification.read ? 'border-l-4' : ''
                 }`;
+                const cardStyle = !notification.read
+                  ? { borderLeftColor: 'var(--th-gold)', background: 'var(--th-cream)' }
+                  : {};
 
                 return (
                   <motion.div
@@ -272,11 +275,12 @@ export default function NotificationsPage() {
                       <Link
                         href={content.link}
                         className={`${cardClasses} cursor-pointer hover:bg-cream/40`}
+                        style={cardStyle}
                       >
                         {cardContent}
                       </Link>
                     ) : (
-                      <div className={cardClasses}>
+                      <div className={cardClasses} style={cardStyle}>
                         {cardContent}
                       </div>
                     )}

@@ -62,11 +62,11 @@ export default function PublicProfilePage({
   const { slug } = use(params);
   const { user, profile: currentUserProfile } = useAuth();
   const [profile, setProfile] = useState<PublicProfile | null>(null);
-  const [comments, setComments] = useState<Comment[]>([]);
+  const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [newComment, setNewComment] = useState('');
-  const [posting, setPosting] = useState(false);
+  const [newMessage, setNewMessage] = useState('');
+  const [sending, setSending] = useState(false);
 
   // Social state
   const [isFollowing, setIsFollowing] = useState(false);
@@ -106,26 +106,33 @@ export default function PublicProfilePage({
 
       setProfile(profileData as PublicProfile);
 
-      // Fetch comments
-      const { data: commentsData } = await supabase
-        .from('comments')
-        .select(`
-          id,
-          content,
-          created_at,
-          author:author_id (
+      // Fetch DMs (messages between current user and profile owner)
+      if (user) {
+        const { data: dmsData } = await supabase
+          .from('dms')
+          .select(`
             id,
-            reader_name,
-            avatar_url,
-            public_slug
-          )
-        `)
-        .eq('profile_id', profileData.id)
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (commentsData) {
-        setComments(commentsData as unknown as Comment[]);
+            content,
+            created_at,
+            sender:sender_id (
+              id,
+              reader_name,
+              avatar_url,
+              public_slug
+            ),
+            recipient:recipient_id (
+              id,
+              reader_name,
+              avatar_url,
+              public_slug
+            )
+          `)
+          .or(`and(sender_id.eq.${user.id},recipient_id.eq.${profileData.id}),and(sender_id.eq.${profileData.id},recipient_id.eq.${user.id})`)
+          .order('created_at', { ascending: true })
+          .limit(100);
+        if (dmsData) {
+          setMessages(dmsData);
+        }
       }
 
       // Fetch follow counts
@@ -255,24 +262,28 @@ export default function PublicProfilePage({
     setRecommendLoading(false);
   };
 
-  const handlePostComment = async () => {
-    if (!user || !profile || !newComment.trim()) return;
-
-    setPosting(true);
+  const handleSendMessage = async () => {
+    if (!user || !profile || !newMessage.trim()) return;
+    setSending(true);
     const supabase = createClient();
-
     const { data, error } = await supabase
-      .from('comments')
+      .from('dms')
       .insert({
-        profile_id: profile.id,
-        author_id: user.id,
-        content: newComment.trim(),
+        sender_id: user.id,
+        recipient_id: profile.id,
+        content: newMessage.trim(),
       })
       .select(`
         id,
         content,
         created_at,
-        author:author_id (
+        sender:sender_id (
+          id,
+          reader_name,
+          avatar_url,
+          public_slug
+        ),
+        recipient:recipient_id (
           id,
           reader_name,
           avatar_url,
@@ -280,31 +291,28 @@ export default function PublicProfilePage({
         )
       `)
       .single();
-
     if (!error && data) {
-      setComments([data as unknown as Comment, ...comments]);
-      setNewComment('');
-
-      // Create notification
+      setMessages([...messages, data]);
+      setNewMessage('');
+      // Optionally: create notification for new DM
       await supabase.from('notifications').insert({
         user_id: profile.id,
-        type: 'new_comment',
+        type: 'new_dm',
         from_user_id: user.id,
         data: {
           from_name: currentUserProfile?.reader_name,
           from_slug: currentUserProfile?.public_slug,
-          comment_preview: newComment.trim().slice(0, 100),
+          message_preview: newMessage.trim().slice(0, 100),
         },
       });
     }
-
-    setPosting(false);
+    setSending(false);
   };
 
-  const handleDeleteComment = async (commentId: string) => {
+  const handleDeleteMessage = async (messageId: string) => {
     const supabase = createClient();
-    await supabase.from('comments').delete().eq('id', commentId);
-    setComments(comments.filter((c) => c.id !== commentId));
+    await supabase.from('dms').delete().eq('id', messageId);
+    setMessages(messages.filter((m) => m.id !== messageId));
   };
 
   // Calculate stats
@@ -630,7 +638,7 @@ export default function PublicProfilePage({
         </motion.section>
       )}
 
-      {/* Comments Section */}
+      {/* DM Section (Private Messages) */}
       <motion.section
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -642,10 +650,10 @@ export default function PublicProfilePage({
           style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
         >
           <MessageCircle className="w-5 h-5 text-gold" />
-          Discussion ({comments.length})
+          Direct Messages
         </h2>
 
-        {/* Comment Input */}
+        {/* Message Input */}
         {user ? (
           <div className="glass-card rounded-xl p-4 mb-4">
             <div className="flex gap-3">
@@ -668,9 +676,9 @@ export default function PublicProfilePage({
               )}
               <div className="flex-1">
                 <textarea
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  placeholder={`Say something to ${profile.reader_name}...`}
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder={`Send a private message to ${profile.reader_name}...`}
                   className="w-full p-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm resize-none focus:outline-none focus:border-gold"
                   style={{ fontFamily: "'Lora', Georgia, serif" }}
                   rows={2}
@@ -678,17 +686,17 @@ export default function PublicProfilePage({
                 <div className="flex justify-end mt-2">
                   <motion.button
                     whileTap={{ scale: 0.95 }}
-                    onClick={handlePostComment}
-                    disabled={!newComment.trim() || posting}
+                    onClick={handleSendMessage}
+                    disabled={!newMessage.trim() || sending}
                     className="px-4 py-2 rounded-xl text-sm font-medium text-parchment flex items-center gap-2 disabled:opacity-50"
                     style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}
                   >
-                    {posting ? (
+                    {sending ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
                       <>
                         <Send className="w-4 h-4" />
-                        Post
+                        Send
                       </>
                     )}
                   </motion.button>
@@ -698,7 +706,7 @@ export default function PublicProfilePage({
           </div>
         ) : (
           <div className="glass-card rounded-xl p-4 mb-4 text-center">
-            <p className="text-ink-muted text-sm mb-2">Sign in to join the discussion</p>
+            <p className="text-ink-muted text-sm mb-2">Sign in to send a message</p>
             <Link
               href="/login"
               className="inline-block px-4 py-2 rounded-xl text-sm font-medium text-parchment"
@@ -709,48 +717,28 @@ export default function PublicProfilePage({
           </div>
         )}
 
-        {/* Comments List */}
+        {/* Messages List */}
         <AnimatePresence>
-          {comments.length === 0 ? (
+          {messages.length === 0 ? (
             <div className="text-center py-8">
               <MessageCircle className="w-12 h-12 text-gold/30 mx-auto mb-2" />
-              <p className="text-ink-muted text-sm">No comments yet. Be the first!</p>
+              <p className="text-ink-muted text-sm">No messages yet. Start the conversation!</p>
             </div>
           ) : (
             <div className="space-y-3">
-              {comments.map((comment) => (
+              {messages.map((message) => (
                 <motion.div
-                  key={comment.id}
+                  key={message.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="glass-card rounded-xl p-4"
+                  className={`glass-card rounded-xl p-4 ${Boolean(user?.id) && message.sender.id === user?.id ? 'bg-cream/80' : ''}`}
                 >
                   <div className="flex gap-3">
-                    {comment.author.public_slug ? (
-                      <Link href={`/user/${comment.author.public_slug}`}>
-                        {comment.author.avatar_url ? (
-                          <img
-                            src={comment.author.avatar_url}
-                            alt={comment.author.reader_name}
-                            className="w-10 h-10 rounded-full object-cover hover:ring-2 hover:ring-gold transition-all"
-                          />
-                        ) : (
-                          <div
-                            className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold hover:ring-2 hover:ring-gold transition-all"
-                            style={{
-                              background: 'linear-gradient(135deg, var(--th-gold), var(--th-amber))',
-                              color: 'var(--th-parchment)',
-                            }}
-                          >
-                            {(comment.author.reader_name || 'U').charAt(0).toUpperCase()}
-                          </div>
-                        )}
-                      </Link>
-                    ) : comment.author.avatar_url ? (
+                    {message.sender.avatar_url ? (
                       <img
-                        src={comment.author.avatar_url}
-                        alt={comment.author.reader_name}
+                        src={message.sender.avatar_url}
+                        alt={message.sender.reader_name}
                         className="w-10 h-10 rounded-full object-cover"
                       />
                     ) : (
@@ -761,34 +749,25 @@ export default function PublicProfilePage({
                           color: 'var(--th-parchment)',
                         }}
                       >
-                        {(comment.author.reader_name || 'U').charAt(0).toUpperCase()}
+                        {(message.sender.reader_name || 'U').charAt(0).toUpperCase()}
                       </div>
                     )}
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          {comment.author.public_slug ? (
-                            <Link
-                              href={`/user/${comment.author.public_slug}`}
-                              className="text-sm font-medium text-ink hover:text-gold transition-colors"
-                            >
-                              {comment.author.reader_name}
-                            </Link>
-                          ) : (
-                            <span className="text-sm font-medium text-ink">
-                              {comment.author.reader_name}
-                            </span>
-                          )}
+                          <span className="text-sm font-medium text-ink">
+                            {message.sender.reader_name}
+                          </span>
                           <span className="text-xs text-ink-muted">
-                            {new Date(comment.created_at).toLocaleDateString('en-US', {
+                            {new Date(message.created_at).toLocaleDateString('en-US', {
                               month: 'short',
                               day: 'numeric',
                             })}
                           </span>
                         </div>
-                        {(user?.id === comment.author.id || user?.id === profile.id) && (
+                        {(user?.id === message.sender.id || user?.id === message.recipient.id) && (
                           <button
-                            onClick={() => handleDeleteComment(comment.id)}
+                            onClick={() => handleDeleteMessage(message.id)}
                             className="text-ink-muted hover:text-red-500 transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -799,7 +778,7 @@ export default function PublicProfilePage({
                         className="text-sm text-ink mt-1"
                         style={{ fontFamily: "'Lora', Georgia, serif" }}
                       >
-                        {comment.content}
+                        {message.content}
                       </p>
                     </div>
                   </div>
