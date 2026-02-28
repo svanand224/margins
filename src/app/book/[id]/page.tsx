@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
-import { useState, useMemo, useRef, useCallback } from 'react';
+import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { format, formatDistanceToNow } from 'date-fns';
 import Confetti from '@/components/Confetti';
 import { MehndiDivider, LotusDivider, OrnateFrame, BlockPrintBorder, LotusProgressBar } from '@/components/IndianPatterns';
@@ -209,7 +209,18 @@ export default function BookDetailPage() {
   };
 
   const { user } = useAuth();
-  const [comments, setComments] = useState([]);
+  type BookComment = {
+    id: string;
+    content: string;
+    created_at: string;
+    author: {
+      id: string;
+      reader_name: string;
+      avatar_url: string | null;
+      public_slug: string;
+    };
+  };
+  const [comments, setComments] = useState<BookComment[]>([]);
   const [commentText, setCommentText] = useState('');
   const [commentLoading, setCommentLoading] = useState(false);
 
@@ -222,7 +233,12 @@ export default function BookDetailPage() {
         .select('id, content, created_at, author:author_id (id, reader_name, avatar_url, public_slug)')
         .eq('book_id', params.id)
         .order('created_at', { ascending: false });
-      setComments(data || []);
+      // Fix author shape if it's an array
+      const fixedData = (data || []).map((c: any) => ({
+        ...c,
+        author: Array.isArray(c.author) ? c.author[0] : c.author,
+      }));
+      setComments(fixedData);
     };
     fetchComments();
   }, [params.id]);
@@ -246,7 +262,11 @@ export default function BookDetailPage() {
       .select('id, content, created_at, author:author_id (id, reader_name, avatar_url, public_slug)')
       .eq('book_id', params.id)
       .order('created_at', { ascending: false });
-    setComments(data || []);
+    const fixedData = (data || []).map((c: any) => ({
+      ...c,
+      author: Array.isArray(c.author) ? c.author[0] : c.author,
+    }));
+    setComments(fixedData);
   };
 
   return (
