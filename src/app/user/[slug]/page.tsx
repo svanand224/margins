@@ -271,16 +271,46 @@ export default function PublicProfilePage({
     setSending(true);
     const supabase = createClient();
     const { data, error } = await supabase
-      setSending(true);
-      const supabase = createClient();
-      // ...existing code for sending a DM message...
-  const currentlyReading = books.filter((b) => b.status === 'reading');
-  const wantToRead = books.filter((b) => b.status === 'want-to-read');
-  const totalPages = completedBooks.reduce((sum, b) => sum + (b.totalPages || 0), 0);
-  const avgRating =
-    completedBooks.filter((b) => b.rating).length > 0
-      ? completedBooks.reduce((sum, b) => sum + (b.rating || 0), 0) /
-        completedBooks.filter((b) => b.rating).length
+      .from('dms')
+      .insert({
+        sender_id: user.id,
+        recipient_id: profile.id,
+        content: newMessage.trim(),
+      })
+      .select(`
+        id,
+        content,
+        created_at,
+        sender:sender_id (
+          id,
+          reader_name,
+          avatar_url,
+          public_slug
+        ),
+        recipient:recipient_id (
+          id,
+          reader_name,
+          avatar_url,
+          public_slug
+        )
+      `)
+      .single();
+    if (!error && data) {
+      setMessages([...messages, data]);
+      setNewMessage('');
+    }
+    setSending(false);
+
+  // Book stats variables
+  const books: Book[] = profile?.reading_data?.books || [];
+  const completedBooks: Book[] = books.filter((b: Book) => b.status === 'completed');
+  const currentlyReading: Book[] = books.filter((b: Book) => b.status === 'reading');
+  const wantToRead: Book[] = books.filter((b: Book) => b.status === 'want-to-read');
+  const totalPages: number = completedBooks.reduce((sum: number, b: Book) => sum + (b.totalPages || 0), 0);
+  const avgRating: number =
+    completedBooks.filter((b: Book) => b.rating).length > 0
+      ? completedBooks.reduce((sum: number, b: Book) => sum + (b.rating || 0), 0) /
+        completedBooks.filter((b: Book) => b.rating).length
       : 0;
 
   if (loading) {
