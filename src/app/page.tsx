@@ -2,24 +2,7 @@
 
 import { useBookStore } from '@/lib/store';
 import { motion, AnimatePresence } from 'framer-motion';
-  BookOpen,
-  BookMarked,
-  Trophy,
-  Clock,
-  TrendingUp,
-  ChevronRight,
-  Star,
-  Flame,
-  Target,
-  Edit3,
-  Plus,
-  X,
-  Settings,
-  Trash2,
-  Gift,
-  Loader2,
-  Check,
-} from 'lucide-react';
+import * as Lucide from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { format, differenceInDays, startOfYear, isThisYear, subDays } from 'date-fns';
