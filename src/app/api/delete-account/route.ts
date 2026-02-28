@@ -18,7 +18,7 @@ export async function POST(req: Request) {
   const tables = [
     'profiles',
     'follows',
-    'comments',
+    // 'comments' table removed
     'recommendations',
     'notifications',
     // add more tables if needed
@@ -26,10 +26,7 @@ export async function POST(req: Request) {
 
   for (const table of tables) {
     await supabase.from(table).delete().eq('user_id', userId);
-    // For comments, you may need to delete by author_id
-    if (table === 'comments') {
-      await supabase.from('comments').delete().eq('author_id', userId);
-    }
+    // Comments deletion logic removed
     // For follows, delete both follower and following
     if (table === 'follows') {
       await supabase.from('follows').delete().eq('follower_id', userId);

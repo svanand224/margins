@@ -8,7 +8,6 @@ import {
   Bell,
   UserPlus,
   Gift,
-  MessageCircle,
   Loader2,
   Trash2,
 } from 'lucide-react';
@@ -23,11 +22,11 @@ interface Notification {
   created_at: string;
 }
 
+
 export default function NotificationsPage() {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
-
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -41,19 +40,15 @@ export default function NotificationsPage() {
         setLoading(false);
         return;
       }
-
       const supabase = createClient();
-
       const { data } = await supabase
         .from('notifications')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(50);
-
       if (data) {
         setNotifications(data as Notification[]);
-
         // Mark all as read
         const unreadIds = data.filter((n) => !n.read).map((n) => n.id);
         if (unreadIds.length > 0) {
@@ -63,10 +58,8 @@ export default function NotificationsPage() {
             .in('id', unreadIds);
         }
       }
-
       setLoading(false);
     };
-
     fetchNotifications();
   }, [user]);
 
@@ -90,7 +83,7 @@ export default function NotificationsPage() {
       case 'new_recommendation':
         return <Gift className="w-5 h-5" style={{ color: 'var(--th-forest)' }} />;
       case 'new_comment':
-        return <MessageCircle className="w-5 h-5" style={{ color: 'var(--th-amber)' }} />;
+        // new_comment notification removed
       default:
         return <Bell className="w-5 h-5" style={{ color: 'var(--th-gold-dark)' }} />;
     }
@@ -114,12 +107,7 @@ export default function NotificationsPage() {
           name: data.from_name,
         };
       case 'new_comment':
-        return {
-          text: <><strong>{data.from_name}</strong> commented on your profile</>,
-          link: data.from_slug ? `/user/${data.from_slug}` : '/profile',
-          avatar: null,
-          name: data.from_name,
-        };
+          // new_comment notification removed
       default:
         return {
           text: <>New notification</>,
@@ -222,54 +210,61 @@ export default function NotificationsPage() {
               {notifications.map((notification, index) => {
                 const content = getNotificationContent(notification);
 
-                const cardContent = (
-                  <>
-                    {/* Icon */}
-                    <div className="w-10 h-10 rounded-full bg-cream/50 flex items-center justify-center flex-shrink-0">
-                      {getNotificationIcon(notification.type)}
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <p
-                        className="text-sm text-ink"
-                        style={{ fontFamily: "'Lora', Georgia, serif" }}
-                      >
-                        {content.text}
-                      </p>
-                      <p className="text-xs text-ink-muted mt-1">
-                        {formatTime(notification.created_at)}
-                      </p>
-                    </div>
-
-                    {/* Delete */}
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleDelete(notification.id);
-                      }}
-                      className="text-ink-muted hover:text-red-500 transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </>
-                );
-
-                const cardClasses = `glass-card rounded-xl p-4 flex items-start gap-3 transition-colors ${
-                  !notification.read ? 'border-l-4' : ''
-                }`;
-                const cardStyle = !notification.read
-                  ? { borderLeftColor: 'var(--th-gold)', background: 'var(--th-cream)' }
-                  : {};
-
                 return (
-                  <motion.div
-                    key={notification.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, x: -100 }}
-                    transition={{ delay: index * 0.03 }}
+                  <div className="max-w-2xl mx-auto p-4 md:p-8">
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5 }}
+                      className="mb-8"
+                    >
+                      <h1 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                        <Bell className="w-7 h-7 text-rose" /> Alerts
+                      </h1>
+                    </motion.div>
+                    {loading ? (
+                      <div className="flex items-center justify-center py-12">
+                        <Loader2 className="w-8 h-8 animate-spin text-gold" />
+                      </div>
+                    ) : error ? (
+                      <div className="text-center py-8 text-rose">{error}</div>
+                    ) : notifications.length === 0 ? (
+                      <div className="text-center py-8 text-ink-muted">No alerts yet.</div>
+                    ) : (
+                      <div className="space-y-4">
+                        {notifications.map((n) => {
+                          const content = getNotificationContent(n);
+                          return (
+                            <motion.div
+                              key={n.id}
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.4 }}
+                              className="glass-card rounded-xl border border-gold-light/30 bg-gradient-to-br from-rose/10 to-gold/5 p-4 flex items-center gap-3 shadow-sm"
+                            >
+                              {getNotificationIcon(n.type)}
+                              <div className="flex-1 min-w-0">
+                                <div className="font-medium text-ink truncate">{content.text}</div>
+                                {content.link && (
+                                  <Link href={content.link} className="text-xs text-gold-dark hover:text-gold transition-colors">View</Link>
+                                )}
+                                <div className="text-xs text-ink-muted mt-1">{new Date(n.created_at).toLocaleString()}</div>
+                              </div>
+                              <button onClick={() => handleDelete(n.id)} className="p-2 rounded hover:bg-rose/10 text-rose">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </motion.div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    <div className="mt-8 flex justify-end">
+                      <button onClick={handleClearAll} className="px-4 py-2 rounded-xl bg-rose text-parchment font-semibold flex items-center gap-2 hover:bg-rose/80 transition-colors">
+                        <Trash2 className="w-4 h-4" /> Clear All
+                      </button>
+                    </div>
+                  </div>
+                );
                   >
                     {content.link ? (
                       <Link

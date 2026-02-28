@@ -18,25 +18,26 @@ import {
   Sparkles,
   Gift,
   Bell,
-    MessageCircle,
+    // MessageCircle icon removed
     Newspaper,
 } from 'lucide-react';
 import { useThemeStore } from '@/lib/themeStore';
 import { useAuth } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import LotusLogo from './LotusLogo';
 import { PaisleyBorder, ChintzFloral } from './IndianPatterns';
 
 const navItems = [
   { href: '/', icon: Home, label: 'Home' },
   { href: '/library', icon: Library, label: 'Library' },
-    { href: '/dm', icon: MessageCircle, label: 'Messages' },
+  // DM navigation removed
   { href: '/add', icon: PlusCircle, label: 'Add Book' },
   { href: '/goals', icon: Target, label: 'Goals' },
   { href: '/analytics', icon: BarChart3, label: 'Analytics' },
-    { href: '/feed', icon: Newspaper, label: 'Feed' },
-  { href: '/discover', icon: Users, label: 'Discover' },
-  { href: '/recommendations', icon: Gift, label: 'Inbox' },
+  { href: '/social', icon: Users, label: 'Social' },
+  // Inbox navigation removed
   { href: '/notifications', icon: Bell, label: 'Alerts' },
   { href: '/profile', icon: UserCircle, label: 'Profile' },
 ];
@@ -47,6 +48,21 @@ export default function Navigation() {
   const { user, signOut } = useAuth();
   const router = useRouter();
   const isNight = theme === 'night';
+  const [unreadAlerts, setUnreadAlerts] = useState(0);
+
+  useEffect(() => {
+    const fetchUnreadAlerts = async () => {
+      if (!isSupabaseConfigured() || !user) return;
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('notifications')
+        .select('id, read')
+        .eq('user_id', user.id)
+        .eq('read', false);
+      setUnreadAlerts(data ? data.length : 0);
+    };
+    fetchUnreadAlerts();
+  }, [user]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -80,6 +96,7 @@ export default function Navigation() {
           {navItems.map((item) => {
             const isActive = pathname === item.href || 
               (item.href !== '/' && pathname.startsWith(item.href));
+            const isAlerts = item.href === '/notifications';
             return (
               <Link key={item.href} href={item.href}>
                 <motion.div
@@ -101,6 +118,9 @@ export default function Navigation() {
                   )}
                   <item.icon className={`w-5 h-5 ${isActive ? 'text-gold-dark' : ''}`} />
                   <span className="hidden lg:block text-sm font-medium">{item.label}</span>
+                  {isAlerts && unreadAlerts > 0 && (
+                    <span className="absolute top-2 right-4 w-2.5 h-2.5 rounded-full bg-rose border-2 border-cream animate-pulse" title="Unread alerts"></span>
+                  )}
                   {isActive && (
                     <motion.div
                       initial={{ scale: 0 }}

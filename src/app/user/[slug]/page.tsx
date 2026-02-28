@@ -42,15 +42,7 @@ interface PublicProfile {
   created_at: string;
 }
 interface Comment {
-  id: string;
-  content: string;
-  created_at: string;
-  author: {
-    id: string;
-    reader_name: string;
-    avatar_url: string | null;
-    public_slug: string | null;
-  };
+// Comment interface removed
 }
 export default function PublicProfilePage({
   params,
@@ -63,8 +55,7 @@ export default function PublicProfilePage({
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [newMessage, setNewMessage] = useState('');
-  const [sending, setSending] = useState(false);
+  // DM state removed
 
   // Social state
   const [isFollowing, setIsFollowing] = useState(false);
@@ -79,6 +70,7 @@ export default function PublicProfilePage({
   // Recommendation modal
   const [showRecommendModal, setShowRecommendModal] = useState(false);
   const [recommendBook, setRecommendBook] = useState({ title: '', author: '', message: '' });
+    // Book recommendation message state removed
   const [recommendLoading, setRecommendLoading] = useState(false);
   const [recommendSuccess, setRecommendSuccess] = useState(false);
 
@@ -109,33 +101,7 @@ export default function PublicProfilePage({
       setProfile(profileData as PublicProfile);
 
       // Fetch DMs (messages between current user and profile owner)
-      if (user) {
-        const { data: dmsData } = await supabase
-          .from('dms')
-          .select(`
-            id,
-            content,
-            created_at,
-            sender:sender_id (
-              id,
-              reader_name,
-              avatar_url,
-              public_slug
-            ),
-            recipient:recipient_id (
-              id,
-              reader_name,
-              avatar_url,
-              public_slug
-            )
-          `)
-          .or(`and(sender_id.eq.${user.id},recipient_id.eq.${profileData.id}),and(sender_id.eq.${profileData.id},recipient_id.eq.${user.id})`)
-          .order('created_at', { ascending: true })
-          .limit(100);
-        if (dmsData) {
-          setMessages(dmsData);
-        }
-      }
+      // DM fetch logic removed
 
       // Fetch follow counts and lists
       const { count: followers, data: followersData } = await supabase
@@ -267,39 +233,7 @@ export default function PublicProfilePage({
   };
 
   const handleSendMessage = async () => {
-    if (!user || !profile || !newMessage.trim()) return;
-    setSending(true);
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from('dms')
-      .insert({
-        sender_id: user.id,
-        recipient_id: profile.id,
-        content: newMessage.trim(),
-      })
-      .select(`
-        id,
-        content,
-        created_at,
-        sender:sender_id (
-          id,
-          reader_name,
-          avatar_url,
-          public_slug
-        ),
-        recipient:recipient_id (
-          id,
-          reader_name,
-          avatar_url,
-          public_slug
-        )
-      `)
-      .single();
-    if (!error && data) {
-      setMessages([...messages, data]);
-      setNewMessage('');
-    }
-    setSending(false);
+  // DM send logic removed
 
   // Book stats variables
   const books: Book[] = profile?.reading_data?.books || [];

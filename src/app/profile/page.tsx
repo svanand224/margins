@@ -29,7 +29,7 @@ import {
   Upload,
   Lock,
   Eye,
-  MessageCircle,
+  // MessageCircle icon removed
   Users,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -598,8 +598,7 @@ export default function ProfilePage() {
                     </div>
                   </div>
                   <div className="mt-3 p-3 rounded-lg bg-forest/10 flex items-center gap-2">
-                    <MessageCircle className="w-4 h-4 text-forest" />
-                    <span className="text-sm text-ink">Others can leave comments on your profile</span>
+                    {/* DM and comments UI removed */}
                   </div>
                 </div>
               </motion.div>
