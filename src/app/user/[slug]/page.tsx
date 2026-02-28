@@ -23,9 +23,6 @@ import {
   Gift,
   X,
 } from 'lucide-react';
-import Link from 'next/link';
-import type { Book } from '@/lib/types';
-
 interface PublicProfile {
   id: string;
   reader_name: string;
@@ -40,9 +37,6 @@ interface PublicProfile {
     dailyLogs?: Record<string, { pagesRead: number; minutesRead: number }>;
   };
   created_at: string;
-}
-interface Comment {
-// Comment interface removed
 }
 export default function PublicProfilePage({
   params,
@@ -83,7 +77,6 @@ export default function PublicProfilePage({
       }
 
       const supabase = createClient();
-
       // Fetch profile by slug
       const { data: profileData, error } = await supabase
         .from('profiles')
@@ -110,9 +103,11 @@ export default function PublicProfilePage({
 
   const handleFollow = async () => {
     // ...removed follow logic...
+    const supabase = createClient();
 
   const handleRecommendBook = async () => {
     // ...removed recommendation logic...
+    const supabase = createClient();
 
     const { error } = await supabase.from('recommendations').insert({
       from_user_id: user?.id,
@@ -168,8 +163,7 @@ export default function PublicProfilePage({
         <Loader2 className="w-8 h-8 animate-spin text-gold" />
       </div>
     );
-  }
-
+  // ...end of file
   if (notFound || !profile) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6">
@@ -200,82 +194,76 @@ export default function PublicProfilePage({
         </Link>
       </div>
     );
-  }
-
   const isOwnProfile = user?.id === profile.id;
 
   return (
     <div className="min-h-screen pb-24 md:pb-8">
-      {/* Debug: Show raw book data only in development */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="bg-amber/10 text-xs p-2 mb-2 rounded-xl">
-          <strong>Debug: Raw books data</strong>
-          <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{JSON.stringify(books, null, 2)}</pre>
-        </div>
-      )}
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="glass-card mx-4 mt-4 rounded-2xl p-6 md:mx-auto md:max-w-2xl"
-      >
-        <div className="flex items-start gap-4">
-          {/* Avatar */}
-          {profile.avatar_url ? (
-            <img
-              src={profile.avatar_url}
-              alt={profile.reader_name}
-              className="w-20 h-20 rounded-full object-cover"
-            />
-          ) : (
-            <div
-              className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold"
-              style={{
-                background: 'linear-gradient(135deg, var(--th-gold), var(--th-amber))',
-                color: 'var(--th-parchment)',
-              }}
-            >
-              {(profile.reader_name || 'U').charAt(0).toUpperCase()}
-            </div>
-          )}
-
-          {/* Info */}
-          <div className="flex-1">
-            <h1
-              className="text-2xl font-bold text-ink"
-              style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
-            >
-              {profile.reader_name || 'Unknown Reader'}
-            </h1>
-            <p className="text-sm text-ink-muted">@{profile.public_slug || 'unknown'}</p>
-            <p className="text-ink-muted text-sm mt-1" style={{ fontFamily: "'Lora', Georgia, serif" }}>
-              {profile.bio ? profile.bio : 'No bio provided.'}
-            </p>
-            {/* ...existing code... */}
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        {user && !isOwnProfile && (
-          <div className="flex gap-2 mt-4">
-            {/* ...existing code... */}
+      <>
+        </>
+      <>
+        </>
+      <>
+        {/* Debug: Show raw book data only in development */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="bg-amber/10 text-xs p-2 mb-2 rounded-xl">
+            <strong>Debug: Raw books data</strong>
+            <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{JSON.stringify(books, null, 2)}</pre>
           </div>
         )}
+        <motion.section initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="glass-card mx-4 mt-4 rounded-2xl p-6 md:mx-auto md:max-w-2xl">
+          <div className="flex items-start gap-4">
+            {/* Avatar */}
+            {profile.avatar_url ? (
+              <img
+                src={profile.avatar_url}
+                alt={profile.reader_name}
+                className="w-20 h-20 rounded-full object-cover"
+              />
+            ) : (
+              <div
+                className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold"
+                style={{
+                  background: 'linear-gradient(135deg, var(--th-gold), var(--th-amber))',
+                  color: 'var(--th-parchment)',
+                }}
+              >
+                {(profile.reader_name || 'U').charAt(0).toUpperCase()}
+              </div>
+            )}
 
-        {/* Genre & Join Date */}
-        <div className="flex items-center gap-4 mt-4 pt-4 border-t border-gold-light/20 text-xs text-ink-muted">
-          <span className="flex items-center gap-1">
-            <BookMarked className="w-3 h-3" />
-            {profile.favorite_genre ? profile.favorite_genre : 'No favorite genre'}
-          </span>
-          <span className="flex items-center gap-1">
-            <Calendar className="w-3 h-3" />
-            Joined {profile.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Unknown'}
-          </span>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-4 gap-3 mt-4">
+            {/* Info */}
+            <div className="flex-1">
+                {completedBooks.length > 0 && (
+                  <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mx-4 mt-6 md:mx-auto md:max-w-2xl">
+                    <h2
+                      className="text-lg font-semibold text-ink mb-3 flex items-center gap-2"
+                      style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+                    >
+                      <Trophy className="w-5 h-5 text-forest" />
+                      Completed ({completedBooks.length})
+                    </h2>
+                    <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
+                      {completedBooks.slice(0, 12).map((book) => (
+                        <div key={book.id} className="group relative">
+                          {book.coverUrl ? (
+                            <img
+                              src={book.coverUrl}
+                              alt={book.title}
+                              className="w-full aspect-[2/3] object-cover rounded-lg shadow-sm"
+                            />
+                          ) : (
+                            <div className="w-full aspect-[2/3] rounded-lg bg-gradient-to-br from-gold/20 to-amber/20 flex items-center justify-center">
+                              <BookOpen className="w-6 h-6 text-gold/50" />
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center p-1">
+                            <p className="text-white text-[10px] text-center line-clamp-3">{book.title}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </motion.section>
+                )}
           <div className="text-center p-3 rounded-xl bg-cream/50">
             <Library className="w-4 h-4 mx-auto text-gold mb-1" />
             <div className="text-lg font-bold text-ink">{books.length}</div>
@@ -289,7 +277,7 @@ export default function PublicProfilePage({
           <div className="text-center p-3 rounded-xl bg-cream/50">
             <BookOpen className="w-4 h-4 mx-auto text-amber mb-1" />
             <div className="text-lg font-bold text-ink">{totalPages.toLocaleString()}</div>
-            <div className="text-xs text-ink-muted">Pages</div>
+              <div className="text-xs text-ink-muted">Pages</div>
           </div>
           <div className="text-center p-3 rounded-xl bg-cream/50">
             <Star className="w-4 h-4 mx-auto text-gold mb-1" />
@@ -297,15 +285,11 @@ export default function PublicProfilePage({
             <div className="text-xs text-ink-muted">Avg</div>
           </div>
         </div>
-      </motion.div>
-
-      {/* Currently Reading */}
-      <motion.section
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="mx-4 mt-6 md:mx-auto md:max-w-2xl"
-      >
+      </motion.section>
+      <>
+        {/* Currently Reading */}
+        <motion.section initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="glass-card mx-4 mt-4 rounded-2xl p-6 md:mx-auto md:max-w-2xl">
+      
         <h2
           className="text-lg font-semibold text-ink mb-3 flex items-center gap-2"
           style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
@@ -351,15 +335,7 @@ export default function PublicProfilePage({
         ) : (
           <div className="text-ink-muted text-sm">No books currently being read.</div>
         )}
-      </motion.section>
-
-      {/* Completed Books */}
-      <motion.section
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="mx-4 mt-6 md:mx-auto md:max-w-2xl"
-      >
+      <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mx-4 mt-6 md:mx-auto md:max-w-2xl">
         <h2
           className="text-lg font-semibold text-ink mb-3 flex items-center gap-2"
           style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
@@ -383,12 +359,6 @@ export default function PublicProfilePage({
                       <BookOpen className="w-6 h-6 text-gold/50" />
                     </div>
                   )}
-                  {book.rating && (
-                    <div className="absolute bottom-1 right-1 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-                      <Star className="w-2.5 h-2.5 fill-gold text-gold" />
-                      {book.rating}
-                    </div>
-                  )}
                   <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center p-1">
                     <p className="text-white text-[10px] text-center line-clamp-3">{book.title}</p>
                   </div>
@@ -404,16 +374,7 @@ export default function PublicProfilePage({
         ) : (
           <div className="text-ink-muted text-sm">No completed books yet.</div>
         )}
-      </motion.section>
-
-      {/* Want to Read */}
-      {wantToRead.length > 0 && (
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="mx-4 mt-6 md:mx-auto md:max-w-2xl"
-        >
+      <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="mx-4 mt-6 md:mx-auto md:max-w-2xl">
           <h2
             className="text-lg font-semibold text-ink mb-3 flex items-center gap-2"
             style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
@@ -448,6 +409,7 @@ export default function PublicProfilePage({
 
       {/* Recommend Book Modal */}
       {/* ...existing code... */}
+      </>
     </div>
   );
 }
