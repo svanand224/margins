@@ -806,10 +806,7 @@ export default function PublicProfilePage({
               )}
             </motion.div>
           </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
+*** End Patch
 }
         )}
       </AnimatePresence>
