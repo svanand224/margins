@@ -105,12 +105,29 @@ export async function fetchBookByURL(url: string): Promise<Partial<Book> | null>
     // Goodreads - try to extract from URL
     const goodreadsMatch = url.match(/goodreads\.com\/book\/show\/(\d+)/);
     if (goodreadsMatch) {
-      // Search by Goodreads title from URL
-      const slug = url.split('/').pop()?.replace(/-/g, ' ').replace(/\.\w+$/, '') || '';
-      const words = slug.split(' ').filter(w => isNaN(Number(w))).slice(0, 3).join('+');
-      if (words) {
-        return fetchBookBySearch(words);
+      // Get everything after the numeric ID in the URL path
+      const fullSlug = url.split('/').pop() || '';
+      // Remove query params and hash
+      const cleanSlug = fullSlug.split('?')[0].split('#')[0];
+
+      // Goodreads URLs come in two formats:
+      //   /book/show/5907.The_Hobbit_or_There_and_Back_Again
+      //   /book/show/5907-the-hobbit
+      // Extract title part after the ID
+      const titlePart = cleanSlug
+        .replace(/^\d+[.\-]?/, '')  // Remove leading ID and separator (. or -)
+        .replace(/[_\-]/g, ' ')      // Convert underscores/hyphens to spaces
+        .trim();
+
+      if (titlePart) {
+        const words = titlePart.split(/\s+/).slice(0, 5).join('+');
+        if (words) {
+          return fetchBookBySearch(words);
+        }
       }
+
+      // If no slug (e.g. just /book/show/5907), we can't search
+      return null;
     }
 
     // Generic ISBN extraction from URL

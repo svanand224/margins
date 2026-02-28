@@ -12,8 +12,16 @@ import {
   Library,
   Sun,
   Moon,
+  UserCircle,
+  LogOut,
+  Users,
+  Sparkles,
+  Gift,
+  Bell,
 } from 'lucide-react';
 import { useThemeStore } from '@/lib/themeStore';
+import { useAuth } from '@/lib/auth';
+import { useRouter } from 'next/navigation';
 import LotusLogo from './LotusLogo';
 import { PaisleyBorder, ChintzFloral } from './IndianPatterns';
 
@@ -23,12 +31,25 @@ const navItems = [
   { href: '/add', icon: PlusCircle, label: 'Add Book' },
   { href: '/goals', icon: Target, label: 'Goals' },
   { href: '/analytics', icon: BarChart3, label: 'Analytics' },
+  { href: '/feed', icon: Sparkles, label: 'Feed' },
+  { href: '/discover', icon: Users, label: 'Discover' },
+  { href: '/recommendations', icon: Gift, label: 'Inbox' },
+  { href: '/notifications', icon: Bell, label: 'Alerts' },
+  { href: '/profile', icon: UserCircle, label: 'Profile' },
 ];
 
 export default function Navigation() {
   const pathname = usePathname();
   const { theme, toggleTheme } = useThemeStore();
+  const { user, signOut } = useAuth();
+  const router = useRouter();
   const isNight = theme === 'night';
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push('/login');
+    router.refresh();
+  };
 
   return (
     <>
@@ -126,6 +147,22 @@ export default function Navigation() {
             </span>
           </button>
 
+          {/* Sign Out */}
+          {user && (
+            <button
+              onClick={handleSignOut}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 hover:bg-rose/10 group"
+              aria-label="Sign out"
+            >
+              <div className="w-10 h-10 lg:w-9 lg:h-9 rounded-full flex items-center justify-center bg-rose/10">
+                <LogOut className="w-4 h-4 text-rose" />
+              </div>
+              <span className="hidden lg:block text-sm font-medium text-ink-muted group-hover:text-rose transition-colors">
+                Sign Out
+              </span>
+            </button>
+          )}
+
           <div className="hidden lg:block">
             <div className="mb-2">
               <PaisleyBorder className="h-3 opacity-40" />
@@ -177,6 +214,18 @@ export default function Navigation() {
             {isNight ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             <span className="text-[10px] font-medium">{isNight ? 'Day' : 'Night'}</span>
           </motion.button>
+          {/* Mobile sign out */}
+          {user && (
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={handleSignOut}
+              className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl text-ink-muted"
+              aria-label="Sign out"
+            >
+              <LogOut className="w-5 h-5" />
+              <span className="text-[10px] font-medium">Sign Out</span>
+            </motion.button>
+          )}
         </div>
       </nav>
     </>

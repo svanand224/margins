@@ -41,6 +41,9 @@ interface BookStore {
 
   // Settings
   setReaderName: (name: string) => void;
+
+  // Cloud sync
+  clearStore: () => void;
 }
 
 export const useBookStore = create<BookStore>()(
@@ -50,7 +53,7 @@ export const useBookStore = create<BookStore>()(
       goals: [],
       dailyLogs: [],
       threads: [],
-      readerName: 'Sasha',
+      readerName: '',
 
       addBook: (bookData) => {
         const id = uuidv4();
@@ -245,6 +248,14 @@ export const useBookStore = create<BookStore>()(
       },
 
       setReaderName: (name) => set({ readerName: name }),
+
+      clearStore: () => set({
+        books: [],
+        goals: [],
+        dailyLogs: [],
+        threads: [],
+        readerName: '',
+      }),
     }),
     {
       name: 'reading-tracker-storage',

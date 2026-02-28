@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import ThemeProvider from "@/components/ThemeProvider";
+import { AuthProvider } from "@/lib/auth";
+import SupabaseSync from "@/components/SupabaseSync";
 
 export const metadata: Metadata = {
   title: "Margins — reading, remembered.",
@@ -37,7 +39,12 @@ export default function RootLayout({
         className="antialiased"
         style={{ fontFamily: "'Lora', 'Georgia', serif" }}
       >
-        <ThemeProvider>{children}</ThemeProvider>
+        <AuthProvider>
+          <ThemeProvider>
+            <SupabaseSync />
+            {children}
+          </ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   );
