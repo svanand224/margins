@@ -7,7 +7,7 @@ import SupabaseSync from "@/components/SupabaseSync";
 export const metadata: Metadata = {
   title: "Margins — reading, remembered.",
   description: "A whimsical reading tracker to nurture your love of books",
-  manifest: "/manifest.json",
+  // Note: omit `manifest` to avoid fetching protected preview manifests
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
