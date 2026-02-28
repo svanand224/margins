@@ -109,55 +109,10 @@ export default function PublicProfilePage({
   }, [slug, user]);
 
   const handleFollow = async () => {
-    if (!user || !profile) return;
-
-    setFollowLoading(true);
-    const supabase = createClient();
-
-    if (isFollowing) {
-      // Unfollow
-      await supabase
-        .from('follows')
-        .delete()
-        .eq('follower_id', user.id)
-        .eq('following_id', profile.id);
-
-      setIsFollowing(false);
-      setFollowerCount((c) => Math.max(0, c - 1));
-    } else {
-      // Follow
-      const { error } = await supabase.from('follows').insert({
-        follower_id: user.id,
-        following_id: profile.id,
-      });
-
-          from_user_id: user.id,
-          data: {
-          // ...existing code...
-        });
-
-        // Create activity
-        await supabase.from('activities').insert({
-          user_id: user.id,
-          type: 'followed',
-          data: {
-            following_id: profile.id,
-            following_name: profile.reader_name,
-            following_slug: profile.public_slug,
-            following_avatar: profile.avatar_url,
-          },
-        });
-      }
-    }
-
-    setFollowLoading(false);
-  };
+    // ...removed follow logic...
 
   const handleRecommendBook = async () => {
-    if (!user || !profile || !recommendBook.title.trim()) return;
-
-    setRecommendLoading(true);
-    const supabase = createClient();
+    // ...removed recommendation logic...
 
     const { error } = await supabase.from('recommendations').insert({
       from_user_id: user.id,
