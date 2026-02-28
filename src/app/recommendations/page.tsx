@@ -262,7 +262,7 @@ export default function RecommendationsPage() {
 
                       {/* From */}
                       <div className="flex items-center gap-2 mt-2">
-                        {rec.from_user.public_slug ? (
+                        {rec.from_user && rec.from_user.public_slug ? (
                           <Link
                             href={`/user/${rec.from_user.public_slug}`}
                             className="flex items-center gap-2 group"
@@ -278,31 +278,20 @@ export default function RecommendationsPage() {
                                 className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
                                 style={{
                                   background: 'linear-gradient(135deg, var(--th-gold), var(--th-amber))',
-                                  color: 'var(--th-parchment)',
                                 }}
                               >
-                                {(rec.from_user?.reader_name || 'U').charAt(0).toUpperCase()}
+                                {(rec.from_user.reader_name || 'U').charAt(0).toUpperCase()}
                               </div>
                             )}
-                            <span className="text-sm text-ink-muted group-hover:text-gold transition-colors">
-                              from {rec.from_user.reader_name}
+                            <span className="text-sm font-medium text-ink group-hover:text-gold transition-colors">
+                              {rec.from_user.reader_name}
                             </span>
                           </Link>
-                         ) : (
-                           <span className="text-sm text-ink-muted">{rec.from_user?.reader_name || 'Unknown User'}</span>
+                        ) : (
+                          <span className="text-sm font-medium text-ink">
+                            {rec.from_user?.reader_name ?? 'Unknown User'}
+                          </span>
                         )}
-                        <span className="text-xs text-ink-muted">• {formatTime(rec.created_at)}</span>
-                      </div>
-
-                      {/* Message */}
-                      {rec.message && (
-                        <p
-                          className="text-sm text-ink mt-2 line-clamp-2"
-                          style={{ fontFamily: "'Lora', Georgia, serif" }}
-                        >
-                          &ldquo;{rec.message}&rdquo;
-                        </p>
-                      )}
 
                       {/* Actions */}
                       {rec.status === 'pending' ? (

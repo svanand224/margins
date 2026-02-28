@@ -290,7 +290,7 @@ export default function FeedPage() {
                     <div className="flex-1">
                       <div className="flex items-start justify-between">
                         <div>
-                          {activity.user.public_slug ? (
+                          {activity.user && activity.user.public_slug ? (
                             <Link
                               href={`/user/${activity.user.public_slug}`}
                               className="font-semibold text-ink hover:text-gold transition-colors"
@@ -298,7 +298,7 @@ export default function FeedPage() {
                               {activity.user.reader_name}
                             </Link>
                           ) : (
-                            <span className="font-semibold text-ink">{activity.user.reader_name}</span>
+                            <span className="font-semibold text-ink">{activity.user?.reader_name ?? 'Unknown User'}</span>
                           )}
                           <p className="text-sm text-ink-muted" style={{ fontFamily: "'Lora', Georgia, serif" }}>
                             {getActivityText(activity)}

@@ -174,7 +174,7 @@ export default function DiscoverPage() {
                     transition={{ delay: index * 0.05 }}
                   >
                     <Link
-                      href={`/user/${user.public_slug}`}
+                      href={user.public_slug ? `/user/${user.public_slug}` : '#'}
                       className="block glass-card rounded-xl p-4 hover:shadow-lg transition-shadow group"
                     >
                       <div className="flex items-start gap-4">
