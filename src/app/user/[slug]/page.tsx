@@ -47,9 +47,9 @@ interface Comment {
 export default function PublicProfilePage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: { slug: string };
 }) {
-  const { slug } = use(params);
+  const { slug } = params;
   const { user, profile: currentUserProfile } = useAuth();
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [messages, setMessages] = useState<any[]>([]);
