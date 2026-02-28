@@ -265,9 +265,6 @@ export default function NotificationsPage() {
                     </div>
                   </div>
                 );
-                  // Removed stray '>' and duplicate block
-                  </motion.div>
-                );
               })}
             </AnimatePresence>
           </div>
