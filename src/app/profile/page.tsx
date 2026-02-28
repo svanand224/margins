@@ -271,11 +271,12 @@ export default function ProfilePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.id }),
       });
-      if (res.ok) {
+      const result = await res.json();
+      if (result.success) {
         await signOut();
         router.replace('/goodbye');
       } else {
-        alert('Account deletion failed.');
+        alert(result.error || 'Account deletion failed.');
       }
     } catch (err) {
       alert('Error deleting account.');
