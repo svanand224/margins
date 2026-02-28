@@ -39,11 +39,7 @@ interface PublicProfile {
     dailyLogs?: Record<string, { pagesRead: number; minutesRead: number }>;
   };
 }
-
-export default function PublicProfilePage({ params }: { params: { slug: string } }) {
-  const { slug } = params;
-  const { user, profile: currentUserProfile } = useAuth();
-  const [profile, setProfile] = useState<PublicProfile | null>(null);
+}
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
