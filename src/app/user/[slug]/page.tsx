@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { motion } from 'framer-motion';
+import * as Lucide from 'lucide-react';
 import {
   BookOpen,
   BookMarked,
@@ -13,6 +14,10 @@ import {
   Trophy,
   Loader2,
   ArrowLeft,
+  Check,
+  Gift,
+  UserPlus,
+  Edit3,
 } from 'lucide-react';
 import { Book } from '@/lib/types';
 import Link from 'next/link';
@@ -42,6 +47,9 @@ export default function PublicProfilePage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
   const [recommendLoading, setRecommendLoading] = useState(false);
   const [recommendSuccess, setRecommendSuccess] = useState(false);
   const [showRecommendModal, setShowRecommendModal] = useState(false);
@@ -71,6 +79,29 @@ export default function PublicProfilePage() {
 
       setProfile(profileData as PublicProfile);
       setLoading(false);
+
+      // Check follow status and counts
+      if (user) {
+        const { data: followData } = await supabase
+          .from('follows')
+          .select('id')
+          .eq('follower_id', user.id)
+          .eq('following_id', profileData.id)
+          .maybeSingle();
+        setIsFollowing(!!followData);
+      }
+      // Get follower count
+      const { count: followers } = await supabase
+        .from('follows')
+        .select('*', { count: 'exact', head: true })
+        .eq('following_id', profileData.id);
+      setFollowerCount(followers || 0);
+      // Get following count
+      const { count: following } = await supabase
+        .from('follows')
+        .select('*', { count: 'exact', head: true })
+        .eq('follower_id', profileData.id);
+      setFollowingCount(following || 0);
     };
 
     fetchProfile();
@@ -81,10 +112,30 @@ export default function PublicProfilePage() {
     setFollowLoading(true);
     try {
       const supabase = createClient();
-      await supabase.from('follows').insert({
-        follower_id: user.id,
-        following_id: profile.id,
-      });
+      if (isFollowing) {
+        // Unfollow
+        await supabase
+          .from('follows')
+          .delete()
+          .eq('follower_id', user.id)
+          .eq('following_id', profile.id);
+        setIsFollowing(false);
+        setFollowerCount(c => Math.max(0, c - 1));
+      } else {
+        // Follow
+        await supabase.from('follows').insert({
+          follower_id: user.id,
+          following_id: profile.id,
+        });
+        setIsFollowing(true);
+        setFollowerCount(c => c + 1);
+        // Log activity
+        await supabase.from('activities').insert({
+          user_id: user.id,
+          type: 'followed',
+          data: { following_name: profile.reader_name, following_slug: profile.public_slug },
+        });
+      }
     } catch (err) {
       console.error('Follow error:', err);
     }
@@ -182,30 +233,143 @@ export default function PublicProfilePage() {
               {(profile.reader_name || 'U').charAt(0).toUpperCase()}
             </div>
           )}
-          <div className="flex-1">
-            <div className="text-center p-3 rounded-xl bg-cream/50">
-              <Library className="w-4 h-4 mx-auto text-gold mb-1" />
-              <div className="text-lg font-bold text-ink">{books.length}</div>
-              <div className="text-xs text-ink-muted">Books</div>
+          <div className="flex-1 min-w-0">
+            <h1
+              className="text-xl font-bold text-ink truncate"
+              style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+            >
+              {profile.reader_name}
+            </h1>
+            <p className="text-xs text-ink-muted mb-2">@{profile.public_slug}</p>
+            {profile.bio && (
+              <p className="text-sm text-ink-muted italic mb-3 line-clamp-2">{profile.bio}</p>
+            )}
+            {/* Follow stats */}
+            <div className="flex items-center gap-4 text-xs text-ink-muted mb-3">
+              <span><strong className="text-ink">{followerCount}</strong> followers</span>
+              <span><strong className="text-ink">{followingCount}</strong> following</span>
             </div>
-            <div className="text-center p-3 rounded-xl bg-cream/50">
-              <Trophy className="w-4 h-4 mx-auto text-forest mb-1" />
-              <div className="text-lg font-bold text-ink">{completedBooks.length}</div>
-              <div className="text-xs text-ink-muted">Read</div>
-            </div>
-            <div className="text-center p-3 rounded-xl bg-cream/50">
-              <BookOpen className="w-4 h-4 mx-auto text-amber mb-1" />
-              <div className="text-lg font-bold text-ink">{totalPages.toLocaleString()}</div>
-              <div className="text-xs text-ink-muted">Pages</div>
-            </div>
-            <div className="text-center p-3 rounded-xl bg-cream/50">
-              <Star className="w-4 h-4 mx-auto text-gold mb-1" />
-              <div className="text-lg font-bold text-ink">{avgRating.toFixed(1)}</div>
-              <div className="text-xs text-ink-muted">Avg</div>
-            </div>
+            {/* Action buttons */}
+            {!isOwnProfile && user && (
+              <div className="flex gap-2">
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleFollow}
+                  disabled={followLoading}
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-1.5 ${
+                    isFollowing
+                      ? 'bg-cream border border-gold-light/30 text-ink-muted hover:bg-rose/10 hover:text-rose hover:border-rose/30'
+                      : 'text-parchment shadow-sm'
+                  }`}
+                  style={!isFollowing ? { background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' } : undefined}
+                >
+                  {followLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : isFollowing ? (
+                    'Following'
+                  ) : (
+                    <><Lucide.UserPlus className="w-4 h-4" /> Follow</>
+                  )}
+                </motion.button>
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowRecommendModal(true)}
+                  className="px-4 py-2 rounded-xl text-sm font-medium bg-forest/10 text-forest border border-forest/20 hover:bg-forest/20 transition-colors flex items-center gap-1.5"
+                >
+                  <Lucide.Gift className="w-4 h-4" />
+                  Recommend
+                </motion.button>
+              </div>
+            )}
+            {isOwnProfile && (
+              <Link href="/profile" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-cream border border-gold-light/30 text-ink-muted hover:text-ink transition-colors">
+                <Lucide.Edit3 className="w-4 h-4" /> Edit Profile
+              </Link>
+            )}
+          </div>
+        </div>
+
+        {/* Stats row */}
+        <div className="grid grid-cols-4 gap-3 mt-5 pt-4 border-t border-gold-light/20">
+          <div className="text-center">
+            <Library className="w-4 h-4 mx-auto text-gold mb-1" />
+            <div className="text-lg font-bold text-ink">{books.length}</div>
+            <div className="text-[10px] text-ink-muted">Books</div>
+          </div>
+          <div className="text-center">
+            <Trophy className="w-4 h-4 mx-auto text-forest mb-1" />
+            <div className="text-lg font-bold text-ink">{completedBooks.length}</div>
+            <div className="text-[10px] text-ink-muted">Read</div>
+          </div>
+          <div className="text-center">
+            <BookOpen className="w-4 h-4 mx-auto text-amber mb-1" />
+            <div className="text-lg font-bold text-ink">{totalPages.toLocaleString()}</div>
+            <div className="text-[10px] text-ink-muted">Pages</div>
+          </div>
+          <div className="text-center">
+            <Star className="w-4 h-4 mx-auto text-gold mb-1" />
+            <div className="text-lg font-bold text-ink">{avgRating.toFixed(1)}</div>
+            <div className="text-[10px] text-ink-muted">Avg</div>
           </div>
         </div>
       </motion.section>
+
+      {/* Recommend Modal */}
+      {showRecommendModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowRecommendModal(false)}>
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-parchment rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-gold-light/30"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-bold text-ink mb-4" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+              Recommend a Book to {profile.reader_name}
+            </h3>
+            {recommendSuccess ? (
+              <div className="text-center py-4">
+                <Lucide.Check className="w-10 h-10 text-forest mx-auto mb-2" />
+                <p className="text-sm text-forest font-medium">Recommendation sent!</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  value={recommendBook.title}
+                  onChange={(e) => setRecommendBook(r => ({ ...r, title: e.target.value }))}
+                  placeholder="Book title *"
+                  className="w-full px-3 py-2 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm"
+                />
+                <input
+                  type="text"
+                  value={recommendBook.author}
+                  onChange={(e) => setRecommendBook(r => ({ ...r, author: e.target.value }))}
+                  placeholder="Author (optional)"
+                  className="w-full px-3 py-2 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm"
+                />
+                <input
+                  type="text"
+                  value={recommendBook.message}
+                  onChange={(e) => setRecommendBook(r => ({ ...r, message: e.target.value }))}
+                  placeholder="Message (optional)"
+                  className="w-full px-3 py-2 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm"
+                />
+                <div className="flex gap-2">
+                  <button onClick={() => setShowRecommendModal(false)} className="flex-1 px-4 py-2 rounded-xl text-sm text-ink-muted border border-gold-light/30 hover:bg-cream/40 transition-colors">Cancel</button>
+                  <button
+                    onClick={handleRecommendBook}
+                    disabled={!recommendBook.title.trim() || recommendLoading}
+                    className="flex-1 px-4 py-2 rounded-xl text-sm font-medium text-parchment disabled:opacity-50"
+                    style={{ background: 'linear-gradient(135deg, var(--th-forest), var(--th-teal))' }}
+                  >
+                    {recommendLoading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Send'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </motion.div>
+        </div>
+      )}
 
       {/* Currently Reading */}
       <motion.section initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="glass-card mx-4 mt-4 rounded-2xl p-6 md:mx-auto md:max-w-2xl">

@@ -191,7 +191,7 @@ export default function AnalyticsPage() {
   };
 
   return (
-    <div className="p-4 md:p-8 max-w-6xl mx-auto">
+    <div className="min-h-screen p-4 pb-24 md:p-8 md:pb-8 max-w-6xl mx-auto">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}

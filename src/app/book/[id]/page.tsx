@@ -147,7 +147,9 @@ export default function BookPage() {
     setBook(null);
     setShowDeleteConfirm(false);
     setShowDeletedMsg(true);
-    router.push('/');
+    setTimeout(() => {
+      router.push('/library');
+    }, 1500);
   };
 
   const handleLogSession = async () => {
@@ -190,7 +192,7 @@ export default function BookPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="min-h-screen max-w-2xl mx-auto px-4 py-8 pb-24 md:pb-8">
       {showConfetti && <Confetti show={showConfetti} />}
       {book && (
         <>
@@ -410,63 +412,55 @@ export default function BookPage() {
             </div>
           </div>
           <div className="mb-6">
-            <button className="flex items-center gap-1 px-2 py-1 rounded-full bg-rose-50 text-rose-600 text-xs font-semibold hover:bg-rose-100 transition" onClick={async () => {
-              if (!book) return;
-              const supabase = createClient();
-              const { data: { user } } = await supabase.auth.getUser();
-              if (!user) return;
-              const { data: profile } = await supabase
-                .from('profiles')
-                .select('reading_data')
-                .eq('id', user.id)
-                .single();
-              if (!profile) return;
-              const books = profile.reading_data.books.filter((b: Book) => b.id !== book.id);
-              await supabase
-                .from('profiles')
-                .update({ reading_data: { ...profile.reading_data, books } })
-                .eq('id', user.id);
-              setBook(null);
-            }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-1 0v-5a.5.5 0 0 1 .5-.5zm2.5.5a.5.5 0 0 0-1 0v5a.5.5 0 0 0 1 0v-5zm2 .5a.5.5 0 0 1 .5-.5v5a.5.5 0 0 1-1 0v-5a.5.5 0 0 1 .5-.5z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1H14a1 1 0 0 1 1 1v1zm-1 1V4H2v9a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4h1.5a.5.5 0 0 0 .5-.5V2a.5.5 0 0 0-.5-.5H10a.5.5 0 0 0-.5.5v1H6v-1A.5.5 0 0 0 5.5 1.5H2A.5.5 0 0 0 1.5 2v1A.5.5 0 0 0 2 3h12a.5.5 0 0 0 .5-.5V2a.5.5 0 0 0-.5-.5H14a.5.5 0 0 0-.5.5v1z"/></svg>
-              Delete book
+            <button
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-rose/10 text-rose border border-rose/20 text-xs font-semibold hover:bg-rose/20 transition-all"
+              onClick={() => setShowDeleteConfirm(true)}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+              Delete Book
             </button>
+
+            {/* Delete confirmation modal */}
             {showDeleteConfirm && (
-              <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-                <div className="bg-white dark:bg-ink rounded-lg shadow-lg p-6 w-full max-w-sm text-center">
-                  <div className="mb-4 text-lg font-semibold text-rose-700 dark:text-rose-400">Are you sure you want to delete this book?</div>
-                  <div className="flex gap-3 justify-center">
-                    <button className="px-4 py-1 rounded bg-gray-200 dark:bg-ink-muted text-gray-700 dark:text-ink font-semibold" onClick={() => setShowDeleteConfirm(false)}>Cancel</button>
-                    <button className="px-4 py-1 rounded bg-rose-600 text-white font-semibold" onClick={async () => {
-                      if (!book) return;
-                      const supabase = createClient();
-                      const { data: { user } } = await supabase.auth.getUser();
-                      if (!user) return;
-                      const { data: profile } = await supabase
-                        .from('profiles')
-                        .select('reading_data')
-                        .eq('id', user.id)
-                        .single();
-                      if (!profile) return;
-                      const books = profile.reading_data.books.filter((b: Book) => b.id !== book.id);
-                      await supabase
-                        .from('profiles')
-                        .update({ reading_data: { ...profile.reading_data, books } })
-                        .eq('id', user.id);
-                      setShowDeleteConfirm(false);
-                      setShowDeletedMsg(true);
-                      setTimeout(() => {
-                        router.push('/');
-                      }, 1500);
-                    }}>Delete</button>
+              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                <div className="bg-parchment rounded-2xl shadow-2xl p-6 w-full max-w-sm text-center border border-rose/20">
+                  <div className="w-14 h-14 rounded-full bg-rose/10 flex items-center justify-center mx-auto mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-rose"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                  </div>
+                  <h3 className="text-lg font-bold text-ink mb-2" style={{ fontFamily: "'Cormorant Garamond', serif" }}>Delete this book?</h3>
+                  <p className="text-sm text-ink-muted mb-1">
+                    <strong className="text-ink">{book.title}</strong> by {book.author}
+                  </p>
+                  <p className="text-xs text-rose/80 mb-6 bg-rose/5 rounded-lg p-2 border border-rose/10">
+                    ⚠️ This action cannot be undone. All reading sessions, notes, and progress will be permanently deleted.
+                  </p>
+                  <div className="flex gap-3">
+                    <button
+                      className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-ink-muted border border-gold-light/30 hover:bg-cream/40 transition-colors"
+                      onClick={() => setShowDeleteConfirm(false)}
+                    >
+                      Keep Book
+                    </button>
+                    <button
+                      className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold bg-rose text-white hover:bg-rose/90 transition-colors"
+                      onClick={handleDeleteBook}
+                    >
+                      Delete Forever
+                    </button>
                   </div>
                 </div>
               </div>
             )}
+
+            {/* Book deleted success card */}
             {showDeletedMsg && (
-              <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-                <div className="bg-white dark:bg-ink rounded-lg shadow-lg p-6 w-full max-w-sm text-center">
-                  <div className="text-lg font-semibold text-rose-700 dark:text-rose-400">Book deleted!</div>
+              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                <div className="bg-parchment rounded-2xl shadow-2xl p-8 w-full max-w-sm text-center border border-gold-light/30">
+                  <div className="w-16 h-16 rounded-full bg-forest/10 flex items-center justify-center mx-auto mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-forest"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  </div>
+                  <h3 className="text-xl font-bold text-ink mb-1" style={{ fontFamily: "'Cormorant Garamond', serif" }}>Book Deleted</h3>
+                  <p className="text-sm text-ink-muted">Redirecting to your library...</p>
                 </div>
               </div>
             )}

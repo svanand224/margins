@@ -218,7 +218,13 @@ export default function HomePage() {
   const [threadBookSearch, setThreadBookSearch] = useState('');
   const [managingThreadId, setManagingThreadId] = useState<string | null>(null);
   const { user } = useAuth();
-  // Recommendation and alerts logic removed
+  // Recommendation state for completed books section
+  const [recommendBookId, setRecommendBookId] = useState<string | null>(null);
+  const [recommendSearchQuery, setRecommendSearchQuery] = useState('');
+  const [recommendUsers, setRecommendUsers] = useState<Array<{id: string; reader_name: string; avatar_url: string | null; public_slug: string}>>([]);
+  const [recommendSending, setRecommendSending] = useState(false);
+  const [recommendSent, setRecommendSent] = useState<string | null>(null);
+  const [recommendMessage, setRecommendMessage] = useState('');
 
   // ...existing code...
 
@@ -236,6 +242,55 @@ export default function HomePage() {
     }
     setEditingName(false);
   }, [nameInput, setReaderName]);
+
+  // Search users for recommendations
+  useEffect(() => {
+    if (!recommendBookId || !recommendSearchQuery.trim()) {
+      setRecommendUsers([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      if (!isSupabaseConfigured()) return;
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, reader_name, avatar_url, public_slug')
+        .eq('shelf_public', true)
+        .not('public_slug', 'is', null)
+        .or(`reader_name.ilike.%${recommendSearchQuery}%,public_slug.ilike.%${recommendSearchQuery}%`)
+        .neq('id', user?.id || '')
+        .limit(5);
+      setRecommendUsers(data || []);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [recommendSearchQuery, recommendBookId, user?.id]);
+
+  const handleRecommendToUser = async (toUserId: string, book: { title: string; author: string }) => {
+    if (!user || !isSupabaseConfigured()) return;
+    setRecommendSending(true);
+    const supabase = createClient();
+    await supabase.from('recommendations').insert({
+      from_user_id: user.id,
+      to_user_id: toUserId,
+      book_title: book.title,
+      book_author: book.author || null,
+      message: recommendMessage.trim() || null,
+    });
+    // Also log an activity
+    await supabase.from('activities').insert({
+      user_id: user.id,
+      type: 'recommended',
+      data: { book_title: book.title, book_author: book.author },
+    });
+    setRecommendSending(false);
+    setRecommendSent(toUserId);
+    setTimeout(() => {
+      setRecommendBookId(null);
+      setRecommendSearchQuery('');
+      setRecommendMessage('');
+      setRecommendSent(null);
+    }, 1500);
+  };
 
   const quote = quotes[quoteIndex];
 
@@ -282,7 +337,7 @@ export default function HomePage() {
   }, [books, goals, dailyLogs]);
 
   return (
-    <div className="p-4 md:p-8 max-w-6xl mx-auto">
+    <div className="min-h-screen p-4 pb-24 md:p-8 md:pb-8 max-w-6xl mx-auto">
       {/* Alerts Preview */}
       {/* Alerts and toast notifications removed for minimalistic UI */}
       {/* Hero greeting */}
@@ -526,7 +581,7 @@ export default function HomePage() {
         </motion.section>
       )}
 
-      {/* To Be Read (TBR) Section */}
+      {/* To Be Read (TBR) Section — Bookmark List */}
       {stats.reading.length > 0 && stats.totalBooks > 0 && (
         (() => {
           const tbrBooks = books.filter(b => b.status === 'want-to-read');
@@ -540,56 +595,65 @@ export default function HomePage() {
             >
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold text-ink flex items-center gap-2" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-                  <Lucide.Book className="w-5 h-5 text-teal" />
-                  To Be Read
+                  <Lucide.Bookmark className="w-5 h-5 text-teal" />
+                  Want to Read
                 </h2>
                 <Link href="/library?status=want-to-read" className="text-sm text-gold-dark hover:text-gold flex items-center gap-1 transition-colors">
-                  View all <Lucide.ChevronRight className="w-4 h-4" />
+                  View all ({tbrBooks.length}) <Lucide.ChevronRight className="w-4 h-4" />
                 </Link>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {tbrBooks.slice(0, 3).map((book, i) => (
+              <div className="glass-card rounded-2xl divide-y divide-gold-light/15 overflow-hidden">
+                {tbrBooks.slice(0, 6).map((book, i) => (
                   <motion.div
                     key={book.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 + i * 0.1 }}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.5 + i * 0.06 }}
                   >
                     <Link href={`/book/${book.id}`}>
-                      <div className="book-card glass-card rounded-2xl p-4 cursor-pointer">
-                        <div className="flex gap-4">
-                          <div className="book-cover-glow w-16 h-24 rounded-lg bg-gradient-to-br from-bark to-espresso flex-shrink-0 overflow-hidden shadow-lg">
-                            {book.coverUrl ? (
-                              <img
-                                src={book.coverUrl}
-                                alt={book.title}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center">
-                                <Lucide.BookOpen className="w-6 h-6 text-gold-light/50" />
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-ink text-sm truncate">{book.title}</h3>
-                            <p className="text-xs text-ink-muted truncate">{book.author}</p>
-                              {book.rating && (
-                                <div className="flex gap-0.5 mt-1">
-                                  {Array.from({ length: 5 }).map((_, s) => (
-                                    <Lucide.Star
-                                      key={s}
-                                      className={`w-3 h-3 ${s < book.rating! ? 'text-gold fill-gold' : 'text-gold-light/30'}`}
-                                    />
-                                  ))}
-                                </div>
-                              )}
-                          </div>
+                      <div className="flex items-center gap-3 px-4 py-3 hover:bg-gold-light/5 transition-colors group cursor-pointer">
+                        {/* Bookmark icon */}
+                        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-teal/10 to-sage-light/10 flex items-center justify-center">
+                          <Lucide.Bookmark className="w-4 h-4 text-teal" />
+                        </div>
+                        {/* Cover thumbnail */}
+                        <div className="flex-shrink-0 w-10 h-14 rounded-md bg-gradient-to-br from-bark to-espresso overflow-hidden shadow-sm">
+                          {book.coverUrl ? (
+                            <img src={book.coverUrl} alt={book.title} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Lucide.BookOpen className="w-4 h-4 text-gold-light/40" />
+                            </div>
+                          )}
+                        </div>
+                        {/* Book info */}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium text-ink text-sm truncate group-hover:text-gold-dark transition-colors">{book.title}</h3>
+                          <p className="text-xs text-ink-muted truncate">{book.author}</p>
+                          {book.genre && (
+                            <span className="inline-block mt-1 px-2 py-0.5 rounded-full bg-teal/5 text-teal text-[10px] font-medium border border-teal/10">
+                              {book.genre}
+                            </span>
+                          )}
+                        </div>
+                        {/* Pages + chevron */}
+                        <div className="flex-shrink-0 text-right">
+                          {book.totalPages > 0 && (
+                            <span className="text-xs text-ink-muted">{book.totalPages}p</span>
+                          )}
+                          <Lucide.ChevronRight className="w-4 h-4 text-ink-muted/40 group-hover:text-gold-dark transition-colors mt-0.5 ml-auto" />
                         </div>
                       </div>
                     </Link>
                   </motion.div>
                 ))}
+                {tbrBooks.length > 6 && (
+                  <Link href="/library?status=want-to-read">
+                    <div className="px-4 py-3 text-center text-xs text-gold-dark hover:bg-gold-light/5 transition-colors cursor-pointer">
+                      +{tbrBooks.length - 6} more books on your list
+                    </div>
+                  </Link>
+                )}
               </div>
             </motion.section>
           );
@@ -646,7 +710,7 @@ export default function HomePage() {
         </motion.section>
       )}
 
-      {/* Recently Completed */}
+      {/* Completed Books — with Recommend to Friends */}
       {stats.completed.length > 0 && (
         <motion.section
           initial={{ opacity: 0, y: 20 }}
@@ -656,57 +720,170 @@ export default function HomePage() {
         >
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-ink flex items-center gap-2" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-              <Lucide.Star className="w-5 h-5 text-amber" />
-              Recently Completed
+              <Lucide.Trophy className="w-5 h-5 text-forest" />
+              Completed
             </h2>
             <Link href="/library?status=completed" className="text-sm text-gold-dark hover:text-gold flex items-center gap-1 transition-colors">
-              View all <Lucide.ChevronRight className="w-4 h-4" />
+              All ({stats.completed.length}) <Lucide.ChevronRight className="w-4 h-4" />
             </Link>
           </div>
-          <div className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {stats.completed
               .sort((a, b) => (b.finishDate || '').localeCompare(a.finishDate || ''))
-              .slice(0, 6)
+              .slice(0, 10)
               .map((book, i) => (
                 <motion.div
                   key={book.id}
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.8 + i * 0.05 }}
-                  className="flex-shrink-0"
+                  transition={{ delay: 0.8 + i * 0.04 }}
+                  className="group"
                 >
-                  <Link href={`/book/${book.id}`}>
-                    <div className="book-card w-28 group cursor-pointer">
-                      <div className="book-cover-glow w-28 h-40 rounded-xl bg-gradient-to-br from-bark to-espresso overflow-hidden shadow-lg mb-2">
+                  <div className="glass-card rounded-xl overflow-hidden">
+                    <Link href={`/book/${book.id}`}>
+                      <div className="book-cover-glow aspect-[2/3] bg-gradient-to-br from-bark to-espresso overflow-hidden relative">
                         {book.coverUrl ? (
-                          <img
-                            src={book.coverUrl}
-                            alt={book.title}
-                            className="w-full h-full object-cover"
-                          />
+                          <img src={book.coverUrl} alt={book.title} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             <Lucide.BookOpen className="w-8 h-8 text-gold-light/30" />
                           </div>
                         )}
+                        {/* Finished badge */}
+                        <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-forest/90 flex items-center justify-center shadow-sm">
+                          <Lucide.Check className="w-3.5 h-3.5 text-white" />
+                        </div>
                       </div>
-                      <p className="text-xs font-medium text-ink truncate">{book.title}</p>
-                      <p className="text-[10px] text-ink-muted truncate">{book.author}</p>
+                    </Link>
+                    <div className="p-2.5">
+                      <Link href={`/book/${book.id}`}>
+                        <p className="text-xs font-medium text-ink truncate group-hover:text-gold-dark transition-colors">{book.title}</p>
+                        <p className="text-[10px] text-ink-muted truncate">{book.author}</p>
+                      </Link>
                       {book.rating && (
                         <div className="flex gap-0.5 mt-1">
                           {Array.from({ length: 5 }).map((_, s) => (
-                            <Lucide.Star
-                              key={s}
-                              className={`w-3 h-3 ${s < book.rating! ? 'text-gold fill-gold' : 'text-gold-light/30'}`}
-                            />
+                            <Lucide.Star key={s} className={`w-2.5 h-2.5 ${s < book.rating! ? 'text-gold fill-gold' : 'text-gold-light/30'}`} />
                           ))}
                         </div>
                       )}
+                      {/* Recommend button */}
+                      {user && (
+                        <button
+                          onClick={() => { setRecommendBookId(book.id); setRecommendSearchQuery(''); setRecommendMessage(''); }}
+                          className="mt-2 w-full flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-forest/5 text-forest text-[10px] font-medium border border-forest/10 hover:bg-forest/10 transition-colors"
+                        >
+                          <Lucide.Gift className="w-3 h-3" />
+                          Recommend
+                        </button>
+                      )}
                     </div>
-                  </Link>
+                  </div>
                 </motion.div>
               ))}
           </div>
+
+          {/* Recommend Modal */}
+          <AnimatePresence>
+            {recommendBookId && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+                onClick={() => { setRecommendBookId(null); setRecommendSearchQuery(''); }}
+              >
+                <motion.div
+                  initial={{ scale: 0.95, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.95, opacity: 0 }}
+                  className="bg-parchment rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-gold-light/30"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {(() => {
+                    const book = books.find(b => b.id === recommendBookId);
+                    if (!book) return null;
+                    return (
+                      <>
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-10 h-14 rounded-md overflow-hidden flex-shrink-0 bg-gradient-to-br from-bark to-espresso">
+                            {book.coverUrl ? (
+                              <img src={book.coverUrl} alt={book.title} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Lucide.BookOpen className="w-4 h-4 text-gold-light/40" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-ink text-sm truncate">{book.title}</h3>
+                            <p className="text-xs text-ink-muted truncate">{book.author}</p>
+                          </div>
+                          <button onClick={() => setRecommendBookId(null)} className="p-1 text-ink-muted hover:text-ink transition-colors">
+                            <Lucide.X className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <div className="mb-3">
+                          <label className="block text-xs font-medium text-ink-muted mb-1 uppercase tracking-wider">Send to a friend</label>
+                          <input
+                            type="text"
+                            value={recommendSearchQuery}
+                            onChange={(e) => setRecommendSearchQuery(e.target.value)}
+                            placeholder="Search by username..."
+                            className="w-full px-3 py-2 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm placeholder:text-ink-muted/60"
+                            autoFocus
+                          />
+                        </div>
+                        <div className="mb-3">
+                          <input
+                            type="text"
+                            value={recommendMessage}
+                            onChange={(e) => setRecommendMessage(e.target.value)}
+                            placeholder="Add a message (optional)"
+                            className="w-full px-3 py-2 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm placeholder:text-ink-muted/60"
+                          />
+                        </div>
+                        {recommendUsers.length > 0 && (
+                          <div className="space-y-1 max-h-40 overflow-y-auto">
+                            {recommendUsers.map(u => (
+                              <button
+                                key={u.id}
+                                onClick={() => handleRecommendToUser(u.id, { title: book.title, author: book.author })}
+                                disabled={recommendSending}
+                                className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gold-light/10 transition-colors text-left"
+                              >
+                                {u.avatar_url ? (
+                                  <img src={u.avatar_url} alt={u.reader_name} className="w-8 h-8 rounded-full object-cover" />
+                                ) : (
+                                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gold to-amber flex items-center justify-center text-parchment text-xs font-bold">
+                                    {u.reader_name.charAt(0).toUpperCase()}
+                                  </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-ink truncate">{u.reader_name}</p>
+                                  <p className="text-[10px] text-ink-muted">@{u.public_slug}</p>
+                                </div>
+                                {recommendSent === u.id ? (
+                                  <div className="flex items-center gap-1 text-forest text-xs">
+                                    <Lucide.Check className="w-3.5 h-3.5" /> Sent!
+                                  </div>
+                                ) : (
+                                  <Lucide.Send className="w-4 h-4 text-gold-dark" />
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        {recommendSearchQuery.trim() && recommendUsers.length === 0 && !recommendSending && (
+                          <p className="text-xs text-ink-muted text-center py-3">No users found. Try a different search.</p>
+                        )}
+                      </>
+                    );
+                  })()}
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.section>
       )}
 

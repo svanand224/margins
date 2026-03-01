@@ -18,8 +18,9 @@ import {
   Sparkles,
   Gift,
   Bell,
-    // MessageCircle icon removed
-    Newspaper,
+  MessageSquare,
+  Compass,
+  Newspaper,
 } from 'lucide-react';
 import { useThemeStore } from '@/lib/themeStore';
 import { useAuth } from '@/lib/auth';
@@ -32,11 +33,11 @@ import { PaisleyBorder, ChintzFloral } from './IndianPatterns';
 const navItems = [
   { href: '/', icon: Home, label: 'Home' },
   { href: '/library', icon: Library, label: 'Library' },
-  // DM navigation removed
   { href: '/add', icon: PlusCircle, label: 'Add Book' },
+  { href: '/discover', icon: Compass, label: 'Explore' },
+  { href: '/discussions', icon: MessageSquare, label: 'Book Club' },
   { href: '/goals', icon: Target, label: 'Goals' },
   { href: '/analytics', icon: BarChart3, label: 'Analytics' },
-  // Social, recommendations, and alerts/notifications navigation removed
   { href: '/profile', icon: UserCircle, label: 'Profile' },
 ];
 

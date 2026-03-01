@@ -294,7 +294,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8 md:py-12">
+    <div className="min-h-screen max-w-3xl mx-auto px-4 py-8 pb-24 md:py-12 md:pb-8">
       {/* Back link */}
       <Link href="/" className="inline-flex items-center gap-2 text-ink-muted hover:text-ink transition-colors mb-6 group">
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />

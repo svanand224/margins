@@ -174,7 +174,7 @@ function LibraryContent() {
   }, [books, searchQuery, statusFilter, genreFilter, sortBy]);
 
   return (
-    <div className="p-4 md:p-8 max-w-6xl mx-auto">
+    <div className="min-h-screen p-4 pb-24 md:p-8 md:pb-8 max-w-6xl mx-auto">
       {/* Growing Lotus Scroll Progress */}
       {books.length > 0 && scrollProgress > 0.05 && (
         <motion.div 
