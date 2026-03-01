@@ -7,29 +7,12 @@ import Confetti from '@/components/Confetti';
 import type { Book, Thread, ReadingStatus } from '@/lib/types';
 import { useState, useEffect } from 'react';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 
-export default function BookPage({ params }: { params: { id: string } }) {
-    // Helper to update book in Supabase and local state
-    const updateBookInSupabase = async (updatedBook: Book) => {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('reading_data')
-        .eq('id', user.id)
-        .single();
-      if (!profile) return;
-      const books = profile.reading_data.books.map((b: Book) =>
-        b.id === updatedBook.id ? updatedBook : b
-      );
-      await supabase
-        .from('profiles')
-        .update({ reading_data: { ...profile.reading_data, books } })
-        .eq('id', user.id);
-      setBook(updatedBook);
-    };
+export default function BookPage() {
+  const params = useParams();
+  const id = params.id as string;
+
   const [book, setBook] = useState<(Book & { threads?: Thread[] }) | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,6 +35,71 @@ export default function BookPage({ params }: { params: { id: string } }) {
   const [showDeletedMsg, setShowDeletedMsg] = useState(false);
   const router = useRouter();
   const [showConfetti, setShowConfetti] = useState(false);
+
+  // Helper to update book in Supabase and local state
+  const updateBookInSupabase = async (updatedBook: Book) => {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('reading_data')
+      .eq('id', user.id)
+      .single();
+    if (!profile) return;
+    const books = (profile.reading_data.books || []).map((b: Book) =>
+      b.id === updatedBook.id ? updatedBook : b
+    );
+    await supabase
+      .from('profiles')
+      .update({ reading_data: { ...profile.reading_data, books } })
+      .eq('id', user.id);
+    setBook(updatedBook);
+  };
+
+  // Fetch book data from Supabase
+  useEffect(() => {
+    const fetchBook = async () => {
+      if (!isSupabaseConfigured()) {
+        setError('Supabase is not configured.');
+        setLoading(false);
+        return;
+      }
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setError('Not authenticated.');
+        setLoading(false);
+        return;
+      }
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('reading_data')
+        .eq('id', user.id)
+        .single();
+      if (!profile) {
+        setError('Profile not found.');
+        setLoading(false);
+        return;
+      }
+      const books: Book[] = profile.reading_data?.books || [];
+      const found = books.find((b: Book) => b.id === id);
+      if (!found) {
+        setError('Book not found.');
+        setLoading(false);
+        return;
+      }
+      setBook(found);
+      setForm({
+        status: found.status,
+        currentPage: found.currentPage || 0,
+        rating: found.rating || 0,
+        notes: found.notes || '',
+      });
+      setLoading(false);
+    };
+    fetchBook();
+  }, [id]);
 
   useEffect(() => {
     if (form.status === 'completed' && book && book.status !== 'completed') {
@@ -291,11 +339,11 @@ export default function BookPage({ params }: { params: { id: string } }) {
                 </div>
               </div>
             )}
-            {book.sessions.length === 0 ? (
+            {(book.sessions || []).length === 0 ? (
               <div className="text-ink-muted mb-2">No reading sessions yet. Log your first one!</div>
             ) : (
               <ul className="mb-2">
-                {book.sessions.map(session => {
+                {(book.sessions || []).map(session => {
                   const getRelativeTime = (dateStr: string) => {
                     const now = new Date();
                     const date = new Date(dateStr);

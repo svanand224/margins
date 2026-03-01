@@ -11,33 +11,26 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
   }
 
-  // Debug: log service role key presence and value length
-  console.log('SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'present' : 'missing', 'length:', process.env.SUPABASE_SERVICE_ROLE_KEY?.length);
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json({ error: 'Server misconfigured: missing service role key' }, { status: 500 });
+  }
 
-  // Delete user from Supabase Auth using service role key
+  // Create admin client (bypasses RLS)
   const adminClient = createSupabaseAdminClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY
   );
+
+  // Delete related records FIRST (before deleting auth user, since RLS depends on auth)
+  await adminClient.from('follows').delete().eq('follower_id', userId);
+  await adminClient.from('follows').delete().eq('following_id', userId);
+  await adminClient.from('profiles').delete().eq('id', userId);
+
+  // THEN delete user from Supabase Auth
   const { error: adminError } = await adminClient.auth.admin.deleteUser(userId);
   if (adminError) {
     console.error('admin.deleteUser error:', adminError);
     return NextResponse.json({ error: 'Failed to delete user from auth', details: adminError.message }, { status: 500 });
-  }
-
-  // Delete related records
-  const tables = [
-    'profiles',
-    'follows',
-  ];
-
-  for (const table of tables) {
-    await supabase.from(table).delete().eq('user_id', userId);
-    if (table === 'follows') {
-      await supabase.from('follows').delete().eq('follower_id', userId);
-      await supabase.from('follows').delete().eq('following_id', userId);
-    }
-    // recommendations and notifications logic removed
   }
 
   return NextResponse.json({ success: true });

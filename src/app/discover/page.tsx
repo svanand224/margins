@@ -64,8 +64,20 @@ export default function DiscoverPage() {
   // Search when query changes (debounced)
   useEffect(() => {
     if (!query.trim()) {
-      setUsers([]); // Show nothing until search
-      setLoading(false);
+      // Restore initial public profiles when search is cleared
+      const restoreProfiles = async () => {
+        if (!isSupabaseConfigured()) return;
+        const supabase = createClient();
+        const { data } = await supabase
+          .from('profiles')
+          .select('id, reader_name, avatar_url, bio, favorite_genre, public_slug, reading_data')
+          .eq('shelf_public', true)
+          .not('public_slug', 'is', null)
+          .order('updated_at', { ascending: false })
+          .limit(20);
+        setUsers(data as PublicUser[] || []);
+      };
+      restoreProfiles();
       return;
     }
     setSearching(true);
