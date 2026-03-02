@@ -46,12 +46,12 @@ interface RecentActivity {
 
 export default function DiscoverPage() {
   const [query, setQuery] = useState('');
+  const [allUsers, setAllUsers] = useState<PublicUser[]>([]);
   const [users, setUsers] = useState<PublicUser[]>([]);
   const [featuredUsers, setFeaturedUsers] = useState<PublicUser[]>([]);
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
-  const [tab, setTab] = useState<'explore' | 'search'>('explore');
 
   useEffect(() => {
     fetchExploreData();
@@ -71,6 +71,7 @@ export default function DiscoverPage() {
       .limit(30);
 
     if (profiles) {
+      setAllUsers(profiles as PublicUser[]);
       setUsers(profiles as PublicUser[]);
       // Featured = most active readers this week (by reading sessions in last 7 days)
       const oneWeekAgo = new Date();
@@ -118,26 +119,23 @@ export default function DiscoverPage() {
     setLoading(false);
   };
 
-  // Search
+  // Client-side filter as user types (instant auto-populate)
   useEffect(() => {
-    if (tab !== 'search' || !query.trim()) return;
-    setSearching(true);
-    const timeout = setTimeout(async () => {
-      if (!isSupabaseConfigured()) return;
-      const supabase = createClient();
-      const { data } = await supabase
-        .from('profiles')
-        .select('id, username, reader_name, first_name, last_name, avatar_url, bio, favorite_genre, public_slug, reading_data')
-        .eq('shelf_public', true)
-        .not('public_slug', 'is', null)
-        .or(`reader_name.ilike.%${query}%,first_name.ilike.%${query}%,last_name.ilike.%${query}%,public_slug.ilike.%${query}%,username.ilike.%${query}%,bio.ilike.%${query}%`)
-        .order('updated_at', { ascending: false })
-        .limit(20);
-      setUsers(data as PublicUser[] || []);
-      setSearching(false);
-    }, 300);
-    return () => clearTimeout(timeout);
-  }, [query, tab]);
+    if (!query.trim()) {
+      setUsers(allUsers);
+      return;
+    }
+    const q = query.toLowerCase();
+    const filtered = allUsers.filter(u =>
+      u.reader_name?.toLowerCase().includes(q) ||
+      u.first_name?.toLowerCase().includes(q) ||
+      u.last_name?.toLowerCase().includes(q) ||
+      u.username?.toLowerCase().includes(q) ||
+      u.public_slug?.toLowerCase().includes(q) ||
+      u.bio?.toLowerCase().includes(q)
+    );
+    setUsers(filtered);
+  }, [query, allUsers]);
 
   const getStats = (user: PublicUser) => {
     const books = user.reading_data?.books || [];
@@ -208,11 +206,10 @@ export default function DiscoverPage() {
               value={query}
               onChange={(e) => {
                 setQuery(e.target.value);
-                if (e.target.value.trim()) setTab('search');
-                else setTab('explore');
               }}
               placeholder="Search readers by name or username..."
               className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gold-light/30 bg-cream/50 text-ink text-sm placeholder:text-ink-muted/60 focus:outline-none focus:border-gold transition-colors"
+              style={{ fontSize: '16px' }}
             />
             {searching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-gold" />}
           </div>
@@ -220,59 +217,10 @@ export default function DiscoverPage() {
       </motion.div>
 
       <div className="px-4 py-6 md:max-w-3xl md:mx-auto">
-        {tab === 'search' ? (
-          /* Search results */
-          <div>
-            <p className="text-xs text-ink-muted mb-4">{users.length} result{users.length !== 1 ? 's' : ''} for &ldquo;{query}&rdquo;</p>
-            {users.length === 0 ? (
-              <div className="text-center py-16">
-                <User className="w-12 h-12 text-gold/30 mx-auto mb-3" />
-                <p className="text-ink-muted text-sm">No readers found. Try a different search.</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {users.map((u, i) => {
-                  const stats = getStats(u);
-                  return (
-                    <motion.div
-                      key={u.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.04 }}
-                    >
-                      <Link
-                        href={`/user/${u.public_slug}`}
-                        className="glass-card rounded-xl p-4 flex items-center gap-3 hover:bg-cream/40 transition-colors group"
-                      >
-                        {u.avatar_url ? (
-                          <img src={u.avatar_url} alt="" className="w-12 h-12 rounded-full object-cover" />
-                        ) : (
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gold to-amber flex items-center justify-center text-parchment font-bold">
-                            {u.reader_name.charAt(0).toUpperCase()}
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-sm text-ink group-hover:text-gold-dark transition-colors">{u.reader_name}</h3>
-                          <p className="text-xs text-ink-muted">@{u.username || u.public_slug}</p>
-                          {u.bio && <p className="text-xs text-ink-muted mt-0.5 line-clamp-1">{u.bio}</p>}
-                        </div>
-                        <div className="text-right text-xs text-ink-muted flex-shrink-0">
-                          <p>{stats.total} books</p>
-                          <p>{stats.completed} read</p>
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-ink-muted/30 flex-shrink-0" />
-                      </Link>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        ) : (
-          /* Explore view */
+          {/* Explore view — show featured & activity when no search, always show filtered readers */}
           <div className="space-y-8">
-            {/* Featured Libraries */}
-            {featuredUsers.length > 0 && (
+            {/* Featured Libraries — hidden when searching */}
+            {!query.trim() && featuredUsers.length > 0 && (
               <section>
                 <h2 className="text-sm font-semibold text-ink uppercase tracking-wider flex items-center gap-2 mb-3">
                   <Sparkles className="w-4 h-4 text-gold" /> Most Active This Week
@@ -314,8 +262,8 @@ export default function DiscoverPage() {
               </section>
             )}
 
-            {/* Recent Activity */}
-            {recentActivity.length > 0 && (
+            {/* Recent Activity — hidden when searching */}
+            {!query.trim() && recentActivity.length > 0 && (
               <section>
                 <h2 className="text-sm font-semibold text-ink uppercase tracking-wider flex items-center gap-2 mb-3">
                   <TrendingUp className="w-4 h-4 text-gold" /> Recent Activity
@@ -354,11 +302,17 @@ export default function DiscoverPage() {
               </section>
             )}
 
-            {/* All Readers */}
+            {/* All Readers / Search Results */}
             <section>
               <h2 className="text-sm font-semibold text-ink uppercase tracking-wider flex items-center gap-2 mb-3">
-                <Users className="w-4 h-4 text-gold" /> All Readers
+                <Users className="w-4 h-4 text-gold" /> {query.trim() ? `Results for "${query}"` : 'All Readers'}
               </h2>
+              {users.length === 0 ? (
+                <div className="text-center py-12">
+                  <User className="w-12 h-12 text-gold/30 mx-auto mb-3" />
+                  <p className="text-ink-muted text-sm">No readers found. Try a different search.</p>
+                </div>
+              ) : (
               <div className="space-y-3">
                 {users.map((u, i) => {
                   const stats = getStats(u);
@@ -394,9 +348,9 @@ export default function DiscoverPage() {
                   );
                 })}
               </div>
+              )}
             </section>
           </div>
-        )}
       </div>
     </div>
   );

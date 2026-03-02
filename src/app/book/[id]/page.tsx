@@ -167,11 +167,11 @@ export default function BookPage() {
   };
 
   useEffect(() => {
-    if (form.status === 'completed' && book && book.status !== 'completed') {
+    if (form.status === 'completed' && book && book.status !== 'completed' && form.currentPage >= book.totalPages && book.totalPages > 0) {
       setShowConfetti(true);
       setTimeout(() => setShowConfetti(false), 5000);
     }
-  }, [form.status, book]);
+  }, [form.status, form.currentPage, book]);
 
   const handleEditChange = (e: any) => {
     const { name, value } = e.target;
@@ -316,10 +316,11 @@ export default function BookPage() {
                   </div>
                   <button
                     onClick={() => setShowDetailsEdit(true)}
-                    className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 min-h-[44px] rounded-lg text-xs font-medium text-gold-dark border border-gold-light/30 hover:bg-gold-light/10 active:bg-gold-light/20 transition-colors touch-manipulation"
+                    className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2.5 min-h-[44px] rounded-xl text-xs font-semibold text-parchment shadow-md hover:shadow-lg active:scale-[0.97] transition-all touch-manipulation"
+                    style={{ background: 'linear-gradient(135deg, var(--th-copper), var(--th-amber))' }}
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    Edit
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    Edit Info
                   </button>
                 </div>
 
@@ -373,6 +374,7 @@ export default function BookPage() {
             <div className="flex gap-2 mt-4 pt-4 border-t border-gold-light/20">
               {(['want-to-read', 'reading', 'completed', 'dnf'] as const).map(status => {
                 const isActive = form.status === status;
+                const isCompletedLocked = status === 'completed' && book && (form.currentPage < book.totalPages || book.totalPages === 0);
                 const colors: Record<string, { bg: string; text: string; border: string }> = {
                   'want-to-read': { bg: 'var(--th-teal)', text: 'var(--th-parchment)', border: 'var(--th-teal)' },
                   'reading': { bg: 'var(--th-gold)', text: 'var(--th-parchment)', border: 'var(--th-gold)' },
@@ -382,12 +384,14 @@ export default function BookPage() {
                 return (
                   <button
                     key={status}
-                    className="flex-1 px-3 py-2 rounded-xl text-xs font-medium transition-all"
+                    className={`flex-1 px-3 py-2 rounded-xl text-xs font-medium transition-all ${isCompletedLocked && !isActive ? 'opacity-40 cursor-not-allowed' : ''}`}
                     style={isActive
                       ? { background: colors[status].bg, color: colors[status].text, borderWidth: '1px', borderColor: colors[status].border }
                       : { background: 'transparent', color: 'var(--th-ink-muted)', borderWidth: '1px', borderColor: 'var(--th-glass-border)' }
                     }
+                    title={isCompletedLocked ? 'Read all pages first to mark as completed' : undefined}
                     onClick={async () => {
+                      if (isCompletedLocked) return;
                       setForm(f => ({ ...f, status: status as ReadingStatus }));
                       if (!book) return;
                       let updatedBook = { ...book, status: status as ReadingStatus };
@@ -795,8 +799,10 @@ export default function BookPage() {
                 </div>
                 {/* Sticky save/cancel buttons at bottom */}
                 <div className="flex gap-2 p-4 border-t border-gold-light/20 bg-parchment rounded-b-2xl" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 1rem))' }}>
-                  <button onClick={() => setShowDetailsEdit(false)} className="flex-1 px-4 min-h-[48px] rounded-xl text-sm text-ink-muted border border-gold-light/30 hover:bg-cream/40 active:bg-cream/60 transition-colors touch-manipulation">Cancel</button>
-                  <button onClick={handleDetailsSave} disabled={savingDetails} className="flex-1 px-4 min-h-[48px] rounded-xl text-sm font-semibold text-parchment disabled:opacity-50 touch-manipulation shadow-lg" style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}>{savingDetails ? 'Saving...' : 'Save Changes'}</button>
+                  <button onClick={() => setShowDetailsEdit(false)} className="flex-1 px-4 min-h-[52px] rounded-xl text-sm text-ink-muted border border-gold-light/30 hover:bg-cream/40 active:bg-cream/60 transition-colors touch-manipulation">Cancel</button>
+                  <button onClick={handleDetailsSave} disabled={savingDetails} className="flex-1 px-4 min-h-[52px] rounded-xl text-base font-bold text-parchment disabled:opacity-50 touch-manipulation shadow-lg active:scale-[0.97] transition-all" style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}>
+                    {savingDetails ? 'Saving...' : '✓ Save Changes'}
+                  </button>
                 </div>
               </div>
             </div>

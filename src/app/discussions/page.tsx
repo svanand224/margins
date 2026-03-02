@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
+  import {
   MessageSquare,
   Plus,
   BookOpen,
@@ -15,6 +15,7 @@ import {
   ArrowLeft,
   X,
   ChevronRight,
+  ChevronDown,
   AlertCircle,
   Edit3,
   Check,
@@ -25,6 +26,7 @@ import {
   ThumbsUp,
   ThumbsDown,
   Pin,
+  CornerDownRight,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Book } from '@/lib/types';
@@ -1020,6 +1022,8 @@ export default function DiscussionsPage() {
                 const canPin = isCreator && (!post.is_pinned && pinnedCount < 3 || post.is_pinned);
                 const isExpanded = expandedPostId === post.id;
                 const totalReactions = reactions.heart.length + reactions.upvote.length + reactions.downvote.length;
+                // Count child replies for this post from loaded posts
+                const replyCount = posts.filter(p => p.parent_id === post.id).length;
                 return (
                   <motion.div
                     key={post.id}
@@ -1110,10 +1114,17 @@ export default function DiscussionsPage() {
                           {/* Reply hint */}
                           <button
                             onClick={() => handleExpandPost(post.id)}
-                            className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] text-ink-muted hover:bg-gold-light/10 transition-all touch-manipulation ml-auto"
+                            className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] transition-all touch-manipulation ml-auto ${
+                              replyCount > 0 
+                                ? 'text-gold-dark font-medium bg-gold/8 border border-gold/15' 
+                                : 'text-ink-muted hover:bg-gold-light/10'
+                            }`}
                           >
                             <MessageSquare className="w-3 h-3" />
-                            <span>Reply</span>
+                            <span>{replyCount > 0 ? `${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}` : 'Reply'}</span>
+                            {replyCount > 0 && (
+                              <ChevronDown className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                            )}
                           </button>
                         </div>
 
@@ -1171,19 +1182,35 @@ export default function DiscussionsPage() {
                                 )}
 
                                 {/* Thread replies */}
-                                <div>
-                                  <p className="text-[10px] font-medium text-ink-muted uppercase tracking-wider mb-2">
-                                    Replies {replies.length > 0 && `(${replies.length})`}
-                                  </p>
+                                <div className="rounded-xl bg-cream/20 border border-gold-light/15 p-3">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <p className="text-[10px] font-semibold text-gold-dark uppercase tracking-wider flex items-center gap-1.5">
+                                      <CornerDownRight className="w-3 h-3" />
+                                      Thread {replies.length > 0 && `· ${replies.length} ${replies.length === 1 ? 'reply' : 'replies'}`}
+                                    </p>
+                                    <button
+                                      onClick={() => handleExpandPost(post.id)}
+                                      className="text-[10px] text-ink-muted hover:text-ink transition-colors flex items-center gap-0.5"
+                                    >
+                                      Collapse <ChevronDown className="w-3 h-3 rotate-180" />
+                                    </button>
+                                  </div>
+
+                                  {/* Parent message quote — context for what thread is replying to */}
+                                  <div className="mb-3 pl-3 border-l-2 border-gold/30 bg-gold/[0.04] rounded-r-lg py-1.5 pr-2">
+                                    <p className="text-[10px] text-ink-muted font-medium">{(post.user as any)?.reader_name || 'Unknown'} wrote:</p>
+                                    <p className="text-[11px] text-ink/70 line-clamp-2 italic">{post.content}</p>
+                                  </div>
+
                                   {repliesLoading ? (
                                     <div className="flex items-center gap-2 py-2">
                                       <Loader2 className="w-3.5 h-3.5 animate-spin text-gold" />
                                       <span className="text-xs text-ink-muted">Loading replies...</span>
                                     </div>
                                   ) : replies.length > 0 ? (
-                                    <div className="space-y-2 mb-2">
+                                    <div className="space-y-2 mb-3">
                                       {replies.map(reply => (
-                                        <div key={reply.id} className="flex gap-2 pl-2 border-l-2 border-gold-light/20">
+                                        <div key={reply.id} className="flex gap-2 pl-2 border-l-2 border-gold-light/30">
                                           {(reply.user as any)?.avatar_url ? (
                                             <img src={(reply.user as any).avatar_url} alt="" className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
                                           ) : (
@@ -1205,29 +1232,35 @@ export default function DiscussionsPage() {
                                       ))}
                                     </div>
                                   ) : (
-                                    <p className="text-xs text-ink-muted italic mb-2">No replies yet</p>
+                                    <p className="text-xs text-ink-muted italic mb-3">No replies yet — start the thread!</p>
                                   )}
 
                                   {/* Reply input */}
                                   {user && isMember && (
-                                    <div className="flex gap-2 items-end">
-                                      <input
-                                        type="text"
-                                        value={replyText}
-                                        onChange={(e) => setReplyText(e.target.value)}
-                                        placeholder="Write a reply..."
-                                        className="flex-1 px-3 py-2 rounded-lg bg-cream/50 border border-gold-light/30 text-ink text-xs touch-manipulation"
-                                        style={{ fontSize: '16px' }}
-                                        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendReply(post.id); } }}
-                                      />
-                                      <button
-                                        onClick={() => handleSendReply(post.id)}
-                                        disabled={!replyText.trim() || sendingReply}
-                                        className="px-3 py-2 rounded-lg text-parchment disabled:opacity-40 touch-manipulation"
-                                        style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}
-                                      >
-                                        {sendingReply ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-                                      </button>
+                                    <div className="space-y-1.5">
+                                      <p className="text-[10px] text-ink-muted flex items-center gap-1">
+                                        <CornerDownRight className="w-2.5 h-2.5" />
+                                        Replying to {(post.user as any)?.reader_name || 'this message'}
+                                      </p>
+                                      <div className="flex gap-2 items-end">
+                                        <input
+                                          type="text"
+                                          value={replyText}
+                                          onChange={(e) => setReplyText(e.target.value)}
+                                          placeholder="Write a reply..."
+                                          className="flex-1 px-3 py-2 rounded-lg bg-parchment/80 border border-gold-light/30 text-ink text-xs touch-manipulation"
+                                          style={{ fontSize: '16px' }}
+                                          onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendReply(post.id); } }}
+                                        />
+                                        <button
+                                          onClick={() => handleSendReply(post.id)}
+                                          disabled={!replyText.trim() || sendingReply}
+                                          className="px-3 py-2 rounded-lg text-parchment disabled:opacity-40 touch-manipulation"
+                                          style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}
+                                        >
+                                          {sendingReply ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                                        </button>
+                                      </div>
                                     </div>
                                   )}
                                 </div>

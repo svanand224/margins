@@ -166,6 +166,13 @@ export default function PublicProfilePage() {
           setIsFollowing(false);
           setFollowerCount(c => Math.max(0, c - 1));
           setIsAcceptedFollower(false);
+          // Also clear any follow_request so re-following a private profile requires re-approval
+          await supabase
+            .from('follow_requests')
+            .delete()
+            .eq('requester_id', user.id)
+            .eq('target_id', profile.id);
+          setFollowRequestStatus('none');
         }
       } else if (!profile.shelf_public && followRequestStatus === 'none') {
         // Private profile — send follow request
