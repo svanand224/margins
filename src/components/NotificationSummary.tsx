@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/lib/auth';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, UserPlus, Gift, MessageSquare, X } from 'lucide-react';
+import { Bell, UserPlus, Gift, MessageSquare, X, Award } from 'lucide-react';
 import Link from 'next/link';
 
 export default function NotificationSummary() {
@@ -13,6 +13,7 @@ export default function NotificationSummary() {
     followers: number;
     recommendations: number;
     discussions: number;
+    badges: number;
     other: number;
     total: number;
   } | null>(null);
@@ -55,9 +56,10 @@ export default function NotificationSummary() {
     const followers = data.filter(n => n.type === 'new_follower').length;
     const recommendations = data.filter(n => n.type === 'new_recommendation').length;
     const discussions = data.filter(n => n.type === 'discussion_join').length;
-    const other = data.length - followers - recommendations - discussions;
+    const badges = data.filter(n => n.type === 'badge_unlocked').length;
+    const other = data.length - followers - recommendations - discussions - badges;
 
-    setSummary({ followers, recommendations, discussions, other, total: data.length });
+    setSummary({ followers, recommendations, discussions, badges, other, total: data.length });
     setShow(true);
     sessionStorage.setItem('notif_summary_shown', '1');
 
@@ -125,6 +127,14 @@ export default function NotificationSummary() {
                   <MessageSquare className="w-3.5 h-3.5 text-gold-dark flex-shrink-0" />
                   <span>
                     <strong>{summary.discussions}</strong> reader{summary.discussions !== 1 ? 's' : ''} joined your discussion{summary.discussions !== 1 ? 's' : ''}
+                  </span>
+                </div>
+              )}
+              {summary.badges > 0 && (
+                <div className="flex items-center gap-2.5 text-xs text-ink">
+                  <Award className="w-3.5 h-3.5 text-amber flex-shrink-0" />
+                  <span>
+                    <strong>{summary.badges}</strong> new badge{summary.badges !== 1 ? 's' : ''} earned!
                   </span>
                 </div>
               )}

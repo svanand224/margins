@@ -4,6 +4,49 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/lib/auth';
 import { useBookStore } from '@/lib/store';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
+import type { Book } from '@/lib/types';
+
+// Compute which achievement IDs are currently unlocked from books array
+function getUnlockedBadges(books: Book[]): string[] {
+  const completed = books.filter(b => b.status === 'completed');
+  const genres = new Set(completed.map(b => b.genre));
+  const totalPages = books.reduce((s, b) => s + b.currentPage, 0);
+  const favorites = books.filter(b => b.favorite);
+  const totalSessions = books.reduce((s, b) => s + (b.sessions?.length || 0), 0);
+
+  const badges: { id: string; label: string; unlocked: boolean }[] = [
+    { id: 'first-book', label: 'First Bloom', unlocked: completed.length >= 1 },
+    { id: 'bookworm', label: 'Bookworm', unlocked: completed.length >= 10 },
+    { id: 'scholar', label: 'Scholar', unlocked: completed.length >= 25 },
+    { id: 'bibliophile', label: 'Bibliophile', unlocked: completed.length >= 50 },
+    { id: 'centurion', label: 'Centurion', unlocked: completed.length >= 100 },
+    { id: 'explorer', label: 'Explorer', unlocked: genres.size >= 5 },
+    { id: 'renaissance', label: 'Renaissance', unlocked: genres.size >= 10 },
+    { id: 'page-turner', label: 'Page Turner', unlocked: totalPages >= 1000 },
+    { id: 'marathon', label: 'Marathon', unlocked: totalPages >= 10000 },
+    { id: 'curator', label: 'Curator', unlocked: favorites.length >= 5 },
+    { id: 'dedicated', label: 'Dedicated', unlocked: totalSessions >= 30 },
+    { id: 'collector', label: 'Collector', unlocked: books.length >= 20 },
+  ];
+
+  return badges.filter(b => b.unlocked).map(b => b.id);
+}
+
+// Badge label map for notification messages
+const badgeLabels: Record<string, string> = {
+  'first-book': 'First Bloom',
+  'bookworm': 'Bookworm',
+  'scholar': 'Scholar',
+  'bibliophile': 'Bibliophile',
+  'centurion': 'Centurion',
+  'explorer': 'Explorer',
+  'renaissance': 'Renaissance',
+  'page-turner': 'Page Turner',
+  'marathon': 'Marathon',
+  'curator': 'Curator',
+  'dedicated': 'Dedicated',
+  'collector': 'Collector',
+};
 
 /**
  * SupabaseSync — bridges Supabase ↔ Zustand store
@@ -21,6 +64,42 @@ export default function SupabaseSync() {
   const hasLoadedRef = useRef(false);
   const isSavingRef = useRef(false);
   const currentUserIdRef = useRef<string | null>(null);
+
+  // Check for newly unlocked badges and create notifications
+  const checkBadgeNotifications = useCallback(async (userId: string) => {
+    if (!supabaseRef.current) return;
+    const books = useBookStore.getState().books;
+    if (!books.length) return;
+
+    const unlockedNow = getUnlockedBadges(books);
+    if (unlockedNow.length === 0) return;
+
+    // Get previously notified badges from localStorage
+    const storageKey = `badges-notified-${userId}`;
+    let previouslyNotified: string[] = [];
+    try {
+      const stored = localStorage.getItem(storageKey);
+      if (stored) previouslyNotified = JSON.parse(stored);
+    } catch { /* ignore */ }
+
+    const newBadges = unlockedNow.filter(id => !previouslyNotified.includes(id));
+    if (newBadges.length === 0) return;
+
+    // Create a notification for each new badge
+    for (const badgeId of newBadges) {
+      await supabaseRef.current.from('notifications').insert({
+        user_id: userId,
+        type: 'badge_unlocked',
+        from_user_id: null,
+        data: { badge_id: badgeId, badge_label: badgeLabels[badgeId] || badgeId },
+      });
+    }
+
+    // Update localStorage so we don't notify again
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(unlockedNow));
+    } catch { /* ignore */ }
+  }, []);
 
   // Load data from Supabase into the store
   const loadFromCloud = useCallback(async (userId: string) => {
@@ -54,10 +133,13 @@ export default function SupabaseSync() {
       }
 
       hasLoadedRef.current = true;
+
+      // Check for new badge unlocks after loading data
+      checkBadgeNotifications(userId);
     } catch (err) {
       console.error('Cloud load error:', err);
     }
-  }, []);
+  }, [checkBadgeNotifications]);
 
   // Save store snapshot to Supabase
   const saveToCloud = useCallback(async (userId: string) => {
@@ -80,12 +162,15 @@ export default function SupabaseSync() {
           reader_name: state.readerName,
         })
         .eq('id', userId);
+
+      // Check for new badge unlocks after save
+      checkBadgeNotifications(userId);
     } catch (err) {
       console.error('Cloud save error:', err);
     } finally {
       isSavingRef.current = false;
     }
-  }, []);
+  }, [checkBadgeNotifications]);
 
   // Debounced save (2 seconds after last change)
   const debouncedSave = useCallback(
