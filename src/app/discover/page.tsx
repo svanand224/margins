@@ -69,7 +69,6 @@ export default function DiscoverPage() {
       const { data: profiles } = await supabase
       .from('profiles')
       .select('id, username, reader_name, first_name, last_name, avatar_url, bio, favorite_genre, public_slug, shelf_public, reading_data')
-      .not('public_slug', 'is', null)
       .order('updated_at', { ascending: false })
       .limit(50);
 
@@ -276,7 +275,7 @@ export default function DiscoverPage() {
                         transition={{ delay: i * 0.06 }}
                       >
                         <Link
-                          href={`/user/${u.public_slug}`}
+                          href={`/user/${u.public_slug || u.username}`}
                           className="glass-card rounded-xl p-4 hover:bg-cream/40 transition-colors group block text-center relative"
                         >
                           {/* Rank badge */}
@@ -374,7 +373,7 @@ export default function DiscoverPage() {
                       transition={{ delay: i * 0.03 }}
                     >
                       <Link
-                        href={`/user/${u.public_slug}`}
+                        href={`/user/${u.public_slug || u.username}`}
                         className="glass-card rounded-xl p-4 flex items-center gap-3 hover:bg-cream/40 transition-colors group"
                       >
                         {u.avatar_url ? (

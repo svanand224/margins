@@ -88,11 +88,22 @@ export default function PublicProfilePage() {
 
       // If not logged in, only fetch minimal profile info (no reading data)
       if (!user) {
-        const { data: minimalProfile, error: minimalError } = await supabase
+        let { data: minimalProfile, error: minimalError } = await supabase
           .from('profiles')
           .select('id, reader_name, avatar_url, public_slug')
           .eq('public_slug', slug)
           .single();
+
+        // Fallback: try lookup by username if public_slug didn't match
+        if (minimalError || !minimalProfile) {
+          const { data: byUsername, error: usernameError } = await supabase
+            .from('profiles')
+            .select('id, reader_name, avatar_url, public_slug')
+            .eq('username', slug)
+            .single();
+          minimalProfile = byUsername;
+          minimalError = usernameError;
+        }
 
         if (minimalError || !minimalProfile) {
           setNotFound(true);
@@ -115,11 +126,22 @@ export default function PublicProfilePage() {
         return;
       }
 
-      const { data: profileData, error } = await supabase
+      let { data: profileData, error } = await supabase
         .from('profiles')
         .select('id, username, reader_name, avatar_url, bio, favorite_genre, public_slug, shelf_public, shelf_accent_color, shelf_show_currently_reading, shelf_show_stats, shelf_bio_override, badges, reading_data, created_at')
         .eq('public_slug', slug)
         .single();
+
+      // Fallback: try lookup by username if public_slug didn't match
+      if (error || !profileData) {
+        const { data: byUsername, error: usernameError } = await supabase
+          .from('profiles')
+          .select('id, username, reader_name, avatar_url, bio, favorite_genre, public_slug, shelf_public, shelf_accent_color, shelf_show_currently_reading, shelf_show_stats, shelf_bio_override, badges, reading_data, created_at')
+          .eq('username', slug)
+          .single();
+        profileData = byUsername;
+        error = usernameError;
+      }
 
       // Normalize badges
       if (profileData) {
