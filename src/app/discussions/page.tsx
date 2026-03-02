@@ -51,6 +51,7 @@ interface DiscussionPost {
   user_id: string;
   content: string;
   created_at: string;
+  parent_id?: string;
   is_pinned?: boolean;
   pinned_at?: string;
   pinned_by?: string;
@@ -105,6 +106,13 @@ export default function DiscussionsPage() {
   const [showBookPicker, setShowBookPicker] = useState(false);
   const [bookPickerSearch, setBookPickerSearch] = useState('');
 
+  // Message detail / thread view
+  const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
+  const [replies, setReplies] = useState<DiscussionPost[]>([]);
+  const [repliesLoading, setRepliesLoading] = useState(false);
+  const [replyText, setReplyText] = useState('');
+  const [sendingReply, setSendingReply] = useState(false);
+  const [reactionMembers, setReactionMembers] = useState<Record<string, { reader_name: string; avatar_url: string | null }>>({});
   // Realtime subscription ref
   const realtimeChannelRef = useRef<ReturnType<ReturnType<typeof createClient>['channel']> | null>(null);
 
@@ -549,17 +557,17 @@ export default function DiscussionsPage() {
     return map;
   };
 
-  // Toggle a reaction on a post
+  // Toggle a reaction on a post (mutually exclusive — only one reaction type per user per post)
   const handleReaction = async (postId: string, reactionType: 'heart' | 'upvote' | 'downvote') => {
     if (!user) return;
     const supabase = createClient();
     const post = posts.find(p => p.id === postId);
     if (!post) return;
     const currentReactions = post.reactions || { heart: [], upvote: [], downvote: [] };
-    const hasReacted = currentReactions[reactionType]?.includes(user.id);
+    const hasThisReaction = currentReactions[reactionType]?.includes(user.id);
 
-    if (hasReacted) {
-      // Remove reaction
+    if (hasThisReaction) {
+      // Remove this reaction (toggle off)
       await supabase
         .from('post_reactions')
         .delete()
@@ -571,14 +579,31 @@ export default function DiscussionsPage() {
         return { ...p, reactions: r };
       }));
     } else {
-      // Add reaction
+      // Remove any existing reactions from this user on this post first (mutual exclusivity)
+      const otherTypes = (['heart', 'upvote', 'downvote'] as const).filter(t => t !== reactionType);
+      const hadOther = otherTypes.some(t => currentReactions[t]?.includes(user.id));
+      if (hadOther) {
+        // Delete all existing reactions for this user on this post
+        await supabase
+          .from('post_reactions')
+          .delete()
+          .match({ post_id: postId, user_id: user.id });
+      }
+      // Add the new reaction
       await supabase
         .from('post_reactions')
-        .insert({ post_id: postId, user_id: user.id, reaction_type: reactionType });
+        .upsert({ post_id: postId, user_id: user.id, reaction_type: reactionType }, { onConflict: 'post_id,user_id,reaction_type' });
       setPosts(prev => prev.map(p => {
         if (p.id !== postId) return p;
         const r = { ...(p.reactions || { heart: [], upvote: [], downvote: [] }) };
-        r[reactionType] = [...r[reactionType], user.id];
+        // Remove user from all types first
+        otherTypes.forEach(t => {
+          r[t] = r[t].filter((id: string) => id !== user.id);
+        });
+        // Add to this type
+        if (!r[reactionType].includes(user.id)) {
+          r[reactionType] = [...r[reactionType], user.id];
+        }
         return { ...p, reactions: r };
       }));
     }
@@ -608,6 +633,71 @@ export default function DiscussionsPage() {
         .eq('id', postId);
       setPosts(prev => prev.map(p => p.id === postId ? { ...p, is_pinned: true, pinned_at: new Date().toISOString(), pinned_by: user.id } : p));
     }
+  };
+
+  // Expand a message to show thread replies and who reacted
+  const handleExpandPost = async (postId: string) => {
+    if (expandedPostId === postId) {
+      setExpandedPostId(null);
+      setReplies([]);
+      setReplyText('');
+      setReactionMembers({});
+      return;
+    }
+    setExpandedPostId(postId);
+    setRepliesLoading(true);
+    setReplyText('');
+    const supabase = createClient();
+
+    // Fetch replies (child posts with parent_id = postId)
+    const { data: replyData } = await supabase
+      .from('discussion_posts')
+      .select('*, user:user_id(reader_name, avatar_url)')
+      .eq('parent_id', postId)
+      .order('created_at', { ascending: true })
+      .limit(50);
+    setReplies((replyData as unknown as DiscussionPost[]) || []);
+
+    // Fetch profile info for users who reacted to this post
+    const post = posts.find(p => p.id === postId);
+    if (post?.reactions) {
+      const allReactorIds = new Set([
+        ...(post.reactions.heart || []),
+        ...(post.reactions.upvote || []),
+        ...(post.reactions.downvote || []),
+      ]);
+      if (allReactorIds.size > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, reader_name, avatar_url')
+          .in('id', Array.from(allReactorIds));
+        if (profiles) {
+          const map: Record<string, { reader_name: string; avatar_url: string | null }> = {};
+          profiles.forEach((p: any) => { map[p.id] = { reader_name: p.reader_name, avatar_url: p.avatar_url }; });
+          setReactionMembers(map);
+        }
+      }
+    }
+    setRepliesLoading(false);
+  };
+
+  // Send a reply to a post
+  const handleSendReply = async (parentPostId: string) => {
+    if (!user || !selectedDiscussion || !replyText.trim()) return;
+    setSendingReply(true);
+    const supabase = createClient();
+    const { data: reply, error } = await supabase.from('discussion_posts').insert({
+      discussion_id: selectedDiscussion.id,
+      user_id: user.id,
+      content: replyText.trim(),
+      parent_id: parentPostId,
+    }).select('*, user:user_id(reader_name, avatar_url)').single();
+
+    if (reply && !error) {
+      setReplies(prev => [...prev, reply as unknown as DiscussionPost]);
+      setReplyText('');
+    }
+    setSendingReply(false);
   };
 
   // Auto-resize textarea
@@ -883,15 +973,16 @@ export default function DiscussionsPage() {
               {(() => {
                 const pinnedPosts = posts.filter(p => p.is_pinned);
                 if (pinnedPosts.length === 0) return null;
+                const isCreator = user?.id === selectedDiscussion.creator_id;
                 return (
-                  <div className="mb-4 space-y-2">
-                    <p className="text-[10px] font-medium text-ink-muted uppercase tracking-wider flex items-center gap-1">
-                      <Pin className="w-3 h-3" /> Pinned ({pinnedPosts.length}/3)
+                  <div className="mb-4 space-y-2 p-3 rounded-xl bg-gold/5 border border-gold/15">
+                    <p className="text-[10px] font-semibold text-gold-dark uppercase tracking-wider flex items-center gap-1.5">
+                      <Pin className="w-3.5 h-3.5" /> Pinned Messages ({pinnedPosts.length}/3)
                     </p>
                     {pinnedPosts.sort((a, b) => (a.pinned_at || '').localeCompare(b.pinned_at || '')).map(post => (
                       <div
                         key={`pin-${post.id}`}
-                        className="flex gap-3 p-3 rounded-xl border border-gold-light/30 bg-gold/5 cursor-pointer hover:bg-gold/10 transition-colors"
+                        className="flex gap-3 p-2.5 rounded-lg bg-parchment/60 border border-gold-light/20 cursor-pointer hover:bg-parchment/80 transition-colors"
                         onClick={() => {
                           const el = document.getElementById(`post-${post.id}`);
                           el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -899,7 +990,6 @@ export default function DiscussionsPage() {
                           setTimeout(() => el?.classList.remove('ring-2', 'ring-gold/50'), 2000);
                         }}
                       >
-                        <Pin className="w-3.5 h-3.5 text-gold flex-shrink-0 mt-0.5" />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-baseline gap-2">
                             <span className="text-xs font-medium text-ink">{(post.user as any)?.reader_name || 'Unknown'}</span>
@@ -907,6 +997,15 @@ export default function DiscussionsPage() {
                           </div>
                           <p className="text-xs text-ink-muted mt-0.5 line-clamp-2">{post.content}</p>
                         </div>
+                        {isCreator && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleTogglePin(post.id); }}
+                            className="p-1.5 rounded-lg text-gold hover:bg-gold/10 active:bg-gold/20 transition-colors flex-shrink-0 touch-manipulation"
+                            title="Unpin message"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -914,11 +1013,13 @@ export default function DiscussionsPage() {
               })()}
 
               {/* All messages */}
-              {posts.map((post, i) => {
+              {posts.filter(p => !p.parent_id).map((post, i) => {
                 const reactions = post.reactions || { heart: [], upvote: [], downvote: [] };
                 const isCreator = user?.id === selectedDiscussion.creator_id;
                 const pinnedCount = posts.filter(p => p.is_pinned).length;
                 const canPin = isCreator && (!post.is_pinned && pinnedCount < 3 || post.is_pinned);
+                const isExpanded = expandedPostId === post.id;
+                const totalReactions = reactions.heart.length + reactions.upvote.length + reactions.downvote.length;
                 return (
                   <motion.div
                     key={post.id}
@@ -926,74 +1027,214 @@ export default function DiscussionsPage() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.03 }}
-                    className={`flex gap-3 group rounded-xl transition-all ${post.is_pinned ? 'bg-gold/[0.03]' : ''}`}
+                    className={`rounded-xl transition-all ${post.is_pinned ? 'bg-gold/[0.03]' : ''} ${isExpanded ? 'ring-1 ring-gold-light/30 bg-cream/30' : ''}`}
                   >
-                    {(post.user as any)?.avatar_url ? (
-                      <img src={(post.user as any).avatar_url} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
-                    ) : (
-                      <div
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-parchment text-xs font-bold flex-shrink-0"
-                        style={{ background: `linear-gradient(135deg, ${theme.color}, ${theme.light})` }}
-                      >
-                        {((post.user as any)?.reader_name || '?').charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-sm font-medium text-ink">{(post.user as any)?.reader_name || 'Unknown'}</span>
-                        <span className="text-[10px] text-ink-muted">{formatTime(post.created_at)}</span>
-                        {post.is_pinned && <Pin className="w-3 h-3 text-gold inline-block" />}
-                        {/* Pin button (creator only) */}
-                        {canPin && (
+                    <div className="flex gap-3 p-1">
+                      {(post.user as any)?.avatar_url ? (
+                        <img src={(post.user as any).avatar_url} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                      ) : (
+                        <div
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-parchment text-xs font-bold flex-shrink-0"
+                          style={{ background: `linear-gradient(135deg, ${theme.color}, ${theme.light})` }}
+                        >
+                          {((post.user as any)?.reader_name || '?').charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-ink">{(post.user as any)?.reader_name || 'Unknown'}</span>
+                          <span className="text-[10px] text-ink-muted">{formatTime(post.created_at)}</span>
+                          {post.is_pinned && (
+                            <span className="flex items-center gap-0.5 text-[9px] font-medium text-gold bg-gold/10 px-1.5 py-0.5 rounded-full border border-gold/20">
+                              <Pin className="w-2.5 h-2.5" /> Pinned
+                            </span>
+                          )}
+                          {/* Pin button — visible on mobile, hover on desktop */}
+                          {canPin && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleTogglePin(post.id); }}
+                              className="ml-auto p-1.5 rounded-lg hover:bg-gold-light/15 active:bg-gold-light/25 transition-all opacity-60 sm:opacity-0 sm:group-hover:opacity-100 touch-manipulation"
+                              title={post.is_pinned ? 'Unpin message' : `Pin message (${pinnedCount}/3)`}
+                            >
+                              <Pin className={`w-3.5 h-3.5 ${post.is_pinned ? 'text-gold' : 'text-ink-muted'}`} />
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Message content — click to expand */}
+                        <button
+                          onClick={() => handleExpandPost(post.id)}
+                          className="w-full text-left mt-0.5"
+                        >
+                          <p className="text-sm text-ink whitespace-pre-wrap break-words">{post.content}</p>
+                        </button>
+
+                        {/* Reactions bar */}
+                        <div className="flex items-center gap-1 mt-1.5 -ml-1 flex-wrap">
+                          {/* Heart */}
                           <button
-                            onClick={() => handleTogglePin(post.id)}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity ml-auto p-1 rounded hover:bg-gold-light/15"
-                            title={post.is_pinned ? 'Unpin message' : 'Pin message'}
+                            onClick={(e) => { e.stopPropagation(); handleReaction(post.id, 'heart'); }}
+                            className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] transition-all touch-manipulation ${
+                              reactions.heart.includes(user?.id || '') 
+                                ? 'bg-rose/15 text-rose border border-rose/20' 
+                                : 'text-ink-muted hover:bg-rose/10 hover:text-rose border border-transparent'
+                            }`}
                           >
-                            <Pin className={`w-3 h-3 ${post.is_pinned ? 'text-gold' : 'text-ink-muted'}`} />
+                            <Heart className={`w-3 h-3 ${reactions.heart.includes(user?.id || '') ? 'fill-rose' : ''}`} />
+                            {reactions.heart.length > 0 && <span>{reactions.heart.length}</span>}
                           </button>
-                        )}
-                      </div>
-                      <p className="text-sm text-ink mt-0.5 whitespace-pre-wrap break-words">{post.content}</p>
-                      
-                      {/* Reactions */}
-                      <div className="flex items-center gap-1 mt-1.5 -ml-1">
-                        {/* Heart */}
-                        <button
-                          onClick={() => handleReaction(post.id, 'heart')}
-                          className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] transition-all ${
-                            reactions.heart.includes(user?.id || '') 
-                              ? 'bg-rose/15 text-rose border border-rose/20' 
-                              : 'text-ink-muted hover:bg-rose/10 hover:text-rose border border-transparent'
-                          }`}
-                        >
-                          <Heart className={`w-3 h-3 ${reactions.heart.includes(user?.id || '') ? 'fill-rose' : ''}`} />
-                          {reactions.heart.length > 0 && <span>{reactions.heart.length}</span>}
-                        </button>
-                        {/* Upvote */}
-                        <button
-                          onClick={() => handleReaction(post.id, 'upvote')}
-                          className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] transition-all ${
-                            reactions.upvote.includes(user?.id || '') 
-                              ? 'bg-forest/15 text-forest border border-forest/20' 
-                              : 'text-ink-muted hover:bg-forest/10 hover:text-forest border border-transparent'
-                          }`}
-                        >
-                          <ThumbsUp className={`w-3 h-3 ${reactions.upvote.includes(user?.id || '') ? 'fill-forest' : ''}`} />
-                          {reactions.upvote.length > 0 && <span>{reactions.upvote.length}</span>}
-                        </button>
-                        {/* Downvote */}
-                        <button
-                          onClick={() => handleReaction(post.id, 'downvote')}
-                          className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] transition-all ${
-                            reactions.downvote.includes(user?.id || '') 
-                              ? 'bg-copper/15 text-copper border border-copper/20' 
-                              : 'text-ink-muted hover:bg-copper/10 hover:text-copper border border-transparent'
-                          }`}
-                        >
-                          <ThumbsDown className={`w-3 h-3 ${reactions.downvote.includes(user?.id || '') ? 'fill-copper' : ''}`} />
-                          {reactions.downvote.length > 0 && <span>{reactions.downvote.length}</span>}
-                        </button>
+                          {/* Upvote */}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleReaction(post.id, 'upvote'); }}
+                            className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] transition-all touch-manipulation ${
+                              reactions.upvote.includes(user?.id || '') 
+                                ? 'bg-forest/15 text-forest border border-forest/20' 
+                                : 'text-ink-muted hover:bg-forest/10 hover:text-forest border border-transparent'
+                            }`}
+                          >
+                            <ThumbsUp className={`w-3 h-3 ${reactions.upvote.includes(user?.id || '') ? 'fill-forest' : ''}`} />
+                            {reactions.upvote.length > 0 && <span>{reactions.upvote.length}</span>}
+                          </button>
+                          {/* Downvote */}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleReaction(post.id, 'downvote'); }}
+                            className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] transition-all touch-manipulation ${
+                              reactions.downvote.includes(user?.id || '') 
+                                ? 'bg-copper/15 text-copper border border-copper/20' 
+                                : 'text-ink-muted hover:bg-copper/10 hover:text-copper border border-transparent'
+                            }`}
+                          >
+                            <ThumbsDown className={`w-3 h-3 ${reactions.downvote.includes(user?.id || '') ? 'fill-copper' : ''}`} />
+                            {reactions.downvote.length > 0 && <span>{reactions.downvote.length}</span>}
+                          </button>
+                          {/* Reply hint */}
+                          <button
+                            onClick={() => handleExpandPost(post.id)}
+                            className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] text-ink-muted hover:bg-gold-light/10 transition-all touch-manipulation ml-auto"
+                          >
+                            <MessageSquare className="w-3 h-3" />
+                            <span>Reply</span>
+                          </button>
+                        </div>
+
+                        {/* Expanded detail: who reacted + thread replies */}
+                        <AnimatePresence>
+                          {isExpanded && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="mt-3 pt-3 border-t border-gold-light/20 space-y-3">
+                                {/* Who reacted section */}
+                                {totalReactions > 0 && (
+                                  <div className="space-y-1.5">
+                                    <p className="text-[10px] font-medium text-ink-muted uppercase tracking-wider">Reactions</p>
+                                    {repliesLoading ? (
+                                      <Loader2 className="w-3.5 h-3.5 animate-spin text-gold" />
+                                    ) : (
+                                      <div className="space-y-1">
+                                        {reactions.heart.length > 0 && (
+                                          <div className="flex items-center gap-1.5 flex-wrap">
+                                            <Heart className="w-3 h-3 text-rose fill-rose" />
+                                            {reactions.heart.map(uid => (
+                                              <span key={uid} className="text-[11px] text-ink bg-rose/8 px-1.5 py-0.5 rounded-full">
+                                                {reactionMembers[uid]?.reader_name || 'Someone'}
+                                              </span>
+                                            ))}
+                                          </div>
+                                        )}
+                                        {reactions.upvote.length > 0 && (
+                                          <div className="flex items-center gap-1.5 flex-wrap">
+                                            <ThumbsUp className="w-3 h-3 text-forest fill-forest" />
+                                            {reactions.upvote.map(uid => (
+                                              <span key={uid} className="text-[11px] text-ink bg-forest/8 px-1.5 py-0.5 rounded-full">
+                                                {reactionMembers[uid]?.reader_name || 'Someone'}
+                                              </span>
+                                            ))}
+                                          </div>
+                                        )}
+                                        {reactions.downvote.length > 0 && (
+                                          <div className="flex items-center gap-1.5 flex-wrap">
+                                            <ThumbsDown className="w-3 h-3 text-copper fill-copper" />
+                                            {reactions.downvote.map(uid => (
+                                              <span key={uid} className="text-[11px] text-ink bg-copper/8 px-1.5 py-0.5 rounded-full">
+                                                {reactionMembers[uid]?.reader_name || 'Someone'}
+                                              </span>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+
+                                {/* Thread replies */}
+                                <div>
+                                  <p className="text-[10px] font-medium text-ink-muted uppercase tracking-wider mb-2">
+                                    Replies {replies.length > 0 && `(${replies.length})`}
+                                  </p>
+                                  {repliesLoading ? (
+                                    <div className="flex items-center gap-2 py-2">
+                                      <Loader2 className="w-3.5 h-3.5 animate-spin text-gold" />
+                                      <span className="text-xs text-ink-muted">Loading replies...</span>
+                                    </div>
+                                  ) : replies.length > 0 ? (
+                                    <div className="space-y-2 mb-2">
+                                      {replies.map(reply => (
+                                        <div key={reply.id} className="flex gap-2 pl-2 border-l-2 border-gold-light/20">
+                                          {(reply.user as any)?.avatar_url ? (
+                                            <img src={(reply.user as any).avatar_url} alt="" className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
+                                          ) : (
+                                            <div
+                                              className="w-6 h-6 rounded-full flex items-center justify-center text-parchment text-[10px] font-bold flex-shrink-0"
+                                              style={{ background: `linear-gradient(135deg, ${theme.color}, ${theme.light})` }}
+                                            >
+                                              {((reply.user as any)?.reader_name || '?').charAt(0).toUpperCase()}
+                                            </div>
+                                          )}
+                                          <div className="flex-1 min-w-0">
+                                            <div className="flex items-baseline gap-1.5">
+                                              <span className="text-xs font-medium text-ink">{(reply.user as any)?.reader_name || 'Unknown'}</span>
+                                              <span className="text-[10px] text-ink-muted">{formatTime(reply.created_at)}</span>
+                                            </div>
+                                            <p className="text-xs text-ink mt-0.5 whitespace-pre-wrap break-words">{reply.content}</p>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <p className="text-xs text-ink-muted italic mb-2">No replies yet</p>
+                                  )}
+
+                                  {/* Reply input */}
+                                  {user && isMember && (
+                                    <div className="flex gap-2 items-end">
+                                      <input
+                                        type="text"
+                                        value={replyText}
+                                        onChange={(e) => setReplyText(e.target.value)}
+                                        placeholder="Write a reply..."
+                                        className="flex-1 px-3 py-2 rounded-lg bg-cream/50 border border-gold-light/30 text-ink text-xs touch-manipulation"
+                                        style={{ fontSize: '16px' }}
+                                        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendReply(post.id); } }}
+                                      />
+                                      <button
+                                        onClick={() => handleSendReply(post.id)}
+                                        disabled={!replyText.trim() || sendingReply}
+                                        className="px-3 py-2 rounded-lg text-parchment disabled:opacity-40 touch-manipulation"
+                                        style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}
+                                      >
+                                        {sendingReply ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
                     </div>
                   </motion.div>

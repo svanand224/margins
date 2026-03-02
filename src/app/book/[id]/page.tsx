@@ -721,74 +721,82 @@ export default function BookPage() {
           {/* Edit Book Details Modal (title, author, genre, cover, pages) */}
           {showDetailsEdit && (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-50" onClick={() => setShowDetailsEdit(false)}>
-              <div className="bg-parchment rounded-t-2xl sm:rounded-2xl shadow-2xl p-6 pb-8 w-full sm:max-w-sm max-h-[90vh] overflow-y-auto border border-gold-light/30 touch-manipulation" onClick={e => e.stopPropagation()} style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom, 2rem))' }}>
-                <h2 className="text-lg font-bold text-ink mb-4" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>Edit Book Info</h2>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs text-ink-muted mb-1 uppercase tracking-wider">Title</label>
-                    <input
-                      type="text"
-                      value={detailsForm.title}
-                      onChange={e => setDetailsForm(f => ({ ...f, title: e.target.value }))}
-                      className="w-full px-3 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm touch-manipulation"
-                      placeholder="Book title"
-                    />
+              <div className="bg-parchment rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm max-h-[90vh] border border-gold-light/30 touch-manipulation flex flex-col" onClick={e => e.stopPropagation()}>
+                <div className="p-6 pb-3 overflow-y-auto flex-1">
+                  <h2 className="text-lg font-bold text-ink mb-4" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>Edit Book Info</h2>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs text-ink-muted mb-1 uppercase tracking-wider">Title</label>
+                      <input
+                        type="text"
+                        value={detailsForm.title}
+                        onChange={e => setDetailsForm(f => ({ ...f, title: e.target.value }))}
+                        className="w-full px-3 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm touch-manipulation"
+                        style={{ fontSize: '16px' }}
+                        placeholder="Book title"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-ink-muted mb-1 uppercase tracking-wider">Author</label>
+                      <input
+                        type="text"
+                        value={detailsForm.author}
+                        onChange={e => setDetailsForm(f => ({ ...f, author: e.target.value }))}
+                        className="w-full px-3 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm touch-manipulation"
+                        style={{ fontSize: '16px' }}
+                        placeholder="Author name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-ink-muted mb-1 uppercase tracking-wider">Genre</label>
+                      <input
+                        type="text"
+                        value={detailsForm.genre}
+                        onChange={e => setDetailsForm(f => ({ ...f, genre: e.target.value }))}
+                        className="w-full px-3 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm touch-manipulation"
+                        style={{ fontSize: '16px' }}
+                        placeholder="e.g. Fiction, Romance, Sci-Fi"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-ink-muted mb-1 uppercase tracking-wider">Cover Image URL</label>
+                      <input
+                        type="url"
+                        value={detailsForm.coverUrl}
+                        onChange={e => setDetailsForm(f => ({ ...f, coverUrl: e.target.value }))}
+                        className="w-full px-3 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm touch-manipulation"
+                        style={{ fontSize: '16px' }}
+                        placeholder="https://..."
+                      />
+                      {detailsForm.coverUrl && (
+                        <div className="mt-2 flex items-center gap-2">
+                          <img src={detailsForm.coverUrl} alt="Preview" className="w-10 h-14 object-cover rounded-md border border-gold-light/20" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                          <span className="text-[10px] text-ink-muted">Preview</span>
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-xs text-ink-muted mb-1 uppercase tracking-wider">Total Pages</label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={detailsForm.totalPages || ''}
+                        onChange={e => {
+                          const raw = e.target.value.replace(/[^0-9]/g, '');
+                          setDetailsForm(f => ({ ...f, totalPages: raw === '' ? 0 : Number(raw) }));
+                        }}
+                        className="w-full px-3 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm touch-manipulation"
+                        style={{ fontSize: '16px' }}
+                        placeholder="0"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-xs text-ink-muted mb-1 uppercase tracking-wider">Author</label>
-                    <input
-                      type="text"
-                      value={detailsForm.author}
-                      onChange={e => setDetailsForm(f => ({ ...f, author: e.target.value }))}
-                      className="w-full px-3 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm touch-manipulation"
-                      placeholder="Author name"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-ink-muted mb-1 uppercase tracking-wider">Genre</label>
-                    <input
-                      type="text"
-                      value={detailsForm.genre}
-                      onChange={e => setDetailsForm(f => ({ ...f, genre: e.target.value }))}
-                      className="w-full px-3 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm touch-manipulation"
-                      placeholder="e.g. Fiction, Romance, Sci-Fi"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-ink-muted mb-1 uppercase tracking-wider">Cover Image URL</label>
-                    <input
-                      type="url"
-                      value={detailsForm.coverUrl}
-                      onChange={e => setDetailsForm(f => ({ ...f, coverUrl: e.target.value }))}
-                      className="w-full px-3 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm touch-manipulation"
-                      placeholder="https://..."
-                    />
-                    {detailsForm.coverUrl && (
-                      <div className="mt-2 flex items-center gap-2">
-                        <img src={detailsForm.coverUrl} alt="Preview" className="w-10 h-14 object-cover rounded-md border border-gold-light/20" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                        <span className="text-[10px] text-ink-muted">Preview</span>
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-xs text-ink-muted mb-1 uppercase tracking-wider">Total Pages</label>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      value={detailsForm.totalPages || ''}
-                      onChange={e => {
-                        const raw = e.target.value.replace(/[^0-9]/g, '');
-                        setDetailsForm(f => ({ ...f, totalPages: raw === '' ? 0 : Number(raw) }));
-                      }}
-                      className="w-full px-3 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm touch-manipulation"
-                      placeholder="0"
-                    />
-                  </div>
-                  <div className="flex gap-2 pt-1">
-                    <button onClick={() => setShowDetailsEdit(false)} className="flex-1 px-4 min-h-[44px] rounded-xl text-sm text-ink-muted border border-gold-light/30 hover:bg-cream/40 active:bg-cream/60 transition-colors touch-manipulation">Cancel</button>
-                    <button onClick={handleDetailsSave} disabled={savingDetails} className="flex-1 px-4 min-h-[44px] rounded-xl text-sm font-medium text-parchment disabled:opacity-50 touch-manipulation" style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}>{savingDetails ? 'Saving...' : 'Save Changes'}</button>
-                  </div>
+                </div>
+                {/* Sticky save/cancel buttons at bottom */}
+                <div className="flex gap-2 p-4 border-t border-gold-light/20 bg-parchment rounded-b-2xl" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 1rem))' }}>
+                  <button onClick={() => setShowDetailsEdit(false)} className="flex-1 px-4 min-h-[48px] rounded-xl text-sm text-ink-muted border border-gold-light/30 hover:bg-cream/40 active:bg-cream/60 transition-colors touch-manipulation">Cancel</button>
+                  <button onClick={handleDetailsSave} disabled={savingDetails} className="flex-1 px-4 min-h-[48px] rounded-xl text-sm font-semibold text-parchment disabled:opacity-50 touch-manipulation shadow-lg" style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}>{savingDetails ? 'Saving...' : 'Save Changes'}</button>
                 </div>
               </div>
             </div>
