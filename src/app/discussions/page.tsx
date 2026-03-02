@@ -239,7 +239,7 @@ export default function DiscussionsPage() {
               onClick={() => { setSelectedDiscussion(null); setPosts([]); }}
               className="flex items-center gap-1 text-sm text-ink-muted hover:text-ink transition-colors mb-3"
             >
-              <ArrowLeft className="w-4 h-4" /> Back to Discussions
+              <ArrowLeft className="w-4 h-4" /> Back to Marginalia
             </button>
             <div className="flex items-center gap-3 mb-1">
               <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: theme.color }} />
@@ -367,9 +367,9 @@ export default function DiscussionsPage() {
               style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
             >
               <MessageSquare className="w-6 h-6 text-gold" />
-              Book Club
+              Marginalia
             </h1>
-            <p className="text-sm text-ink-muted mt-0.5">Discuss books with fellow readers</p>
+            <p className="text-sm text-ink-muted mt-0.5">Notes in the margins — discuss books with fellow readers</p>
           </div>
           {user && (
             <motion.button
@@ -481,9 +481,9 @@ export default function DiscussionsPage() {
           <div className="text-center py-20">
             <MessageSquare className="w-16 h-16 text-gold/30 mx-auto mb-4" />
             <h2 className="text-xl font-bold text-ink mb-2" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
-              No discussions yet
+              No threads yet
             </h2>
-            <p className="text-ink-muted mb-6">Be the first to start a book club discussion!</p>
+            <p className="text-ink-muted mb-6">Be the first to start a marginalia thread!</p>
             {user && (
               <motion.button
                 whileTap={{ scale: 0.95 }}

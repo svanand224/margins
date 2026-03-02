@@ -967,7 +967,7 @@ export default function HomePage() {
                     type="text"
                     value={newThreadName}
                     onChange={(e) => setNewThreadName(e.target.value)}
-                    placeholder="Thread name (e.g., Book Club 2026, Comfort Reads)"
+                    placeholder="Thread name (e.g., Marginalia 2026, Comfort Reads)"
                     className="w-full px-3 py-2 bg-cream/50 border border-gold-light/30 rounded-lg text-sm text-ink"
                   />
                   <input
