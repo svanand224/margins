@@ -169,13 +169,17 @@ export default function DiscoverPage() {
     const d = activity.data as Record<string, string>;
     switch (activity.type) {
       case 'book_added':
-      case 'started_reading': return `added "${d.book_title || 'a book'}" to their library`;
+      case 'started_reading': return `started reading "${d.book_title || 'a book'}"${d.book_author ? ` by ${d.book_author}` : ''}`;
       case 'book_completed':
-      case 'finished_book': return `finished reading "${d.book_title || 'a book'}"`;
+      case 'finished_book': return `finished "${d.book_title || 'a book'}"${d.book_author ? ` by ${d.book_author}` : ''} 🎉`;
       case 'review_added':
-      case 'rated_book': return `reviewed "${d.book_title || 'a book'}"`;
+      case 'rated_book': return `reviewed "${d.book_title || 'a book'}"${d.rating ? ` — ${'★'.repeat(Number(d.rating))}` : ''}`;
+      case 'recommended': return `recommended "${d.book_title || 'a book'}"${d.book_author ? ` by ${d.book_author}` : ''}${d.message ? ` — "${d.message}"` : ''}`;
+      case 'gold_recommend': return `gave a gold recommendation to "${d.book_title || 'a book'}"${d.note ? ` — "${d.note}"` : ''} ✨`;
+      case 'book_post': return `shared a thought on "${d.book_title || 'a book'}"${d.message ? `: "${d.message}"` : ''}`;
       case 'follow':
-      case 'followed': return `followed ${d.following_name || d.followed_name || 'someone'}`;
+      case 'followed': return `followed ${d.following_name || d.followed_name || 'a reader'}`;
+      case 'session_logged': return `read ${d.pages_read ? `${d.pages_read} pages of ` : ''}"${d.book_title || 'a book'}"${d.minutes_spent ? ` in ${d.minutes_spent} min` : ''}`;
       default: return 'was active';
     }
   };
