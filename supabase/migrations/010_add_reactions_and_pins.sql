@@ -42,5 +42,5 @@ alter table public.discussion_posts add column if not exists pinned_by uuid refe
 -- Index for efficiently fetching pinned posts
 create index if not exists discussion_posts_pinned_idx on public.discussion_posts (discussion_id, is_pinned) where is_pinned = true;
 
--- Enable realtime on discussion_posts (in case not already done)
-alter publication supabase_realtime add table public.discussion_posts;
+-- Enable realtime on discussion_posts (skip if already enabled)
+-- Run this only if you haven't already: alter publication supabase_realtime add table public.discussion_posts;
