@@ -15,6 +15,8 @@ import {
   Trash2,
   CheckCheck,
   Award,
+  Lock,
+  UserCheck,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -94,8 +96,11 @@ export default function NotificationsPage() {
       case 'new_follower': return <UserPlus className="w-4 h-4 text-gold" />;
       case 'new_recommendation': return <Gift className="w-4 h-4 text-rose" />;
       case 'discussion_join': return <MessageSquare className="w-4 h-4 text-gold-dark" />;
+      case 'new_discussion_post': return <MessageSquare className="w-4 h-4 text-teal" />;
       case 'new_comment': return <MessageSquare className="w-4 h-4 text-copper" />;
       case 'badge_unlocked': return <Award className="w-4 h-4 text-amber" />;
+      case 'follow_request': return <Lock className="w-4 h-4 text-gold" />;
+      case 'follow_request_accepted': return <UserCheck className="w-4 h-4 text-forest" />;
       default: return <Bell className="w-4 h-4 text-gold" />;
     }
   };
@@ -106,8 +111,11 @@ export default function NotificationsPage() {
       case 'new_follower': return <><strong>{name}</strong> started following you</>;
       case 'new_recommendation': return <><strong>{name}</strong> recommended <em>&ldquo;{n.data.book_title || 'a book'}&rdquo;</em> to you</>;
       case 'discussion_join': return <><strong>{name}</strong> joined your discussion <em>&ldquo;{n.data.discussion_title || ''}&rdquo;</em></>;
+      case 'new_discussion_post': return <><strong>{name}</strong> posted in <em>&ldquo;{n.data.discussion_title || 'a discussion'}&rdquo;</em></>;
       case 'new_comment': return <><strong>{name}</strong> commented on your shelf</>;
       case 'badge_unlocked': return <>You earned the <strong>{n.data.badge_label || 'achievement'}</strong> badge!</>;
+      case 'follow_request': return <><strong>{name}</strong> wants to follow you</>;
+      case 'follow_request_accepted': return <><strong>{name}</strong> accepted your follow request</>;
       default: return <>{n.data.message || 'You have a notification'}</>;
     }
   };
@@ -117,7 +125,10 @@ export default function NotificationsPage() {
       case 'new_follower': return (n.from_user as any)?.public_slug ? `/user/${(n.from_user as any).public_slug}` : null;
       case 'new_recommendation': return '/recommendations';
       case 'discussion_join': return '/discussions';
+      case 'new_discussion_post': return '/discussions';
       case 'badge_unlocked': return '/goals';
+      case 'follow_request': return '/profile';
+      case 'follow_request_accepted': return (n.from_user as any)?.public_slug ? `/user/${(n.from_user as any).public_slug}` : null;
       default: return null;
     }
   };

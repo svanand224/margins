@@ -367,6 +367,45 @@ create index if not exists follows_follower_idx on public.follows (follower_id);
 create index if not exists follows_following_idx on public.follows (following_id);
 
 -- ============================================================
+-- 10b. Follow Requests (for private accounts)
+-- ============================================================
+
+create table if not exists public.follow_requests (
+  id uuid primary key default gen_random_uuid(),
+  requester_id uuid references public.profiles(id) on delete cascade not null,
+  target_id uuid references public.profiles(id) on delete cascade not null,
+  status text not null default 'pending' check (status in ('pending', 'accepted', 'rejected')),
+  created_at timestamptz default now(),
+  unique(requester_id, target_id)
+);
+
+alter table public.follow_requests enable row level security;
+
+drop policy if exists "Users can view own follow requests" on public.follow_requests;
+create policy "Users can view own follow requests"
+  on public.follow_requests for select
+  using (auth.uid() = requester_id or auth.uid() = target_id);
+
+drop policy if exists "Users can send follow requests" on public.follow_requests;
+create policy "Users can send follow requests"
+  on public.follow_requests for insert
+  with check (auth.uid() = requester_id and requester_id != target_id);
+
+drop policy if exists "Target can respond to follow requests" on public.follow_requests;
+create policy "Target can respond to follow requests"
+  on public.follow_requests for update
+  using (auth.uid() = target_id);
+
+drop policy if exists "Users can delete follow requests" on public.follow_requests;
+create policy "Users can delete follow requests"
+  on public.follow_requests for delete
+  using (auth.uid() = requester_id or auth.uid() = target_id);
+
+create index if not exists follow_requests_requester_idx on public.follow_requests (requester_id);
+create index if not exists follow_requests_target_idx on public.follow_requests (target_id);
+create index if not exists follow_requests_pending_idx on public.follow_requests (target_id, status) where status = 'pending';
+
+-- ============================================================
 -- 11. Book Recommendations (Letterboxd-style)
 -- ============================================================
 

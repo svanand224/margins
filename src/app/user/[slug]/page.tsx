@@ -60,6 +60,10 @@ export default function PublicProfilePage() {
   const [showRecommendModal, setShowRecommendModal] = useState(false);
   const [recommendBook, setRecommendBook] = useState({ title: '', author: '', message: '' });
 
+  // Follow request state
+  const [followRequestStatus, setFollowRequestStatus] = useState<'none' | 'pending' | 'accepted' | 'rejected'>('none');
+  const [isAcceptedFollower, setIsAcceptedFollower] = useState(false);
+
   useEffect(() => {
     const fetchProfile = async () => {
       if (!isSupabaseConfigured()) {
@@ -81,8 +85,45 @@ export default function PublicProfilePage() {
         return;
       }
 
-      // For private profiles, strip detailed reading data — only show name/bio
-      if (!profileData.shelf_public) {
+      // Check follow status, follow requests, and determine visibility
+      let canSeeContent = profileData.shelf_public;
+
+      if (user) {
+        // Check if already following
+        const { data: followData } = await supabase
+          .from('follows')
+          .select('id')
+          .eq('follower_id', user.id)
+          .eq('following_id', profileData.id)
+          .maybeSingle();
+        setIsFollowing(!!followData);
+
+        // If following a private profile, they can see content
+        if (followData && !profileData.shelf_public) {
+          canSeeContent = true;
+          setIsAcceptedFollower(true);
+        }
+
+        // Check follow request status (for private profiles)
+        if (!profileData.shelf_public && !followData) {
+          const { data: requestData } = await supabase
+            .from('follow_requests')
+            .select('status')
+            .eq('requester_id', user.id)
+            .eq('target_id', profileData.id)
+            .maybeSingle();
+          if (requestData) {
+            setFollowRequestStatus(requestData.status as any);
+            if (requestData.status === 'accepted') {
+              canSeeContent = true;
+              setIsAcceptedFollower(true);
+            }
+          }
+        }
+      }
+
+      // For private profiles where viewer can't see content, strip reading data
+      if (!canSeeContent) {
         profileData.reading_data = { books: [], goals: {}, dailyLogs: {} };
         profileData.shelf_show_currently_reading = false;
         profileData.shelf_show_stats = false;
@@ -91,16 +132,6 @@ export default function PublicProfilePage() {
       setProfile(profileData as PublicProfile);
       setLoading(false);
 
-      // Check follow status and counts
-      if (user) {
-        const { data: followData } = await supabase
-          .from('follows')
-          .select('id')
-          .eq('follower_id', user.id)
-          .eq('following_id', profileData.id)
-          .maybeSingle();
-        setIsFollowing(!!followData);
-      }
       // Get follower count
       const { count: followers } = await supabase
         .from('follows')
@@ -123,6 +154,7 @@ export default function PublicProfilePage() {
     setFollowLoading(true);
     try {
       const supabase = createClient();
+
       if (isFollowing) {
         // Unfollow
         const { error } = await supabase
@@ -133,9 +165,36 @@ export default function PublicProfilePage() {
         if (!error) {
           setIsFollowing(false);
           setFollowerCount(c => Math.max(0, c - 1));
+          setIsAcceptedFollower(false);
+        }
+      } else if (!profile.shelf_public && followRequestStatus === 'none') {
+        // Private profile — send follow request
+        const { error } = await supabase.from('follow_requests').insert({
+          requester_id: user.id,
+          target_id: profile.id,
+        });
+        if (!error) {
+          setFollowRequestStatus('pending');
+          // Send notification
+          await supabase.from('notifications').insert({
+            user_id: profile.id,
+            type: 'follow_request',
+            from_user_id: user.id,
+            data: {},
+          });
+        }
+      } else if (!profile.shelf_public && followRequestStatus === 'pending') {
+        // Cancel pending request
+        const { error } = await supabase
+          .from('follow_requests')
+          .delete()
+          .eq('requester_id', user.id)
+          .eq('target_id', profile.id);
+        if (!error) {
+          setFollowRequestStatus('none');
         }
       } else {
-        // Follow
+        // Public profile — follow directly
         const { error } = await supabase.from('follows').insert({
           follower_id: user.id,
           following_id: profile.id,
@@ -305,14 +364,20 @@ export default function PublicProfilePage() {
                   className={`px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-1.5 ${
                     isFollowing
                       ? 'bg-cream border border-gold-light/30 text-ink-muted hover:bg-rose/10 hover:text-rose hover:border-rose/30'
+                      : followRequestStatus === 'pending'
+                      ? 'bg-cream border border-gold-light/30 text-ink-muted hover:bg-rose/10 hover:text-rose hover:border-rose/30'
                       : 'text-parchment shadow-sm'
                   }`}
-                  style={!isFollowing ? { background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' } : undefined}
+                  style={!isFollowing && followRequestStatus !== 'pending' ? { background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' } : undefined}
                 >
                   {followLoading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : isFollowing ? (
                     'Following'
+                  ) : followRequestStatus === 'pending' ? (
+                    <><Lucide.Clock className="w-4 h-4" /> Requested</>
+                  ) : !profile.shelf_public ? (
+                    <><Lucide.Lock className="w-4 h-4" /> Request to Follow</>
                   ) : (
                     <><Lucide.UserPlus className="w-4 h-4" /> Follow</>
                   )}
@@ -439,7 +504,7 @@ export default function PublicProfilePage() {
       )}
 
       {/* Private profile notice */}
-      {!profile.shelf_public && !isOwnProfile && (
+      {!profile.shelf_public && !isOwnProfile && !isAcceptedFollower && !isFollowing && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -453,7 +518,12 @@ export default function PublicProfilePage() {
             Private Reader
           </h3>
           <p className="text-xs text-ink-muted max-w-xs mx-auto">
-            {profile.reader_name} keeps their library private. You can still follow them to stay connected and send book recommendations.
+            {followRequestStatus === 'pending'
+              ? `Your follow request is pending. Once ${profile.reader_name} accepts, you'll be able to see their reading activity.`
+              : followRequestStatus === 'rejected'
+              ? `${profile.reader_name} has not accepted your follow request.`
+              : `${profile.reader_name} keeps their library private. Send a follow request to see their reading activity and recommendations.`
+            }
           </p>
         </motion.div>
       )}

@@ -43,6 +43,10 @@ export default function BookPage() {
   const [showDeletedMsg, setShowDeletedMsg] = useState(false);
   const router = useRouter();
   const [showConfetti, setShowConfetti] = useState(false);
+  const [savingProgress, setSavingProgress] = useState(false);
+  const [savingDetails, setSavingDetails] = useState(false);
+  const [savingSession, setSavingSession] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
 
   // Helper to update book in Supabase and local state
   const updateBookInSupabase = async (updatedBook: Book) => {
@@ -143,17 +147,22 @@ export default function BookPage() {
   }, [id]);
 
   const handleDetailsSave = async () => {
-    if (!book) return;
-    const updatedBook = {
-      ...book,
-      title: detailsForm.title.trim() || book.title,
-      author: detailsForm.author.trim() || book.author,
-      genre: detailsForm.genre.trim(),
-      coverUrl: detailsForm.coverUrl.trim() || book.coverUrl,
-      totalPages: detailsForm.totalPages || book.totalPages,
-    };
-    await updateBookInSupabase(updatedBook);
-    setShowDetailsEdit(false);
+    if (!book || savingDetails) return;
+    setSavingDetails(true);
+    try {
+      const updatedBook = {
+        ...book,
+        title: detailsForm.title.trim() || book.title,
+        author: detailsForm.author.trim() || book.author,
+        genre: detailsForm.genre.trim(),
+        coverUrl: detailsForm.coverUrl.trim() || book.coverUrl,
+        totalPages: detailsForm.totalPages || book.totalPages,
+      };
+      await updateBookInSupabase(updatedBook);
+      setShowDetailsEdit(false);
+    } finally {
+      setSavingDetails(false);
+    }
   };
 
   useEffect(() => {
@@ -407,43 +416,54 @@ export default function BookPage() {
             </div>
 
             {/* Page controls */}
-            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gold-light/20">
+            <div className="mt-3 pt-3 border-t border-gold-light/20 space-y-2">
+              <div className="flex items-center gap-1.5">
+                <button
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-xs font-medium border border-gold-light/30 text-ink-muted hover:bg-cream/60 active:bg-cream/80 transition-colors touch-manipulation"
+                  onClick={() => setForm(f => ({ ...f, currentPage: Math.max(0, f.currentPage - 10) }))}
+                >−10</button>
+                <button
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-xs font-medium border border-gold-light/30 text-ink-muted hover:bg-cream/60 active:bg-cream/80 transition-colors touch-manipulation"
+                  onClick={() => setForm(f => ({ ...f, currentPage: Math.max(0, f.currentPage - 1) }))}
+                >−1</button>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={form.currentPage}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/[^0-9]/g, '');
+                    const val = raw === '' ? 0 : Math.max(0, Math.min(book.totalPages, Number(raw)));
+                    setForm(f => ({ ...f, currentPage: val }));
+                  }}
+                  className="flex-1 text-center px-2 min-h-[44px] rounded-lg bg-cream/50 border border-gold-light/30 text-ink text-sm touch-manipulation"
+                />
+                <button
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-xs font-medium border border-gold-light/30 text-ink-muted hover:bg-cream/60 active:bg-cream/80 transition-colors touch-manipulation"
+                  onClick={() => setForm(f => ({ ...f, currentPage: Math.min(book.totalPages, f.currentPage + 1) }))}
+                >+1</button>
+                <button
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-xs font-medium border border-gold-light/30 text-ink-muted hover:bg-cream/60 active:bg-cream/80 transition-colors touch-manipulation"
+                  onClick={() => setForm(f => ({ ...f, currentPage: Math.min(book.totalPages, f.currentPage + 10) }))}
+                >+10</button>
+              </div>
               <button
-                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-gold-light/30 text-ink-muted hover:bg-cream/60 transition-colors"
-                onClick={() => setForm(f => ({ ...f, currentPage: Math.max(0, f.currentPage - 10) }))}
-              >−10</button>
-              <button
-                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-gold-light/30 text-ink-muted hover:bg-cream/60 transition-colors"
-                onClick={() => setForm(f => ({ ...f, currentPage: Math.max(0, f.currentPage - 1) }))}
-              >−1</button>
-              <input
-                type="number"
-                value={form.currentPage}
-                onChange={(e) => {
-                  const val = Math.max(0, Math.min(book.totalPages, Number(e.target.value)));
-                  setForm(f => ({ ...f, currentPage: val }));
-                }}
-                className="flex-1 text-center px-2 py-1.5 rounded-lg bg-cream/50 border border-gold-light/30 text-ink text-sm"
-                min={0}
-                max={book.totalPages}
-              />
-              <button
-                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-gold-light/30 text-ink-muted hover:bg-cream/60 transition-colors"
-                onClick={() => setForm(f => ({ ...f, currentPage: Math.min(book.totalPages, f.currentPage + 1) }))}
-              >+1</button>
-              <button
-                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-gold-light/30 text-ink-muted hover:bg-cream/60 transition-colors"
-                onClick={() => setForm(f => ({ ...f, currentPage: Math.min(book.totalPages, f.currentPage + 10) }))}
-              >+10</button>
-              <button
-                className="px-3 py-1.5 rounded-lg text-xs font-medium text-parchment"
+                className="w-full min-h-[44px] rounded-lg text-sm font-medium text-parchment disabled:opacity-50 touch-manipulation"
                 style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}
+                disabled={savingProgress}
                 onClick={async () => {
-                  if (!book) return;
-                  const updated = { ...book, currentPage: form.currentPage };
-                  await updateBookInSupabase(updated);
+                  if (!book || savingProgress) return;
+                  setSavingProgress(true);
+                  try {
+                    const updated = { ...book, currentPage: form.currentPage };
+                    await updateBookInSupabase(updated);
+                    setSaveSuccess('progress');
+                    setTimeout(() => setSaveSuccess(null), 1500);
+                  } finally {
+                    setSavingProgress(false);
+                  }
                 }}
-              >Save</button>
+              >{savingProgress ? 'Saving...' : saveSuccess === 'progress' ? '✓ Saved!' : 'Save Progress'}</button>
             </div>
           </div>
 
@@ -541,30 +561,37 @@ export default function BookPage() {
 
           {/* Log Session Modal */}
           {showSessionModal && (
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowSessionModal(false)}>
-              <div className="bg-parchment rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-gold-light/30" onClick={e => e.stopPropagation()}>
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-50" onClick={() => setShowSessionModal(false)}>
+              <div className="bg-parchment rounded-t-2xl sm:rounded-2xl shadow-2xl p-6 w-full sm:max-w-sm max-h-[85vh] overflow-y-auto border border-gold-light/30 touch-manipulation" onClick={e => e.stopPropagation()}>
                 <h2 className="text-lg font-bold text-ink mb-4" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>Log Reading Session</h2>
                 <div className="space-y-3">
                   <div>
                     <label className="block text-xs text-ink-muted mb-1 uppercase tracking-wider">Pages read</label>
                     <input
-                      type="number"
-                      min={1}
-                      max={book.totalPages}
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       value={sessionForm.pagesRead || ''}
-                      onChange={e => setSessionForm(f => ({ ...f, pagesRead: Number(e.target.value) }))}
-                      className="w-full px-3 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm"
+                      onChange={e => {
+                        const raw = e.target.value.replace(/[^0-9]/g, '');
+                        setSessionForm(f => ({ ...f, pagesRead: raw === '' ? 0 : Number(raw) }));
+                      }}
+                      className="w-full px-3 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm touch-manipulation"
                       placeholder="0"
                     />
                   </div>
                   <div>
                     <label className="block text-xs text-ink-muted mb-1 uppercase tracking-wider">Minutes spent</label>
                     <input
-                      type="number"
-                      min={1}
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       value={sessionForm.minutesSpent || ''}
-                      onChange={e => setSessionForm(f => ({ ...f, minutesSpent: Number(e.target.value) }))}
-                      className="w-full px-3 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm"
+                      onChange={e => {
+                        const raw = e.target.value.replace(/[^0-9]/g, '');
+                        setSessionForm(f => ({ ...f, minutesSpent: raw === '' ? 0 : Number(raw) }));
+                      }}
+                      className="w-full px-3 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm touch-manipulation"
                       placeholder="0"
                     />
                   </div>
@@ -573,7 +600,7 @@ export default function BookPage() {
                     <textarea
                       value={sessionForm.notes}
                       onChange={e => setSessionForm(f => ({ ...f, notes: e.target.value }))}
-                      className="w-full px-3 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm resize-none"
+                      className="w-full px-3 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm resize-none touch-manipulation"
                       rows={2}
                       placeholder="Great chapter about..."
                     />
@@ -581,14 +608,14 @@ export default function BookPage() {
                   <div className="flex gap-2 pt-1">
                     <button
                       onClick={() => setShowSessionModal(false)}
-                      className="flex-1 px-4 py-2.5 rounded-xl text-sm text-ink-muted border border-gold-light/30 hover:bg-cream/40 transition-colors"
+                      className="flex-1 px-4 min-h-[44px] rounded-xl text-sm text-ink-muted border border-gold-light/30 hover:bg-cream/40 active:bg-cream/60 transition-colors touch-manipulation"
                     >Cancel</button>
                     <button
                       onClick={handleLogSession}
-                      disabled={!sessionForm.pagesRead}
-                      className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-parchment disabled:opacity-50"
+                      disabled={!sessionForm.pagesRead || savingSession}
+                      className="flex-1 px-4 min-h-[44px] rounded-xl text-sm font-medium text-parchment disabled:opacity-50 touch-manipulation"
                       style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}
-                    >Save Session</button>
+                    >{savingSession ? 'Saving...' : 'Save Session'}</button>
                   </div>
                 </div>
               </div>
@@ -597,13 +624,13 @@ export default function BookPage() {
 
           {/* Edit Modal */}
           {showEdit && (
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowEdit(false)}>
-              <div className="bg-parchment rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-gold-light/30" onClick={e => e.stopPropagation()}>
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-50" onClick={() => setShowEdit(false)}>
+              <div className="bg-parchment rounded-t-2xl sm:rounded-2xl shadow-2xl p-6 w-full sm:max-w-sm max-h-[85vh] overflow-y-auto border border-gold-light/30 touch-manipulation" onClick={e => e.stopPropagation()}>
                 <h2 className="text-lg font-bold text-ink mb-4" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>Edit Book Details</h2>
                 <div className="space-y-3">
                   <div>
                     <label className="block text-xs text-ink-muted mb-1 uppercase tracking-wider">Status</label>
-                    <select name="status" value={form.status} onChange={handleEditChange} className="w-full px-3 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm">
+                    <select name="status" value={form.status} onChange={handleEditChange} className="w-full px-3 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm touch-manipulation">
                       <option value="want-to-read">Want to Read</option>
                       <option value="reading">Reading</option>
                       <option value="completed">Completed</option>
@@ -612,7 +639,7 @@ export default function BookPage() {
                   </div>
                   <div>
                     <label className="block text-xs text-ink-muted mb-1 uppercase tracking-wider">Current Page</label>
-                    <input type="number" name="currentPage" value={form.currentPage} onChange={handleEditChange} className="w-full px-3 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm" min={0} max={book.totalPages} />
+                    <input type="text" inputMode="numeric" pattern="[0-9]*" name="currentPage" value={form.currentPage} onChange={handleEditChange} className="w-full px-3 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm touch-manipulation" />
                   </div>
                   <div>
                     <label className="block text-xs text-ink-muted mb-1 uppercase tracking-wider">Rating</label>
@@ -621,6 +648,7 @@ export default function BookPage() {
                         <button
                           key={star}
                           onClick={() => setForm(f => ({ ...f, rating: star }))}
+                          className="min-w-[44px] min-h-[44px] flex items-center justify-center touch-manipulation"
                           style={{ color: star <= form.rating ? 'var(--th-gold)' : 'var(--th-gold-light)', fontSize: '1.5rem', background: 'none', border: 'none', cursor: 'pointer' }}
                         >★</button>
                       ))}
@@ -628,11 +656,11 @@ export default function BookPage() {
                   </div>
                   <div>
                     <label className="block text-xs text-ink-muted mb-1 uppercase tracking-wider">Notes / Review</label>
-                    <textarea name="notes" value={form.notes} onChange={handleEditChange} className="w-full px-3 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm resize-none" rows={3} placeholder="Your thoughts..." />
+                    <textarea name="notes" value={form.notes} onChange={handleEditChange} className="w-full px-3 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm resize-none touch-manipulation" rows={3} placeholder="Your thoughts..." />
                   </div>
                   <div className="flex gap-2 pt-1">
-                    <button onClick={() => setShowEdit(false)} className="flex-1 px-4 py-2.5 rounded-xl text-sm text-ink-muted border border-gold-light/30 hover:bg-cream/40 transition-colors">Cancel</button>
-                    <button onClick={handleEditSave} className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-parchment" style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}>Save</button>
+                    <button onClick={() => setShowEdit(false)} className="flex-1 px-4 min-h-[44px] rounded-xl text-sm text-ink-muted border border-gold-light/30 hover:bg-cream/40 active:bg-cream/60 transition-colors touch-manipulation">Cancel</button>
+                    <button onClick={handleEditSave} className="flex-1 px-4 min-h-[44px] rounded-xl text-sm font-medium text-parchment touch-manipulation" style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}>Save</button>
                   </div>
                 </div>
               </div>
@@ -679,8 +707,8 @@ export default function BookPage() {
 
           {/* Edit Book Details Modal (title, author, genre, cover, pages) */}
           {showDetailsEdit && (
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowDetailsEdit(false)}>
-              <div className="bg-parchment rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-gold-light/30" onClick={e => e.stopPropagation()}>
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-50" onClick={() => setShowDetailsEdit(false)}>
+              <div className="bg-parchment rounded-t-2xl sm:rounded-2xl shadow-2xl p-6 w-full sm:max-w-sm max-h-[85vh] overflow-y-auto border border-gold-light/30 touch-manipulation" onClick={e => e.stopPropagation()}>
                 <h2 className="text-lg font-bold text-ink mb-4" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>Edit Book Info</h2>
                 <div className="space-y-3">
                   <div>
@@ -689,7 +717,7 @@ export default function BookPage() {
                       type="text"
                       value={detailsForm.title}
                       onChange={e => setDetailsForm(f => ({ ...f, title: e.target.value }))}
-                      className="w-full px-3 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm"
+                      className="w-full px-3 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm touch-manipulation"
                       placeholder="Book title"
                     />
                   </div>
@@ -699,7 +727,7 @@ export default function BookPage() {
                       type="text"
                       value={detailsForm.author}
                       onChange={e => setDetailsForm(f => ({ ...f, author: e.target.value }))}
-                      className="w-full px-3 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm"
+                      className="w-full px-3 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm touch-manipulation"
                       placeholder="Author name"
                     />
                   </div>
@@ -709,7 +737,7 @@ export default function BookPage() {
                       type="text"
                       value={detailsForm.genre}
                       onChange={e => setDetailsForm(f => ({ ...f, genre: e.target.value }))}
-                      className="w-full px-3 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm"
+                      className="w-full px-3 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm touch-manipulation"
                       placeholder="e.g. Fiction, Romance, Sci-Fi"
                     />
                   </div>
@@ -719,7 +747,7 @@ export default function BookPage() {
                       type="url"
                       value={detailsForm.coverUrl}
                       onChange={e => setDetailsForm(f => ({ ...f, coverUrl: e.target.value }))}
-                      className="w-full px-3 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm"
+                      className="w-full px-3 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm touch-manipulation"
                       placeholder="https://..."
                     />
                     {detailsForm.coverUrl && (
@@ -732,17 +760,21 @@ export default function BookPage() {
                   <div>
                     <label className="block text-xs text-ink-muted mb-1 uppercase tracking-wider">Total Pages</label>
                     <input
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       value={detailsForm.totalPages || ''}
-                      onChange={e => setDetailsForm(f => ({ ...f, totalPages: Number(e.target.value) }))}
-                      className="w-full px-3 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm"
-                      min={1}
+                      onChange={e => {
+                        const raw = e.target.value.replace(/[^0-9]/g, '');
+                        setDetailsForm(f => ({ ...f, totalPages: raw === '' ? 0 : Number(raw) }));
+                      }}
+                      className="w-full px-3 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm touch-manipulation"
                       placeholder="0"
                     />
                   </div>
                   <div className="flex gap-2 pt-1">
-                    <button onClick={() => setShowDetailsEdit(false)} className="flex-1 px-4 py-2.5 rounded-xl text-sm text-ink-muted border border-gold-light/30 hover:bg-cream/40 transition-colors">Cancel</button>
-                    <button onClick={handleDetailsSave} className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-parchment" style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}>Save Changes</button>
+                    <button onClick={() => setShowDetailsEdit(false)} className="flex-1 px-4 min-h-[44px] rounded-xl text-sm text-ink-muted border border-gold-light/30 hover:bg-cream/40 active:bg-cream/60 transition-colors touch-manipulation">Cancel</button>
+                    <button onClick={handleDetailsSave} disabled={savingDetails} className="flex-1 px-4 min-h-[44px] rounded-xl text-sm font-medium text-parchment disabled:opacity-50 touch-manipulation" style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}>{savingDetails ? 'Saving...' : 'Save Changes'}</button>
                   </div>
                 </div>
               </div>

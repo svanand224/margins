@@ -78,8 +78,11 @@ export default function ProfilePage() {
   // Social: followers, following, mutuals
   const [followers, setFollowers] = useState<{ id: string; username: string; reader_name: string; avatar_url: string | null; public_slug: string | null }[]>([]);
   const [following, setFollowing] = useState<{ id: string; username: string; reader_name: string; avatar_url: string | null; public_slug: string | null }[]>([]);
-  const [socialTab, setSocialTab] = useState<'followers' | 'following' | 'mutuals'>('mutuals');
+  const [socialTab, setSocialTab] = useState<'followers' | 'following' | 'mutuals' | 'requests'>('mutuals');
   const [socialLoading, setSocialLoading] = useState(false);  const [librarySaving, setLibrarySaving] = useState(false);
+
+  // Follow requests
+  const [pendingRequests, setPendingRequests] = useState<{ id: string; requester_id: string; username: string; reader_name: string; avatar_url: string | null; public_slug: string | null; created_at: string }[]>([]);
 
   // Avatar
   const [avatarUploading, setAvatarUploading] = useState(false);
@@ -99,7 +102,7 @@ export default function ProfilePage() {
     }
   }, [profile]);
 
-  // Fetch social data (followers/following)
+  // Fetch social data (followers/following/requests)
   useEffect(() => {
     if (!user) return;
     const fetchSocial = async () => {
@@ -133,12 +136,87 @@ export default function ProfilePage() {
           public_slug: (f.profiles as any)?.public_slug || null,
         })));
       }
+      // Fetch pending follow requests
+      const { data: requestData } = await supabase
+        .from('follow_requests')
+        .select('id, requester_id, created_at, profiles:requester_id(username, reader_name, avatar_url, public_slug)')
+        .eq('target_id', user.id)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+      if (requestData) {
+        setPendingRequests(requestData.map((r: any) => ({
+          id: r.id,
+          requester_id: r.requester_id,
+          username: (r.profiles as any)?.username || '',
+          reader_name: (r.profiles as any)?.reader_name || 'Unknown',
+          avatar_url: (r.profiles as any)?.avatar_url || null,
+          public_slug: (r.profiles as any)?.public_slug || null,
+          created_at: r.created_at,
+        })));
+      }
       setSocialLoading(false);
     };
     fetchSocial();
   }, [user]);
 
   const mutuals = followers.filter(f => following.some(g => g.id === f.id));
+
+  // Accept a follow request
+  const handleAcceptRequest = async (requestId: string, requesterId: string) => {
+    if (!user) return;
+    const supabase = createClient();
+
+    // Update request status
+    const { error: updateError } = await supabase
+      .from('follow_requests')
+      .update({ status: 'accepted' })
+      .eq('id', requestId);
+
+    if (updateError) {
+      console.error('Accept request error:', updateError);
+      return;
+    }
+
+    // Create the follow relationship
+    await supabase.from('follows').insert({
+      follower_id: requesterId,
+      following_id: user.id,
+    });
+
+    // Notify the requester
+    await supabase.from('notifications').insert({
+      user_id: requesterId,
+      type: 'follow_request_accepted',
+      from_user_id: user.id,
+      data: {},
+    });
+
+    // Update local state
+    setPendingRequests(prev => prev.filter(r => r.id !== requestId));
+    const accepted = pendingRequests.find(r => r.id === requestId);
+    if (accepted) {
+      setFollowers(prev => [...prev, {
+        id: accepted.requester_id,
+        username: accepted.username,
+        reader_name: accepted.reader_name,
+        avatar_url: accepted.avatar_url,
+        public_slug: accepted.public_slug,
+      }]);
+    }
+  };
+
+  // Reject a follow request
+  const handleRejectRequest = async (requestId: string) => {
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('follow_requests')
+      .update({ status: 'rejected' })
+      .eq('id', requestId);
+
+    if (!error) {
+      setPendingRequests(prev => prev.filter(r => r.id !== requestId));
+    }
+  };
 
   const handleSave = async () => {
     if (!user) return;
@@ -793,7 +871,7 @@ export default function ProfilePage() {
 
             {/* Sub-tabs */}
             <div className="flex gap-1 mb-4 bg-cream/50 rounded-lg p-1">
-              {(['mutuals', 'followers', 'following'] as const).map(tab => (
+              {(['mutuals', 'followers', 'following', 'requests'] as const).map(tab => (
                 <button
                   key={tab}
                   onClick={() => setSocialTab(tab)}
@@ -801,7 +879,10 @@ export default function ProfilePage() {
                     socialTab === tab ? 'bg-gold/10 text-gold-dark' : 'text-ink-muted hover:bg-cream'
                   }`}
                 >
-                  {tab === 'mutuals' ? `Mutuals (${mutuals.length})` : tab === 'followers' ? `Followers (${followers.length})` : `Following (${following.length})`}
+                  {tab === 'mutuals' ? `Mutuals (${mutuals.length})`
+                    : tab === 'followers' ? `Followers (${followers.length})`
+                    : tab === 'following' ? `Following (${following.length})`
+                    : `Requests${pendingRequests.length > 0 ? ` (${pendingRequests.length})` : ''}`}
                 </button>
               ))}
             </div>
@@ -809,6 +890,52 @@ export default function ProfilePage() {
             {socialLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-6 h-6 animate-spin text-gold" />
+              </div>
+            ) : socialTab === 'requests' ? (
+              <div className="space-y-2">
+                {pendingRequests.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Users className="w-12 h-12 text-gold/20 mx-auto mb-3" />
+                    <p className="text-sm text-ink-muted">No pending follow requests</p>
+                  </div>
+                ) : (
+                  pendingRequests.map((req, i) => (
+                    <motion.div
+                      key={req.id}
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.03 }}
+                      className="glass-card rounded-xl p-3 flex items-center gap-3"
+                    >
+                      {req.avatar_url ? (
+                        <img src={req.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gold to-amber flex items-center justify-center text-parchment font-bold">
+                          {req.reader_name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-ink">{req.reader_name}</p>
+                        {req.username && <p className="text-xs text-ink-muted">@{req.username}</p>}
+                      </div>
+                      <div className="flex gap-1.5">
+                        <button
+                          onClick={() => handleAcceptRequest(req.id, req.requester_id)}
+                          className="px-3 py-1.5 rounded-lg text-xs font-medium text-parchment"
+                          style={{ background: 'linear-gradient(135deg, var(--th-forest), var(--th-teal))' }}
+                        >
+                          Accept
+                        </button>
+                        <button
+                          onClick={() => handleRejectRequest(req.id)}
+                          className="px-3 py-1.5 rounded-lg text-xs font-medium text-ink-muted border border-gold-light/30 hover:bg-rose/10 hover:text-rose hover:border-rose/30 transition-colors"
+                        >
+                          Decline
+                        </button>
+                      </div>
+                    </motion.div>
+                  ))
+                )}
               </div>
             ) : (
               <div className="space-y-2">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -97,6 +97,25 @@ export default function DiscussionsPage() {
   const [showBookPicker, setShowBookPicker] = useState(false);
   const [bookPickerSearch, setBookPickerSearch] = useState('');
 
+  // Realtime subscription ref
+  const realtimeChannelRef = useRef<ReturnType<ReturnType<typeof createClient>['channel']> | null>(null);
+
+  // Scroll to bottom ref
+  const postsEndRef = useRef<HTMLDivElement>(null);
+  const scrollToBottom = useCallback(() => {
+    postsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+
+  // Cleanup realtime on unmount
+  useEffect(() => {
+    return () => {
+      if (realtimeChannelRef.current) {
+        const supabase = createClient();
+        supabase.removeChannel(realtimeChannelRef.current);
+        realtimeChannelRef.current = null;
+      }
+    };
+  }, []);
   // Create form
   const [formTitle, setFormTitle] = useState('');
   const [formDescription, setFormDescription] = useState('');
@@ -211,6 +230,13 @@ export default function DiscussionsPage() {
   };
 
   const openDiscussion = async (disc: Discussion) => {
+    // Clean up previous realtime subscription
+    if (realtimeChannelRef.current) {
+      const sb = createClient();
+      sb.removeChannel(realtimeChannelRef.current);
+      realtimeChannelRef.current = null;
+    }
+
     setSelectedDiscussion(disc);
     setPostsLoading(true);
     const supabase = createClient();
@@ -257,8 +283,49 @@ export default function DiscussionsPage() {
           avatar_url: (m.profiles as any)?.avatar_url || null,
         })));
       }
+
+      // Subscribe to realtime new posts
+      const channel = supabase
+        .channel(`discussion-${disc.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'discussion_posts',
+            filter: `discussion_id=eq.${disc.id}`,
+          },
+          async (payload) => {
+            const newPostData = payload.new as any;
+            // Don't duplicate if we already added this post locally (from our own send)
+            setPosts(prev => {
+              if (prev.some(p => p.id === newPostData.id)) return prev;
+              return prev; // Will be enriched below
+            });
+
+            // Fetch the full post with user info
+            const { data: fullPost } = await supabase
+              .from('discussion_posts')
+              .select('*, user:user_id(reader_name, avatar_url)')
+              .eq('id', newPostData.id)
+              .single();
+
+            if (fullPost) {
+              setPosts(prev => {
+                if (prev.some(p => p.id === fullPost.id)) return prev;
+                return [...prev, fullPost as unknown as DiscussionPost];
+              });
+              // Auto-scroll to new message
+              setTimeout(scrollToBottom, 100);
+            }
+          }
+        )
+        .subscribe();
+
+      realtimeChannelRef.current = channel;
     } finally {
       setPostsLoading(false);
+      setTimeout(scrollToBottom, 300);
     }
   };
 
@@ -365,6 +432,27 @@ export default function DiscussionsPage() {
     if (post && !error) {
       setPosts(prev => [...prev, post as unknown as DiscussionPost]);
       setNewPost('');
+
+      // Notify all other members in this discussion
+      const { data: memberList } = await supabase
+        .from('discussion_members')
+        .select('user_id')
+        .eq('discussion_id', selectedDiscussion.id)
+        .neq('user_id', user.id);
+
+      if (memberList && memberList.length > 0) {
+        const notifications = memberList.map((m: any) => ({
+          user_id: m.user_id,
+          type: 'new_discussion_post',
+          from_user_id: user.id,
+          data: {
+            discussion_id: selectedDiscussion.id,
+            discussion_title: selectedDiscussion.title,
+            post_preview: newPost.trim().slice(0, 100),
+          },
+        }));
+        await supabase.from('notifications').insert(notifications);
+      }
     } else if (error) {
       console.error('Post failed:', error);
     }
@@ -393,7 +481,15 @@ export default function DiscussionsPage() {
         <div className="px-4 pt-4 pb-4 border-b border-gold-light/20 bg-cream/50">
           <div className="md:max-w-2xl md:mx-auto">
             <button
-              onClick={() => { setSelectedDiscussion(null); setPosts([]); setEditingDiscussion(null); setShowAddMember(false); }}
+              onClick={() => {
+                // Clean up realtime subscription when leaving
+                if (realtimeChannelRef.current) {
+                  const sb = createClient();
+                  sb.removeChannel(realtimeChannelRef.current);
+                  realtimeChannelRef.current = null;
+                }
+                setSelectedDiscussion(null); setPosts([]); setEditingDiscussion(null); setShowAddMember(false);
+              }}
               className="flex items-center gap-1 text-sm text-ink-muted hover:text-ink transition-colors mb-3"
             >
               <ArrowLeft className="w-4 h-4" /> Back to Marginalia
@@ -648,6 +744,7 @@ export default function DiscussionsPage() {
                   </div>
                 </motion.div>
               ))}
+              <div ref={postsEndRef} />
             </div>
           )}
         </div>
