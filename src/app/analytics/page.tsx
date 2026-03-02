@@ -79,6 +79,10 @@ export default function AnalyticsPage() {
         const dateKey = sess.date.split('T')[0];
         if (!dailyMap[dateKey]) {
           dailyMap[dateKey] = { pages: sess.pagesRead, minutes: sess.minutesSpent };
+        } else {
+          // Additive: accumulate session data not already in dailyLogs
+          dailyMap[dateKey].pages += sess.pagesRead;
+          dailyMap[dateKey].minutes += sess.minutesSpent;
         }
       });
     });

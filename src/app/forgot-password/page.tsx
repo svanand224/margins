@@ -52,7 +52,7 @@ function ForgotPasswordInner() {
     try {
       const supabase = getSupabase();
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/forgot-password`,
+        redirectTo: `${window.location.origin}/auth/callback?next=/forgot-password`,
       });
       if (error) throw error;
       setStep('sent');

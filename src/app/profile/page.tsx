@@ -265,9 +265,15 @@ export default function ProfilePage() {
 
     // Compress image client-side for faster upload
     const compressImage = (file: File): Promise<Blob> => {
-      return new Promise((resolve) => {
+      return new Promise((resolve, reject) => {
         const img = new Image();
+        const objectUrl = URL.createObjectURL(file);
+        img.onerror = () => {
+          URL.revokeObjectURL(objectUrl);
+          reject(new Error('Failed to load image'));
+        };
         img.onload = () => {
+          URL.revokeObjectURL(objectUrl);
           const canvas = document.createElement('canvas');
           const maxSize = 256; // Avatar size
           let { width, height } = img;
@@ -288,13 +294,21 @@ export default function ProfilePage() {
           canvas.height = height;
           const ctx = canvas.getContext('2d')!;
           ctx.drawImage(img, 0, 0, width, height);
-          canvas.toBlob((blob) => resolve(blob!), 'image/jpeg', 0.85);
+          canvas.toBlob((blob) => {
+            if (blob) resolve(blob);
+            else reject(new Error('Failed to compress image'));
+          }, 'image/jpeg', 0.85);
         };
-        img.src = URL.createObjectURL(file);
+        img.src = objectUrl;
       });
     };
 
-    const compressedBlob = await compressImage(file);
+    const compressedBlob = await compressImage(file).catch(() => null);
+    if (!compressedBlob) {
+      alert('Failed to process image. Please try a different file.');
+      setAvatarUploading(false);
+      return;
+    }
     const supabase = createClient();
 
     // Upload to Supabase Storage
@@ -306,20 +320,27 @@ export default function ProfilePage() {
 
     if (uploadError) {
       console.error('Upload error:', uploadError);
+      alert('Failed to upload avatar. Please try again.');
       setAvatarUploading(false);
       return;
     }
 
-    // Get public URL
+    // Get public URL with cache-buster
     const { data: { publicUrl } } = supabase.storage
       .from('avatars')
       .getPublicUrl(filePath);
+    const cacheBustedUrl = `${publicUrl}?v=${Date.now()}`;
 
     // Update profile
-    await supabase
+    const { error: updateError } = await supabase
       .from('profiles')
-      .update({ avatar_url: publicUrl })
+      .update({ avatar_url: cacheBustedUrl })
       .eq('id', user.id);
+
+    if (updateError) {
+      console.error('Profile update error:', updateError);
+      alert('Avatar uploaded but profile update failed. Please try again.');
+    }
 
     await refreshProfile();
     setAvatarUploading(false);
@@ -330,9 +351,10 @@ export default function ProfilePage() {
   const booksRead = books.filter((b) => b.status === 'completed').length;
   const currentlyReading = books.filter((b) => b.status === 'reading').length;
   const totalPages = books.reduce((sum, b) => sum + b.currentPage, 0);
-  const avgRating = booksRead > 0
-    ? (books.filter(b => b.rating).reduce((sum, b) => sum + (b.rating || 0), 0) /
-       books.filter(b => b.rating).length).toFixed(1)
+  const ratedBooks = books.filter(b => b.rating);
+  const avgRating = ratedBooks.length > 0
+    ? (ratedBooks.reduce((sum, b) => sum + (b.rating || 0), 0) /
+       ratedBooks.length).toFixed(1)
     : '—';
   const favoriteBooks = books.filter((b) => b.favorite).length;
 
@@ -357,15 +379,15 @@ export default function ProfilePage() {
       });
       const result = await res.json();
       if (result.success) {
+        useBookStore.getState().clearStore();
         await signOut();
         router.replace('/login');
       } else {
         alert(result.error || 'Account deletion failed. Please try again.');
       }
     } catch (err) {
-      // Network error — still try to sign out in case deletion partially succeeded
-      await signOut();
-      router.replace('/login');
+      // Network error — do NOT sign out, show error
+      alert('Could not reach the server. Your account was not deleted. Please try again.');
     }
     setSaving(false);
   };

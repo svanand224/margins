@@ -5,10 +5,17 @@ import { createClient as createSupabaseAdminClient } from '@supabase/supabase-js
 // POST /api/delete-account
 export async function POST(req: Request) {
   const supabase = await createClient();
+
+  // Verify the caller is authenticated and matches the userId
+  const { data: { user: authUser } } = await supabase.auth.getUser();
   const { userId } = await req.json();
 
   if (!userId) {
     return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
+  }
+
+  if (!authUser || authUser.id !== userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   }
 
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {

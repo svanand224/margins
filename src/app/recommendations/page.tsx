@@ -327,12 +327,13 @@ export default function RecommendationsPage() {
     const timer = setTimeout(async () => {
       if (!isSupabaseConfigured()) return;
       const supabase = createClient();
+      const safeQuery = sendUserQuery.replace(/[%_(),.]/g, '');
       const { data } = await supabase
         .from('profiles')
         .select('id, reader_name, avatar_url, public_slug')
         .eq('shelf_public', true)
         .not('public_slug', 'is', null)
-        .or(`reader_name.ilike.%${sendUserQuery}%,public_slug.ilike.%${sendUserQuery}%`)
+        .or(`reader_name.ilike.%${safeQuery}%,public_slug.ilike.%${safeQuery}%`)
         .neq('id', user?.id || '')
         .limit(5);
       setSendUsers(data || []);
@@ -408,6 +409,8 @@ export default function RecommendationsPage() {
       setShowSendModal(false);
       setSelectedBook(null);
       setSendBookQuery('');
+      setSendUserQuery('');
+      setSendBookResults([]);
       setSendMessage('');
       setShareNetworkSuccess(false);
     }, 1500);

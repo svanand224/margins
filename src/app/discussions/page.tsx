@@ -107,7 +107,7 @@ export default function DiscussionsPage() {
 
   useEffect(() => {
     fetchDiscussions();
-  }, []);
+  }, [user]);
 
   const fetchDiscussions = async () => {
     if (!isSupabaseConfigured()) { setLoading(false); return; }
@@ -215,49 +215,51 @@ export default function DiscussionsPage() {
     setPostsLoading(true);
     const supabase = createClient();
 
-    const { data: postsData } = await supabase
-      .from('discussion_posts')
-      .select('*, user:user_id(reader_name, avatar_url)')
-      .eq('discussion_id', disc.id)
-      .order('created_at', { ascending: true })
-      .limit(100);
-    setPosts((postsData as unknown as DiscussionPost[]) || []);
-
-    if (user) {
-      const { data: mem } = await supabase
-        .from('discussion_members')
-        .select('user_id')
+    try {
+      const { data: postsData } = await supabase
+        .from('discussion_posts')
+        .select('*, user:user_id(reader_name, avatar_url)')
         .eq('discussion_id', disc.id)
-        .eq('user_id', user.id)
-        .maybeSingle();
-      setIsMember(!!mem);
+        .order('created_at', { ascending: true })
+        .limit(100);
+      setPosts((postsData as unknown as DiscussionPost[]) || []);
 
-      // Fetch user's books for linking
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('reading_data')
-        .eq('id', user.id)
-        .single();
-      if (profile?.reading_data?.books) {
-        setUserBooks(profile.reading_data.books);
+      if (user) {
+        const { data: mem } = await supabase
+          .from('discussion_members')
+          .select('user_id')
+          .eq('discussion_id', disc.id)
+          .eq('user_id', user.id)
+          .maybeSingle();
+        setIsMember(!!mem);
+
+        // Fetch user's books for linking
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('reading_data')
+          .eq('id', user.id)
+          .single();
+        if (profile?.reading_data?.books) {
+          setUserBooks(profile.reading_data.books);
+        }
       }
-    }
 
-    // Fetch members list
-    const { data: membersData } = await supabase
-      .from('discussion_members')
-      .select('user_id, profiles:user_id(reader_name, avatar_url)')
-      .eq('discussion_id', disc.id)
-      .limit(50);
-    if (membersData) {
-      setMembers(membersData.map((m: any) => ({
-        id: m.user_id,
-        reader_name: (m.profiles as any)?.reader_name || 'Unknown',
-        avatar_url: (m.profiles as any)?.avatar_url || null,
-      })));
+      // Fetch members list
+      const { data: membersData } = await supabase
+        .from('discussion_members')
+        .select('user_id, profiles:user_id(reader_name, avatar_url)')
+        .eq('discussion_id', disc.id)
+        .limit(50);
+      if (membersData) {
+        setMembers(membersData.map((m: any) => ({
+          id: m.user_id,
+          reader_name: (m.profiles as any)?.reader_name || 'Unknown',
+          avatar_url: (m.profiles as any)?.avatar_url || null,
+        })));
+      }
+    } finally {
+      setPostsLoading(false);
     }
-
-    setPostsLoading(false);
   };
 
   const handleEditDiscussion = async () => {
@@ -362,8 +364,10 @@ export default function DiscussionsPage() {
 
     if (post && !error) {
       setPosts(prev => [...prev, post as unknown as DiscussionPost]);
+      setNewPost('');
+    } else if (error) {
+      console.error('Post failed:', error);
     }
-    setNewPost('');
     setSending(false);
   };
 
@@ -657,7 +661,7 @@ export default function DiscussionsPage() {
                 onChange={(e) => setNewPost(e.target.value)}
                 placeholder="Share your thoughts..."
                 className="flex-1 px-4 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm placeholder:text-ink-muted/60"
-                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendPost()}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendPost(); } }}
               />
               <motion.button
                 whileTap={{ scale: 0.95 }}
