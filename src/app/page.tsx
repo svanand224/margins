@@ -225,6 +225,11 @@ export default function HomePage() {
   const [recommendSending, setRecommendSending] = useState(false);
   const [recommendSent, setRecommendSent] = useState<string | null>(null);
   const [recommendMessage, setRecommendMessage] = useState('');
+  // Recommendation mode: 'gold' = gold badge (max 3), 'post' = network post, 'friend' = send to friend
+  const [recommendMode, setRecommendMode] = useState<'choose' | 'gold' | 'post' | 'friend'>('choose');
+  const [goldNote, setGoldNote] = useState('');
+  const [networkPostSent, setNetworkPostSent] = useState(false);
+  const [goldSaved, setGoldSaved] = useState(false);
 
   // ...existing code...
 
@@ -289,6 +294,70 @@ export default function HomePage() {
       setRecommendSearchQuery('');
       setRecommendMessage('');
       setRecommendSent(null);
+      setRecommendMode('choose');
+    }, 1500);
+  };
+
+  // Gold recommend — max 3 books can have gold badge
+  const goldRecommendedCount = books.filter(b => b.goldRecommended).length;
+
+  const handleGoldRecommend = async (bookId: string) => {
+    const book = books.find(b => b.id === bookId);
+    if (!book || !user) return;
+    if (goldRecommendedCount >= 3 && !book.goldRecommended) return; // max 3
+    setRecommendSending(true);
+    const store = useBookStore.getState();
+    store.updateBook(bookId, {
+      goldRecommended: true,
+      goldRecommendedNote: goldNote.trim() || undefined,
+    });
+    // Post to network
+    if (isSupabaseConfigured()) {
+      const supabase = createClient();
+      await supabase.from('activities').insert({
+        user_id: user.id,
+        type: 'gold_recommend',
+        data: {
+          book_title: book.title,
+          book_author: book.author,
+          note: goldNote.trim(),
+        },
+      });
+    }
+    setRecommendSending(false);
+    setGoldSaved(true);
+    setTimeout(() => {
+      setRecommendBookId(null);
+      setGoldNote('');
+      setGoldSaved(false);
+      setRecommendMode('choose');
+    }, 1500);
+  };
+
+  // Network post — share thoughts about any book
+  const handleNetworkPost = async (bookId: string) => {
+    const book = books.find(b => b.id === bookId);
+    if (!book || !user || !isSupabaseConfigured()) return;
+    setRecommendSending(true);
+    const supabase = createClient();
+    await supabase.from('activities').insert({
+      user_id: user.id,
+      type: 'book_post',
+      data: {
+        book_title: book.title,
+        book_author: book.author,
+        cover_url: book.coverUrl || null,
+        message: recommendMessage.trim(),
+        rating: book.rating || null,
+      },
+    });
+    setRecommendSending(false);
+    setNetworkPostSent(true);
+    setTimeout(() => {
+      setRecommendBookId(null);
+      setRecommendMessage('');
+      setNetworkPostSent(false);
+      setRecommendMode('choose');
     }, 1500);
   };
 
@@ -322,6 +391,13 @@ export default function HomePage() {
     const daysIntoYear = differenceInDays(new Date(), startOfYear(new Date())) + 1;
     const paceNeeded = yearGoal ? (yearGoal.target / 365) * daysIntoYear : 0;
 
+    // Today's data
+    const todayKey = format(new Date(), 'yyyy-MM-dd');
+    const todayLog = dailyLogs.find(l => l.date === todayKey);
+    const todayPages = todayLog?.pagesRead || 0;
+    const todayMinutes = todayLog?.minutesSpent || 0;
+    const todayBooks = todayLog?.booksWorkedOn?.length || 0;
+
     return {
       reading,
       completed,
@@ -333,6 +409,9 @@ export default function HomePage() {
       yearGoal,
       paceNeeded: Math.round(paceNeeded),
       totalBooks: books.length,
+      todayPages,
+      todayMinutes,
+      todayBooks,
     };
   }, [books, goals, dailyLogs]);
 
@@ -472,7 +551,7 @@ export default function HomePage() {
           },
           {
             icon: Lucide.Trophy,
-            label: 'Completed This Year',
+            label: 'Books This Year',
             value: stats.completedThisYear.length,
             color: 'text-gold-dark',
             bg: 'from-gold/10 to-amber/10',
@@ -486,8 +565,9 @@ export default function HomePage() {
           },
           {
             icon: Lucide.Clock,
-            label: 'Hours Read',
+            label: 'Total Hours',
             value: Math.round(stats.totalMinutes / 60),
+            subtitle: `${stats.totalPages.toLocaleString()} pages`,
             color: 'text-teal',
             bg: 'from-teal/10 to-teal-light/10',
           },
@@ -502,9 +582,52 @@ export default function HomePage() {
               {stat.value}
             </div>
             <p className="text-xs text-ink-muted mt-0.5">{stat.label}</p>
+            {'subtitle' in stat && stat.subtitle && (
+              <p className="text-[10px] text-ink-muted/70 mt-0.5">{stat.subtitle}</p>
+            )}
           </motion.div>
         ))}
       </motion.div>
+
+      {/* Today's Reading — tracking at a glance */}
+      {books.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="mb-8"
+        >
+          <div className="glass-card rounded-2xl p-5 bg-gradient-to-r from-gold/5 via-amber/5 to-copper/5 border border-gold-light/15 relative overflow-hidden">
+            <div className="flex items-center gap-2 mb-3">
+              <Lucide.CalendarDays className="w-4 h-4 text-gold-dark" />
+              <h3 className="text-sm font-semibold text-ink uppercase tracking-wider">Today&apos;s Reading</h3>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-center">
+                <div className="text-xl font-bold text-ink" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+                  {stats.todayPages}
+                </div>
+                <p className="text-[11px] text-ink-muted">pages read</p>
+              </div>
+              <div className="text-center border-x border-gold-light/20">
+                <div className="text-xl font-bold text-ink" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+                  {stats.todayMinutes < 60 ? `${stats.todayMinutes}m` : `${Math.floor(stats.todayMinutes / 60)}h ${stats.todayMinutes % 60}m`}
+                </div>
+                <p className="text-[11px] text-ink-muted">time spent</p>
+              </div>
+              <div className="text-center">
+                <div className="text-xl font-bold text-ink" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+                  {stats.todayBooks}
+                </div>
+                <p className="text-[11px] text-ink-muted">{stats.todayBooks === 1 ? 'book' : 'books'} worked on</p>
+              </div>
+            </div>
+            {stats.todayPages === 0 && stats.todayMinutes === 0 && (
+              <p className="text-center text-xs text-ink-muted/70 mt-3 italic">No reading logged today — open a book and log a session to get started!</p>
+            )}
+          </div>
+        </motion.div>
+      )}
 
       {/* Currently Reading */}
       {stats.reading.length > 0 && (
@@ -753,6 +876,13 @@ export default function HomePage() {
                         <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-forest/90 flex items-center justify-center shadow-sm">
                           <Lucide.Check className="w-3.5 h-3.5 text-white" />
                         </div>
+                        {/* Gold recommend badge */}
+                        {book.goldRecommended && (
+                          <div className="absolute top-2 left-2 flex items-center gap-1 px-1.5 py-0.5 rounded-full shadow-md" style={{ background: 'linear-gradient(135deg, #D4A855, #E8C878)', color: '#3A2C22' }}>
+                            <Lucide.Award className="w-3 h-3" />
+                            <span className="text-[9px] font-bold">GOLD</span>
+                          </div>
+                        )}
                       </div>
                     </Link>
                     <div className="p-2.5">
@@ -767,14 +897,21 @@ export default function HomePage() {
                           ))}
                         </div>
                       )}
-                      {/* Recommend button */}
+                      {/* Recommend / Share button */}
                       {user && (
                         <button
-                          onClick={() => { setRecommendBookId(book.id); setRecommendSearchQuery(''); setRecommendMessage(''); }}
-                          className="mt-2 w-full flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-forest/5 text-forest text-[10px] font-medium border border-forest/10 hover:bg-forest/10 transition-colors"
+                          onClick={() => { setRecommendBookId(book.id); setRecommendSearchQuery(''); setRecommendMessage(''); setRecommendMode('choose'); setGoldNote(''); }}
+                          className={`mt-2 w-full flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-medium border transition-colors ${
+                            book.goldRecommended
+                              ? 'bg-gold/10 text-gold-dark border-gold/20 hover:bg-gold/15'
+                              : 'bg-forest/5 text-forest border-forest/10 hover:bg-forest/10'
+                          }`}
                         >
-                          <Lucide.Gift className="w-3 h-3" />
-                          Recommend
+                          {book.goldRecommended ? (
+                            <><Lucide.Award className="w-3 h-3" /> Gold Pick</>
+                          ) : (
+                            <><Lucide.Share2 className="w-3 h-3" /> Share</>
+                          )}
                         </button>
                       )}
                     </div>
@@ -783,7 +920,7 @@ export default function HomePage() {
               ))}
           </div>
 
-          {/* Recommend Modal */}
+          {/* Share & Recommend Modal — 3 modes */}
           <AnimatePresence>
             {recommendBookId && (
               <motion.div
@@ -791,13 +928,13 @@ export default function HomePage() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-                onClick={() => { setRecommendBookId(null); setRecommendSearchQuery(''); }}
+                onClick={() => { setRecommendBookId(null); setRecommendSearchQuery(''); setRecommendMode('choose'); }}
               >
                 <motion.div
                   initial={{ scale: 0.95, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.95, opacity: 0 }}
-                  className="bg-parchment rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-gold-light/30"
+                  className="bg-parchment rounded-2xl shadow-2xl p-6 w-full max-w-md border border-gold-light/30"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {(() => {
@@ -805,77 +942,231 @@ export default function HomePage() {
                     if (!book) return null;
                     return (
                       <>
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className="w-10 h-14 rounded-md overflow-hidden flex-shrink-0 bg-gradient-to-br from-bark to-espresso">
+                        {/* Book header */}
+                        <div className="flex items-center gap-3 mb-5 pb-4 border-b border-gold-light/20">
+                          <div className="w-12 h-[4.5rem] rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-bark to-espresso shadow-md">
                             {book.coverUrl ? (
                               <img src={book.coverUrl} alt={book.title} className="w-full h-full object-cover" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center">
-                                <Lucide.BookOpen className="w-4 h-4 text-gold-light/40" />
+                                <Lucide.BookOpen className="w-5 h-5 text-gold-light/40" />
                               </div>
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <h3 className="font-semibold text-ink text-sm truncate">{book.title}</h3>
                             <p className="text-xs text-ink-muted truncate">{book.author}</p>
+                            {book.goldRecommended && (
+                              <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ background: 'linear-gradient(135deg, #D4A855, #E8C878)', color: '#3A2C22' }}>
+                                <Lucide.Award className="w-2.5 h-2.5" /> Gold Pick
+                              </span>
+                            )}
                           </div>
-                          <button onClick={() => setRecommendBookId(null)} className="p-1 text-ink-muted hover:text-ink transition-colors">
+                          <button onClick={() => { setRecommendBookId(null); setRecommendMode('choose'); }} className="p-1.5 rounded-lg text-ink-muted hover:text-ink hover:bg-cream/60 transition-colors">
                             <Lucide.X className="w-4 h-4" />
                           </button>
                         </div>
-                        <div className="mb-3">
-                          <label className="block text-xs font-medium text-ink-muted mb-1 uppercase tracking-wider">Send to a friend</label>
-                          <input
-                            type="text"
-                            value={recommendSearchQuery}
-                            onChange={(e) => setRecommendSearchQuery(e.target.value)}
-                            placeholder="Search by username..."
-                            className="w-full px-3 py-2 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm placeholder:text-ink-muted/60"
-                            autoFocus
-                          />
-                        </div>
-                        <div className="mb-3">
-                          <input
-                            type="text"
-                            value={recommendMessage}
-                            onChange={(e) => setRecommendMessage(e.target.value)}
-                            placeholder="Add a message (optional)"
-                            className="w-full px-3 py-2 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm placeholder:text-ink-muted/60"
-                          />
-                        </div>
-                        {recommendUsers.length > 0 && (
-                          <div className="space-y-1 max-h-40 overflow-y-auto">
-                            {recommendUsers.map(u => (
-                              <button
-                                key={u.id}
-                                onClick={() => handleRecommendToUser(u.id, { title: book.title, author: book.author })}
-                                disabled={recommendSending}
-                                className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gold-light/10 transition-colors text-left"
-                              >
-                                {u.avatar_url ? (
-                                  <img src={u.avatar_url} alt={u.reader_name} className="w-8 h-8 rounded-full object-cover" />
-                                ) : (
-                                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gold to-amber flex items-center justify-center text-parchment text-xs font-bold">
-                                    {u.reader_name.charAt(0).toUpperCase()}
-                                  </div>
-                                )}
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-ink truncate">{u.reader_name}</p>
-                                  <p className="text-[10px] text-ink-muted">@{u.public_slug}</p>
-                                </div>
-                                {recommendSent === u.id ? (
-                                  <div className="flex items-center gap-1 text-forest text-xs">
-                                    <Lucide.Check className="w-3.5 h-3.5" /> Sent!
-                                  </div>
-                                ) : (
-                                  <Lucide.Send className="w-4 h-4 text-gold-dark" />
-                                )}
-                              </button>
-                            ))}
+
+                        {/* Mode chooser */}
+                        {recommendMode === 'choose' && (
+                          <div className="space-y-2.5">
+                            {/* Gold Recommend */}
+                            <button
+                              onClick={() => setRecommendMode('gold')}
+                              disabled={goldRecommendedCount >= 3 && !book.goldRecommended}
+                              className="w-full flex items-center gap-3 p-3.5 rounded-xl border-2 border-gold/25 hover:border-gold/50 hover:bg-gold/5 transition-all text-left disabled:opacity-40 disabled:cursor-not-allowed group"
+                            >
+                              <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, #D4A855, #E8C878)' }}>
+                                <Lucide.Award className="w-5 h-5 text-[#3A2C22]" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-ink group-hover:text-gold-dark transition-colors">Gold Recommend</p>
+                                <p className="text-[11px] text-ink-muted">Your top picks with a gold badge ({goldRecommendedCount}/3 used)</p>
+                              </div>
+                              <Lucide.ChevronRight className="w-4 h-4 text-ink-muted/50 group-hover:text-gold-dark transition-colors" />
+                            </button>
+
+                            {/* Post to Network */}
+                            <button
+                              onClick={() => setRecommendMode('post')}
+                              className="w-full flex items-center gap-3 p-3.5 rounded-xl border-2 border-forest/20 hover:border-forest/40 hover:bg-forest/5 transition-all text-left group"
+                            >
+                              <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-forest/15">
+                                <Lucide.Megaphone className="w-5 h-5 text-forest" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-ink group-hover:text-forest transition-colors">Post to Network</p>
+                                <p className="text-[11px] text-ink-muted">Share your thoughts like a post — visible to all followers</p>
+                              </div>
+                              <Lucide.ChevronRight className="w-4 h-4 text-ink-muted/50 group-hover:text-forest transition-colors" />
+                            </button>
+
+                            {/* Send to a Friend */}
+                            <button
+                              onClick={() => setRecommendMode('friend')}
+                              className="w-full flex items-center gap-3 p-3.5 rounded-xl border-2 border-teal/20 hover:border-teal/40 hover:bg-teal/5 transition-all text-left group"
+                            >
+                              <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-teal/15">
+                                <Lucide.Send className="w-5 h-5 text-teal" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-ink group-hover:text-teal transition-colors">Send to a Friend</p>
+                                <p className="text-[11px] text-ink-muted">Privately recommend this book to someone specific</p>
+                              </div>
+                              <Lucide.ChevronRight className="w-4 h-4 text-ink-muted/50 group-hover:text-teal transition-colors" />
+                            </button>
                           </div>
                         )}
-                        {recommendSearchQuery.trim() && recommendUsers.length === 0 && !recommendSending && (
-                          <p className="text-xs text-ink-muted text-center py-3">No users found. Try a different search.</p>
+
+                        {/* Gold Recommend Mode */}
+                        {recommendMode === 'gold' && (
+                          <div>
+                            {goldSaved ? (
+                              <div className="text-center py-6">
+                                <div className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #D4A855, #E8C878)' }}>
+                                  <Lucide.Award className="w-7 h-7 text-[#3A2C22]" />
+                                </div>
+                                <p className="text-sm font-semibold text-ink">Gold badge added!</p>
+                                <p className="text-xs text-ink-muted mt-1">Your network has been notified.</p>
+                              </div>
+                            ) : (
+                              <>
+                                <button onClick={() => setRecommendMode('choose')} className="flex items-center gap-1 text-xs text-ink-muted hover:text-ink mb-3 transition-colors">
+                                  <Lucide.ArrowLeft className="w-3.5 h-3.5" /> Back
+                                </button>
+                                <p className="text-xs text-ink-muted mb-3">
+                                  Give <strong className="text-ink">{book.title}</strong> your personal gold badge. Tell everyone why it&apos;s a must-read.
+                                </p>
+                                <textarea
+                                  value={goldNote}
+                                  onChange={(e) => setGoldNote(e.target.value)}
+                                  placeholder="Why do you love this book? What makes it special?"
+                                  className="w-full px-3 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm resize-none mb-3"
+                                  rows={3}
+                                />
+                                <button
+                                  onClick={() => handleGoldRecommend(book.id)}
+                                  disabled={recommendSending}
+                                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-[#3A2C22] shadow-md transition-all hover:shadow-lg disabled:opacity-50"
+                                  style={{ background: 'linear-gradient(135deg, #D4A855, #E8C878)' }}
+                                >
+                                  {recommendSending ? <Lucide.Loader2 className="w-4 h-4 animate-spin" /> : <><Lucide.Award className="w-4 h-4" /> Award Gold Badge</>}
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Post to Network Mode */}
+                        {recommendMode === 'post' && (
+                          <div>
+                            {networkPostSent ? (
+                              <div className="text-center py-6">
+                                <div className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center bg-forest/15">
+                                  <Lucide.Check className="w-7 h-7 text-forest" />
+                                </div>
+                                <p className="text-sm font-semibold text-ink">Posted to your network!</p>
+                                <p className="text-xs text-ink-muted mt-1">Your followers can now see this in their feed.</p>
+                              </div>
+                            ) : (
+                              <>
+                                <button onClick={() => setRecommendMode('choose')} className="flex items-center gap-1 text-xs text-ink-muted hover:text-ink mb-3 transition-colors">
+                                  <Lucide.ArrowLeft className="w-3.5 h-3.5" /> Back
+                                </button>
+                                <p className="text-xs text-ink-muted mb-3">
+                                  Share your thoughts about <strong className="text-ink">{book.title}</strong> with your network — like an Instagram post for readers.
+                                </p>
+                                <textarea
+                                  value={recommendMessage}
+                                  onChange={(e) => setRecommendMessage(e.target.value)}
+                                  placeholder="What did you think? Any favorite moments or quotes?"
+                                  className="w-full px-3 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm resize-none mb-3"
+                                  rows={3}
+                                />
+                                <button
+                                  onClick={() => handleNetworkPost(book.id)}
+                                  disabled={recommendSending || !recommendMessage.trim()}
+                                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-parchment shadow-md transition-all hover:shadow-lg disabled:opacity-50"
+                                  style={{ background: 'linear-gradient(135deg, var(--th-forest), var(--th-sage))' }}
+                                >
+                                  {recommendSending ? <Lucide.Loader2 className="w-4 h-4 animate-spin" /> : <><Lucide.Megaphone className="w-4 h-4" /> Post to Network</>}
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Send to Friend Mode */}
+                        {recommendMode === 'friend' && (
+                          <div>
+                            {recommendSent ? (
+                              <div className="text-center py-6">
+                                <div className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center bg-teal/15">
+                                  <Lucide.Check className="w-7 h-7 text-teal" />
+                                </div>
+                                <p className="text-sm font-semibold text-ink">Recommendation sent!</p>
+                              </div>
+                            ) : (
+                              <>
+                                <button onClick={() => setRecommendMode('choose')} className="flex items-center gap-1 text-xs text-ink-muted hover:text-ink mb-3 transition-colors">
+                                  <Lucide.ArrowLeft className="w-3.5 h-3.5" /> Back
+                                </button>
+                                <div className="mb-3">
+                                  <input
+                                    type="text"
+                                    value={recommendSearchQuery}
+                                    onChange={(e) => setRecommendSearchQuery(e.target.value)}
+                                    placeholder="Search by username..."
+                                    className="w-full px-3 py-2 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm placeholder:text-ink-muted/60"
+                                    autoFocus
+                                  />
+                                </div>
+                                <div className="mb-3">
+                                  <input
+                                    type="text"
+                                    value={recommendMessage}
+                                    onChange={(e) => setRecommendMessage(e.target.value)}
+                                    placeholder="Add a message (optional)"
+                                    className="w-full px-3 py-2 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm placeholder:text-ink-muted/60"
+                                  />
+                                </div>
+                                {recommendUsers.length > 0 && (
+                                  <div className="space-y-1 max-h-40 overflow-y-auto">
+                                    {recommendUsers.map(u => (
+                                      <button
+                                        key={u.id}
+                                        onClick={() => handleRecommendToUser(u.id, { title: book.title, author: book.author })}
+                                        disabled={recommendSending}
+                                        className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gold-light/10 transition-colors text-left"
+                                      >
+                                        {u.avatar_url ? (
+                                          <img src={u.avatar_url} alt={u.reader_name} className="w-8 h-8 rounded-full object-cover" />
+                                        ) : (
+                                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gold to-amber flex items-center justify-center text-parchment text-xs font-bold">
+                                            {u.reader_name.charAt(0).toUpperCase()}
+                                          </div>
+                                        )}
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-sm font-medium text-ink truncate">{u.reader_name}</p>
+                                          <p className="text-[10px] text-ink-muted">@{u.public_slug}</p>
+                                        </div>
+                                        {recommendSent === u.id ? (
+                                          <div className="flex items-center gap-1 text-forest text-xs">
+                                            <Lucide.Check className="w-3.5 h-3.5" /> Sent!
+                                          </div>
+                                        ) : (
+                                          <Lucide.Send className="w-4 h-4 text-teal" />
+                                        )}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                                {recommendSearchQuery.trim() && recommendUsers.length === 0 && !recommendSending && (
+                                  <p className="text-xs text-ink-muted text-center py-3">No users found. Try a different search.</p>
+                                )}
+                              </>
+                            )}
+                          </div>
                         )}
                       </>
                     );
@@ -920,14 +1211,14 @@ export default function HomePage() {
         </motion.div>
       )}
 
-      {/* Lotus Divider before Shelves */}
+      {/* Lotus Divider before Threads */}
       {(books.length >= 2 || threads.length > 0) && (
         <div className="mb-4 -mt-4">
           <LotusDivider className="h-10 opacity-70" />
         </div>
       )}
 
-      {/* Shelves — Custom collections to organize your library */}
+      {/* Threads — Custom collections to organize your library */}
       {(books.length >= 2 || threads.length > 0) && (
         <motion.section
           initial={{ opacity: 0, y: 20 }}
@@ -939,9 +1230,9 @@ export default function HomePage() {
             <div>
               <h2 className="text-xl font-semibold text-ink flex items-center gap-2" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
                 <Lucide.Library className="w-5 h-5 text-copper" />
-                Reading Shelves
+                Threads
               </h2>
-              <p className="text-xs text-ink-muted mt-0.5">Organize your books into custom collections</p>
+              <p className="text-xs text-ink-muted mt-0.5">Group books into collections — by mood, theme, genre, or anything you like</p>
             </div>
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -949,7 +1240,7 @@ export default function HomePage() {
               onClick={() => setShowNewThread(!showNewThread)}
               className="flex items-center gap-1 text-xs text-gold-dark hover:text-gold transition-colors px-3 py-1.5 rounded-lg border border-gold-light/30 hover:bg-gold-light/10"
             >
-              <Lucide.Plus className="w-3.5 h-3.5" /> New Shelf
+              <Lucide.Plus className="w-3.5 h-3.5" /> New Thread
             </motion.button>
           </div>
 
@@ -967,7 +1258,7 @@ export default function HomePage() {
                     type="text"
                     value={newThreadName}
                     onChange={(e) => setNewThreadName(e.target.value)}
-                    placeholder="Shelf name (e.g., Summer 2025, Comfort Reads, Deep Dives)"
+                    placeholder="Thread name (e.g., Summer 2025, Comfort Reads, Deep Dives)"
                     className="w-full px-3 py-2 bg-cream/50 border border-gold-light/30 rounded-lg text-sm text-ink"
                   />
                   <input
@@ -1131,7 +1422,7 @@ export default function HomePage() {
                         )}
                       </div>
                     )) : (
-                      <p className="text-[10px] text-ink-muted italic py-2">Click <Lucide.Settings className="w-3 h-3 inline" /> to add books to this shelf.</p>
+                      <p className="text-[10px] text-ink-muted italic py-2">Click <Lucide.Settings className="w-3 h-3 inline" /> to add books to this thread.</p>
                     )}
                   </div>
                 </div>
@@ -1142,8 +1433,8 @@ export default function HomePage() {
             {threads.length === 0 && (
               <div className="glass-card rounded-xl p-6 text-center border-2 border-dashed border-gold-light/20">
                 <Lucide.Library className="w-10 h-10 text-gold-light/30 mx-auto mb-2" />
-                <p className="text-sm text-ink-muted">Create your first shelf to organize books into collections.</p>
-                <p className="text-xs text-ink-muted/60 mt-1">Shelves work like bookshelves — group books by theme, mood, or any way you like.</p>
+                <p className="text-sm text-ink-muted">Create your first thread to group books into collections.</p>
+                <p className="text-xs text-ink-muted/60 mt-1">Threads are like custom bookshelves — organize by mood, theme, series, or any way you like.</p>
               </div>
             )}
           </div>

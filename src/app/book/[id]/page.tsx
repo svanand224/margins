@@ -22,6 +22,15 @@ export default function BookPage() {
     rating: 0,
     notes: '',
   });
+  // Book details editing
+  const [showDetailsEdit, setShowDetailsEdit] = useState(false);
+  const [detailsForm, setDetailsForm] = useState({
+    title: '',
+    author: '',
+    genre: '',
+    coverUrl: '',
+    totalPages: 0,
+  });
   // Add missing state for session modal and form
   const [showSessionModal, setShowSessionModal] = useState(false);
   const [sessionForm, setSessionForm] = useState({
@@ -73,6 +82,13 @@ export default function BookPage() {
           rating: localBook.rating || 0,
           notes: localBook.notes || '',
         });
+        setDetailsForm({
+          title: localBook.title || '',
+          author: localBook.author || '',
+          genre: localBook.genre || '',
+          coverUrl: localBook.coverUrl || '',
+          totalPages: localBook.totalPages || 0,
+        });
         setLoading(false);
         return;
       }
@@ -114,10 +130,31 @@ export default function BookPage() {
         rating: found.rating || 0,
         notes: found.notes || '',
       });
+      setDetailsForm({
+        title: found.title || '',
+        author: found.author || '',
+        genre: found.genre || '',
+        coverUrl: found.coverUrl || '',
+        totalPages: found.totalPages || 0,
+      });
       setLoading(false);
     };
     fetchBook();
   }, [id]);
+
+  const handleDetailsSave = async () => {
+    if (!book) return;
+    const updatedBook = {
+      ...book,
+      title: detailsForm.title.trim() || book.title,
+      author: detailsForm.author.trim() || book.author,
+      genre: detailsForm.genre.trim(),
+      coverUrl: detailsForm.coverUrl.trim() || book.coverUrl,
+      totalPages: detailsForm.totalPages || book.totalPages,
+    };
+    await updateBookInSupabase(updatedBook);
+    setShowDetailsEdit(false);
+  };
 
   useEffect(() => {
     if (form.status === 'completed' && book && book.status !== 'completed') {
@@ -262,8 +299,19 @@ export default function BookPage() {
                 </div>
               )}
               <div className="flex-1 min-w-0 py-1">
-                <h1 className="text-2xl font-bold text-ink leading-tight mb-1" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{book.title}</h1>
-                <p className="text-sm text-ink-muted mb-3" style={{ fontFamily: "'Lora', Georgia, serif" }}>{book.author || 'Unknown Author'}</p>
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <h1 className="text-2xl font-bold text-ink leading-tight mb-1" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{book.title}</h1>
+                    <p className="text-sm text-ink-muted mb-3" style={{ fontFamily: "'Lora', Georgia, serif" }}>{book.author || 'Unknown Author'}</p>
+                  </div>
+                  <button
+                    onClick={() => setShowDetailsEdit(true)}
+                    className="flex-shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-gold-dark border border-gold-light/30 hover:bg-gold-light/10 transition-colors"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    Edit
+                  </button>
+                </div>
 
                 {/* Status + Genre + Pages pills */}
                 <div className="flex flex-wrap gap-1.5 mb-3">
@@ -400,11 +448,14 @@ export default function BookPage() {
           </div>
 
           {/* Reading Sessions Card */}
-          <div className="glass-card rounded-2xl p-5 mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-ink uppercase tracking-wider">Reading Sessions</h2>
+          <div className="glass-card rounded-2xl p-5 mb-6 border border-gold-light/15">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-ink uppercase tracking-wider flex items-center gap-2">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-gold-dark"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Reading Sessions
+              </h2>
               <button
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-parchment"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-parchment shadow-md"
                 style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}
                 onClick={() => setShowSessionModal(true)}
               >
@@ -412,9 +463,46 @@ export default function BookPage() {
               </button>
             </div>
 
+            {/* Session stats summary */}
+            {(book.sessions || []).length > 0 && (
+              <div className="grid grid-cols-3 gap-3 mb-4 p-3 rounded-xl bg-gold/5 border border-gold-light/15">
+                <div className="text-center">
+                  <div className="text-lg font-bold text-ink" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+                    {(book.sessions || []).length}
+                  </div>
+                  <p className="text-[10px] text-ink-muted">sessions</p>
+                </div>
+                <div className="text-center border-x border-gold-light/15">
+                  <div className="text-lg font-bold text-ink" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+                    {(book.sessions || []).reduce((s, sess) => s + sess.pagesRead, 0)}
+                  </div>
+                  <p className="text-[10px] text-ink-muted">pages logged</p>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-ink" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+                    {(() => { const m = (book.sessions || []).reduce((s, sess) => s + sess.minutesSpent, 0); return m < 60 ? `${m}m` : `${Math.floor(m/60)}h ${m%60}m`; })()}
+                  </div>
+                  <p className="text-[10px] text-ink-muted">time spent</p>
+                </div>
+              </div>
+            )}
+
             {(book.sessions || []).length === 0 ? (
-              <div className="text-center py-6">
-                <p className="text-sm text-ink-muted">No sessions yet. Log your first reading session!</p>
+              <div className="text-center py-8 space-y-3">
+                <div className="w-12 h-12 rounded-full bg-gold/10 flex items-center justify-center mx-auto">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-gold"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-ink">No sessions yet</p>
+                  <p className="text-xs text-ink-muted mt-1">Track your reading by logging how many pages you read and how long you spent. Your progress is tracked automatically!</p>
+                </div>
+                <button
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-semibold text-parchment shadow-md"
+                  style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}
+                  onClick={() => setShowSessionModal(true)}
+                >
+                  Log Your First Session
+                </button>
               </div>
             ) : (
               <div className="space-y-2">
@@ -585,6 +673,78 @@ export default function BookPage() {
                     )}
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Edit Book Details Modal (title, author, genre, cover, pages) */}
+          {showDetailsEdit && (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowDetailsEdit(false)}>
+              <div className="bg-parchment rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-gold-light/30" onClick={e => e.stopPropagation()}>
+                <h2 className="text-lg font-bold text-ink mb-4" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>Edit Book Info</h2>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs text-ink-muted mb-1 uppercase tracking-wider">Title</label>
+                    <input
+                      type="text"
+                      value={detailsForm.title}
+                      onChange={e => setDetailsForm(f => ({ ...f, title: e.target.value }))}
+                      className="w-full px-3 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm"
+                      placeholder="Book title"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-ink-muted mb-1 uppercase tracking-wider">Author</label>
+                    <input
+                      type="text"
+                      value={detailsForm.author}
+                      onChange={e => setDetailsForm(f => ({ ...f, author: e.target.value }))}
+                      className="w-full px-3 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm"
+                      placeholder="Author name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-ink-muted mb-1 uppercase tracking-wider">Genre</label>
+                    <input
+                      type="text"
+                      value={detailsForm.genre}
+                      onChange={e => setDetailsForm(f => ({ ...f, genre: e.target.value }))}
+                      className="w-full px-3 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm"
+                      placeholder="e.g. Fiction, Romance, Sci-Fi"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-ink-muted mb-1 uppercase tracking-wider">Cover Image URL</label>
+                    <input
+                      type="url"
+                      value={detailsForm.coverUrl}
+                      onChange={e => setDetailsForm(f => ({ ...f, coverUrl: e.target.value }))}
+                      className="w-full px-3 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm"
+                      placeholder="https://..."
+                    />
+                    {detailsForm.coverUrl && (
+                      <div className="mt-2 flex items-center gap-2">
+                        <img src={detailsForm.coverUrl} alt="Preview" className="w-10 h-14 object-cover rounded-md border border-gold-light/20" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                        <span className="text-[10px] text-ink-muted">Preview</span>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-xs text-ink-muted mb-1 uppercase tracking-wider">Total Pages</label>
+                    <input
+                      type="number"
+                      value={detailsForm.totalPages || ''}
+                      onChange={e => setDetailsForm(f => ({ ...f, totalPages: Number(e.target.value) }))}
+                      className="w-full px-3 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm"
+                      min={1}
+                      placeholder="0"
+                    />
+                  </div>
+                  <div className="flex gap-2 pt-1">
+                    <button onClick={() => setShowDetailsEdit(false)} className="flex-1 px-4 py-2.5 rounded-xl text-sm text-ink-muted border border-gold-light/30 hover:bg-cream/40 transition-colors">Cancel</button>
+                    <button onClick={handleDetailsSave} className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-parchment" style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}>Save Changes</button>
+                  </div>
+                </div>
               </div>
             </div>
           )}

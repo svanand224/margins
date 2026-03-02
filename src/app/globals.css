@@ -1,68 +1,68 @@
 @import "tailwindcss";
 
-/* ─── Day Mode: Reseda Green, Van Dyke, Isabelline, Pink Lavender ─── */
+/* ─── Day Mode: Warm Gold, Rich Forest, Soft Parchment ─── */
 :root,
 [data-theme="day"] {
-  --th-parchment: #F5F3EC;
-  --th-cream: #EBE8DE;
-  --th-warm-white: #FDFCF8;
-  --th-gold: #5C6030;
-  --th-gold-light: #8B8E52;
-  --th-gold-dark: #3F4420;
-  --th-amber: #C48DA0;
-  --th-copper: #A06880;
-  --th-forest: #4A6B3A;
-  --th-forest-light: #6E8E58;
-  --th-sage: #8BA06A;
-  --th-sage-light: #C8D4AA;
-  --th-bark: #3E2E26;
+  --th-parchment: #FAF8F2;
+  --th-cream: #F0EDE4;
+  --th-warm-white: #FEFDFB;
+  --th-gold: #8B7233;
+  --th-gold-light: #B8A56A;
+  --th-gold-dark: #6A5528;
+  --th-amber: #C4956A;
+  --th-copper: #A67050;
+  --th-forest: #3D6B4E;
+  --th-forest-light: #5E9470;
+  --th-sage: #7A9A6A;
+  --th-sage-light: #BDD4A0;
+  --th-bark: #3A2C22;
   --th-bark-light: #5A463B;
   --th-espresso: #2A1C16;
-  --th-ink: #3E2E26;
+  --th-ink: #2E2420;
   --th-ink-light: #5A463B;
-  --th-ink-muted: #7F7265;
+  --th-ink-muted: #8A7E70;
   --th-rose: #C25858;
   --th-rose-light: #E0A8A8;
-  --th-teal: #4A7F7F;
+  --th-teal: #3A7A7A;
   --th-teal-light: #8AB8B8;
-  --th-plum: #8A5878;
-  --th-lavender: #C48DA0;
+  --th-plum: #7A4868;
+  --th-lavender: #B88DA0;
 
   /* Effect colors */
-  --th-glass-bg: rgba(245, 243, 236, 0.78);
-  --th-glass-border: rgba(92, 96, 48, 0.2);
-  --th-card-shadow: 0 20px 40px rgba(62, 46, 38, 0.14), 0 0 30px rgba(92, 96, 48, 0.1);
-  --th-selection: rgba(92, 96, 48, 0.25);
-  --th-focus-ring: rgba(92, 96, 48, 0.2);
-  --th-particle-inner: rgba(92, 96, 48, 0.45);
-  --th-particle-outer: rgba(196, 141, 160, 0.25);
-  --th-shimmer: rgba(255, 255, 255, 0.35);
-  --th-status-reading: #4A6B3A;
-  --th-status-want: #4A7F7F;
-  --th-status-completed: #C48DA0;
+  --th-glass-bg: rgba(250, 248, 242, 0.8);
+  --th-glass-border: rgba(139, 114, 51, 0.15);
+  --th-card-shadow: 0 20px 40px rgba(46, 36, 32, 0.1), 0 0 30px rgba(139, 114, 51, 0.08);
+  --th-selection: rgba(139, 114, 51, 0.2);
+  --th-focus-ring: rgba(139, 114, 51, 0.2);
+  --th-particle-inner: rgba(139, 114, 51, 0.35);
+  --th-particle-outer: rgba(196, 149, 106, 0.2);
+  --th-shimmer: rgba(255, 255, 255, 0.4);
+  --th-status-reading: #3D6B4E;
+  --th-status-want: #3A7A7A;
+  --th-status-completed: #8B7233;
   --th-status-dnf: #C25858;
 }
 
-/* ─── Night Mode: Cream, Steel Blue, Burgundy, Dark ─── */
+/* ─── Night Mode: Deep Walnut, Warm Brass, Soft Ivory ─── */
 [data-theme="night"] {
-  --th-parchment: #1A0905;
-  --th-cream: #2C1A12;
-  --th-warm-white: #3E2B20;
-  --th-gold: #94B1C8;
-  --th-gold-light: #506878;
-  --th-gold-dark: #B8D0E0;
-  --th-amber: #7A3048;
-  --th-copper: #8B2040;
+  --th-parchment: #1C1410;
+  --th-cream: #2A1E18;
+  --th-warm-white: #3A2E25;
+  --th-gold: #D4A855;
+  --th-gold-light: #8A7040;
+  --th-gold-dark: #E8C878;
+  --th-amber: #9A6040;
+  --th-copper: #B87050;
   --th-forest: #5AAA78;
   --th-forest-light: #48906A;
   --th-sage: #4A8A60;
   --th-sage-light: #2A4A38;
-  --th-bark: #5A1828;
-  --th-bark-light: #7A2A3E;
-  --th-espresso: #0D0403;
-  --th-ink: #E3DFCE;
-  --th-ink-light: #C8C4B2;
-  --th-ink-muted: #8A8478;
+  --th-bark: #4A3028;
+  --th-bark-light: #6A4838;
+  --th-espresso: #100A06;
+  --th-ink: #EAE4D4;
+  --th-ink-light: #C8C0AE;
+  --th-ink-muted: #9A9080;
   --th-rose: #D0607A;
   --th-rose-light: #4A2030;
   --th-teal: #4AB8C8;
@@ -71,18 +71,18 @@
   --th-lavender: #5A3878;
 
   /* Effect colors */
-  --th-glass-bg: rgba(26, 9, 5, 0.82);
-  --th-glass-border: rgba(138, 32, 64, 0.22);
-  --th-card-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(138, 32, 64, 0.1);
-  --th-selection: rgba(148, 177, 200, 0.3);
-  --th-focus-ring: rgba(138, 32, 64, 0.3);
-  --th-particle-inner: rgba(148, 177, 200, 0.35);
-  --th-particle-outer: rgba(138, 32, 64, 0.3);
-  --th-shimmer: rgba(148, 177, 200, 0.1);
+  --th-glass-bg: rgba(28, 20, 16, 0.85);
+  --th-glass-border: rgba(212, 168, 85, 0.15);
+  --th-card-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(212, 168, 85, 0.06);
+  --th-selection: rgba(212, 168, 85, 0.25);
+  --th-focus-ring: rgba(212, 168, 85, 0.2);
+  --th-particle-inner: rgba(212, 168, 85, 0.3);
+  --th-particle-outer: rgba(154, 96, 64, 0.25);
+  --th-shimmer: rgba(212, 168, 85, 0.1);
   --th-status-reading: #6A9A80;
-  --th-status-want: #94B1C8;
-  --th-status-completed: #B8D0E0;
-  --th-status-dnf: #9B3050;
+  --th-status-want: #4AB8C8;
+  --th-status-completed: #D4A855;
+  --th-status-dnf: #D0607A;
 }
 
 @theme {

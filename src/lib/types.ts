@@ -29,6 +29,8 @@ export interface Book {
   tags: string[];
   isRecommended?: boolean; // badge for books added via recommendations
   recommendedBy?: string; // who recommended this book
+  goldRecommended?: boolean; // user's top 3 gold-badge recommendations
+  goldRecommendedNote?: string; // reason for the gold recommendation
 }
 
 export interface ReadingGoal {

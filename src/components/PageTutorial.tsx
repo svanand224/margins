@@ -15,8 +15,8 @@ const pageTips: Record<string, PageTip> = {
     id: 'library',
     title: 'Library Tips',
     tips: [
-      'Use Shelves (threads) to organize books into custom collections',
-      'Search by title, author, genre, or tag — including shelf names',
+      'Use threads to group books into collections — by mood, theme, genre, or anything',
+      'Search by title, author, genre, or tag — including thread names',
       'Filter by reading status or genre to find books quickly',
       'Tap the heart icon to mark favorites',
       'Switch between grid and list views',

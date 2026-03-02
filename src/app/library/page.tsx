@@ -378,7 +378,7 @@ function LibraryContent() {
                       onChange={(e) => setShelfFilter(e.target.value)}
                       className="text-sm bg-cream/50 border border-gold-light/30 rounded-lg px-3 py-1.5 text-ink"
                     >
-                      <option value="all">All Shelves</option>
+                      <option value="all">All Threads</option>
                       {threads.map(t => (
                         <option key={t.id} value={t.id}>{t.name} ({t.bookIds.length})</option>
                       ))}
