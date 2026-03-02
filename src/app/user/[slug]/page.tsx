@@ -31,6 +31,10 @@ interface PublicProfile {
   favorite_genre: string;
   public_slug: string;
   shelf_public: boolean;
+  shelf_accent_color: string;
+  shelf_show_currently_reading: boolean;
+  shelf_show_stats: boolean;
+  shelf_bio_override: string | null;
   reading_data: {
     books?: Book[];
     goals?: { pagesPerDay?: number; booksPerYear?: number };
@@ -66,7 +70,7 @@ export default function PublicProfilePage() {
       const supabase = createClient();
       const { data: profileData, error } = await supabase
         .from('profiles')
-        .select('id, reader_name, avatar_url, bio, favorite_genre, public_slug, shelf_public, reading_data, created_at')
+        .select('id, reader_name, avatar_url, bio, favorite_genre, public_slug, shelf_public, shelf_accent_color, shelf_show_currently_reading, shelf_show_stats, shelf_bio_override, reading_data, created_at')
         .eq('public_slug', slug)
         .eq('shelf_public', true)
         .single();
@@ -218,21 +222,36 @@ export default function PublicProfilePage() {
 
   const isOwnProfile = user?.id === profile.id;
 
+  // Resolve accent color to CSS values
+  const accentThemes: Record<string, { accent: string; accentLight: string }> = {
+    gold: { accent: 'var(--th-gold)', accentLight: 'var(--th-gold-light)' },
+    teal: { accent: '#0d9488', accentLight: '#99f6e4' },
+    rose: { accent: '#e11d48', accentLight: '#fecdd3' },
+    forest: { accent: '#059669', accentLight: '#a7f3d0' },
+    purple: { accent: '#7c3aed', accentLight: '#ddd6fe' },
+    copper: { accent: '#c2410c', accentLight: '#fed7aa' },
+  };
+  const accent = accentThemes[profile.shelf_accent_color || 'gold'] || accentThemes.gold;
+  const displayBio = profile.shelf_bio_override || profile.bio;
+  const showCurrentlyReading = profile.shelf_show_currently_reading !== false;
+  const showStats = profile.shelf_show_stats !== false;
+
   return (
     <div className="min-h-screen pb-24 md:pb-8">
-      <motion.section initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="glass-card mx-4 mt-4 rounded-2xl p-6 md:mx-auto md:max-w-2xl">
+      <motion.section initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="glass-card mx-4 mt-4 rounded-2xl p-6 md:mx-auto md:max-w-2xl" style={{ borderTop: `3px solid ${accent.accent}` }}>
         <div className="flex items-start gap-4">
           {profile.avatar_url ? (
             <img
               src={profile.avatar_url}
               alt={profile.reader_name}
               className="w-20 h-20 rounded-full object-cover"
+              style={{ boxShadow: `0 0 0 3px ${accent.accentLight}` }}
             />
           ) : (
             <div
               className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold"
               style={{
-                background: 'linear-gradient(135deg, var(--th-gold), var(--th-amber))',
+                background: `linear-gradient(135deg, ${accent.accent}, ${accent.accentLight})`,
                 color: 'var(--th-parchment)',
               }}
             >
@@ -247,8 +266,8 @@ export default function PublicProfilePage() {
               {profile.reader_name}
             </h1>
             <p className="text-xs text-ink-muted mb-2">@{profile.public_slug}</p>
-            {profile.bio && (
-              <p className="text-sm text-ink-muted italic mb-3 line-clamp-2">{profile.bio}</p>
+            {displayBio && (
+              <p className="text-sm text-ink-muted italic mb-3 line-clamp-2">{displayBio}</p>
             )}
             {/* Follow stats */}
             <div className="flex items-center gap-4 text-xs text-ink-muted mb-3">
@@ -296,28 +315,30 @@ export default function PublicProfilePage() {
         </div>
 
         {/* Stats row */}
+        {showStats && (
         <div className="grid grid-cols-4 gap-3 mt-5 pt-4 border-t border-gold-light/20">
           <div className="text-center">
-            <Library className="w-4 h-4 mx-auto text-gold mb-1" />
+            <Library className="w-4 h-4 mx-auto mb-1" style={{ color: accent.accent }} />
             <div className="text-lg font-bold text-ink">{books.length}</div>
             <div className="text-[10px] text-ink-muted">Books</div>
           </div>
           <div className="text-center">
-            <Trophy className="w-4 h-4 mx-auto text-forest mb-1" />
+            <Trophy className="w-4 h-4 mx-auto mb-1" style={{ color: accent.accent }} />
             <div className="text-lg font-bold text-ink">{completedBooks.length}</div>
             <div className="text-[10px] text-ink-muted">Read</div>
           </div>
           <div className="text-center">
-            <BookOpen className="w-4 h-4 mx-auto text-amber mb-1" />
+            <BookOpen className="w-4 h-4 mx-auto mb-1" style={{ color: accent.accent }} />
             <div className="text-lg font-bold text-ink">{totalPages.toLocaleString()}</div>
             <div className="text-[10px] text-ink-muted">Pages</div>
           </div>
           <div className="text-center">
-            <Star className="w-4 h-4 mx-auto text-gold mb-1" />
+            <Star className="w-4 h-4 mx-auto mb-1" style={{ color: accent.accent }} />
             <div className="text-lg font-bold text-ink">{avgRating.toFixed(1)}</div>
             <div className="text-[10px] text-ink-muted">Avg</div>
           </div>
         </div>
+        )}
       </motion.section>
 
       {/* Recommend Modal */}
@@ -378,12 +399,13 @@ export default function PublicProfilePage() {
       )}
 
       {/* Currently Reading */}
+      {showCurrentlyReading && (
       <motion.section initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="glass-card mx-4 mt-4 rounded-2xl p-6 md:mx-auto md:max-w-2xl">
         <h2
           className="text-lg font-semibold text-ink mb-3 flex items-center gap-2"
           style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
         >
-          <Clock className="w-5 h-5 text-amber" />
+          <Clock className="w-5 h-5" style={{ color: accent.accent }} />
           Currently Reading
         </h2>
         {currentlyReading.length > 0 ? (
@@ -393,8 +415,8 @@ export default function PublicProfilePage() {
                 {book.coverUrl ? (
                   <img src={book.coverUrl} alt={book.title} className="w-full h-40 object-cover rounded-lg" />
                 ) : (
-                  <div className="w-full h-40 rounded-lg bg-gradient-to-br from-gold/20 to-amber/20 flex items-center justify-center">
-                    <BookOpen className="w-8 h-8 text-gold/50" />
+                  <div className="w-full h-40 rounded-lg flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${accent.accentLight}, color-mix(in srgb, ${accent.accent} 20%, transparent))` }}>
+                    <BookOpen className="w-8 h-8" style={{ color: `color-mix(in srgb, ${accent.accent} 50%, transparent)` }} />
                   </div>
                 )}
                 <p className="text-xs text-ink mt-2 line-clamp-2 font-medium">{book.title}</p>
@@ -402,8 +424,8 @@ export default function PublicProfilePage() {
                   <div className="mt-1">
                     <div className="h-1 bg-cream rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-gold to-amber rounded-full"
-                        style={{ width: `${(book.currentPage / book.totalPages) * 100}%` }}
+                        className="h-full rounded-full"
+                        style={{ width: `${(book.currentPage / book.totalPages) * 100}%`, background: `linear-gradient(90deg, ${accent.accent}, ${accent.accentLight})` }}
                       />
                     </div>
                     <p className="text-[10px] text-ink-muted mt-0.5">
@@ -418,6 +440,7 @@ export default function PublicProfilePage() {
           <div className="text-ink-muted text-sm">No books currently being read.</div>
         )}
       </motion.section>
+      )}
 
       {/* Completed Books */}
       <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mx-4 mt-6 md:mx-auto md:max-w-2xl">

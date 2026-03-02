@@ -37,6 +37,9 @@ export default function BookPage() {
 
   // Helper to update book in Supabase and local state
   const updateBookInSupabase = async (updatedBook: Book) => {
+    // Also sync to Zustand store
+    useBookStore.getState().updateBook(updatedBook.id, updatedBook);
+    // Then persist to Supabase
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
@@ -56,11 +59,27 @@ export default function BookPage() {
     setBook(updatedBook);
   };
 
-  // Fetch book data from Supabase
+  // Fetch book data — check local Zustand store first, then Supabase
   useEffect(() => {
     const fetchBook = async () => {
+      // Check local Zustand store first
+      const storeBooks = useBookStore.getState().books;
+      const localBook = storeBooks.find((b: Book) => b.id === id);
+      if (localBook) {
+        setBook(localBook);
+        setForm({
+          status: localBook.status,
+          currentPage: localBook.currentPage || 0,
+          rating: localBook.rating || 0,
+          notes: localBook.notes || '',
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Fallback to Supabase
       if (!isSupabaseConfigured()) {
-        setError('Supabase is not configured.');
+        setError('Book not found in your library.');
         setLoading(false);
         return;
       }
@@ -84,7 +103,7 @@ export default function BookPage() {
       const books: Book[] = profile.reading_data?.books || [];
       const found = books.find((b: Book) => b.id === id);
       if (!found) {
-        setError('Book not found.');
+        setError('Book not found in your library.');
         setLoading(false);
         return;
       }
@@ -129,20 +148,29 @@ export default function BookPage() {
 
   const handleDeleteBook = async () => {
     if (!book) return;
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('reading_data')
-      .eq('id', user.id)
-      .single();
-    if (!profile) return;
-    const books = profile.reading_data.books.filter((b: Book) => b.id !== book.id);
-    await supabase
-      .from('profiles')
-      .update({ reading_data: { ...profile.reading_data, books } })
-      .eq('id', user.id);
+    // Remove from Zustand store (local)
+    useBookStore.getState().deleteBook(book.id);
+    // Remove from Supabase (cloud)
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('reading_data')
+          .eq('id', user.id)
+          .single();
+        if (profile) {
+          const books = (profile.reading_data?.books || []).filter((b: Book) => b.id !== book.id);
+          await supabase
+            .from('profiles')
+            .update({ reading_data: { ...profile.reading_data, books } })
+            .eq('id', user.id);
+        }
+      }
+    } catch (err) {
+      console.error('Error deleting from cloud:', err);
+    }
     setBook(null);
     setShowDeleteConfirm(false);
     setShowDeletedMsg(true);
@@ -161,12 +189,32 @@ export default function BookPage() {
       notes: sessionForm.notes,
     };
     let updatedBook = { ...book, sessions: [...(book.sessions || []), newSession] };
+    // Advance progress bar by pages read in this session
+    const newPage = Math.min(book.totalPages, (book.currentPage || 0) + sessionForm.pagesRead);
+    updatedBook.currentPage = newPage;
     // Set startDate if first session
     if (!book.startDate && sessionForm.pagesRead > 0) {
       updatedBook.startDate = new Date().toISOString();
+      updatedBook.status = 'reading';
+    }
+    // Auto-complete if reached total pages
+    if (newPage >= book.totalPages && book.status === 'reading') {
+      updatedBook.status = 'completed';
+      updatedBook.finishDate = new Date().toISOString();
+      updatedBook.currentPage = book.totalPages;
     }
     await updateBookInSupabase(updatedBook);
     setBook(updatedBook);
+    // Sync form state too
+    setForm(f => ({ ...f, currentPage: updatedBook.currentPage, status: updatedBook.status }));
+    // Also update Zustand store
+    useBookStore.getState().updateBook(book.id, {
+      currentPage: updatedBook.currentPage,
+      status: updatedBook.status,
+      sessions: updatedBook.sessions,
+      startDate: updatedBook.startDate,
+      finishDate: updatedBook.finishDate,
+    });
     setShowSessionModal(false);
     setSessionForm({ pagesRead: 0, minutesSpent: 0, notes: '' });
   };

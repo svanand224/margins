@@ -1138,47 +1138,10 @@ export default function HomePage() {
               );
             })}
 
-            {/* Auto-genre threads */}
-            {(() => {
-              const genreGroups: Record<string, typeof books> = {};
-              books.forEach(b => {
-                if (b.genre) {
-                  if (!genreGroups[b.genre]) genreGroups[b.genre] = [];
-                  genreGroups[b.genre].push(b);
-                }
-              });
-              const autoThreads = Object.entries(genreGroups)
-                .filter(([, group]) => group.length >= 2)
-                .sort((a, b) => b[1].length - a[1].length)
-                .slice(0, 3);
-
-              if (autoThreads.length === 0 && threads.length === 0) return (
-                <p className="text-sm text-ink-muted italic">Add more books with shared genres to discover threads, or create your own above.</p>
-              );
-
-              return autoThreads.map(([genre, group]) => (
-                <div key={genre} className="relative glass-card rounded-xl p-3 pl-5">
-                  <div className="absolute left-2 top-3 bottom-3 w-px bg-gradient-to-b from-gold-light/50 via-gold/30 to-transparent" />
-                  <p className="text-xs font-medium text-gold-dark mb-2 uppercase tracking-wider">{genre} <span className="text-ink-muted/50 normal-case">(auto)</span></p>
-                  <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1">
-                    {group.slice(0, 6).map((b) => (
-                      <Link key={b.id} href={`/book/${b.id}`} className="flex-shrink-0 group">
-                        <div className="book-cover-glow w-12 h-[4.5rem] rounded-lg bg-gradient-to-br from-bark to-espresso overflow-hidden shadow-sm">
-                          {b.coverUrl ? (
-                            <img src={b.coverUrl} alt={b.title} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <Lucide.BookOpen className="w-4 h-4 text-gold-light/30" />
-                            </div>
-                          )}
-                        </div>
-                        <p className="text-[10px] text-ink-muted truncate w-12 mt-1 group-hover:text-gold-dark transition-colors">{b.title}</p>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              ));
-            })()}
+            {/* Show hint when no custom threads exist */}
+            {threads.length === 0 && (
+              <p className="text-sm text-ink-muted italic">Create your first thread above to organize books into custom collections.</p>
+            )}
           </div>
         </motion.section>
       )}

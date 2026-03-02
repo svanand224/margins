@@ -165,7 +165,7 @@ export default function AddBookPage() {
   const modes: { key: AddMode; icon: typeof Search; label: string; desc: string }[] = [
     { key: 'search', icon: Search, label: 'Search', desc: 'Find by title or author' },
     { key: 'isbn', icon: Hash, label: 'ISBN', desc: 'Look up by ISBN' },
-    { key: 'url', icon: Link2, label: 'URL', desc: 'Import from URL' },
+    { key: 'url', icon: Link2, label: 'URL', desc: 'Import from Amazon' },
     { key: 'manual', icon: PenTool, label: 'Manual', desc: 'Enter details yourself' },
   ];
 
@@ -379,7 +379,7 @@ export default function AddBookPage() {
             <div className="flex gap-2">
               <input
                 type="url"
-                placeholder="Paste a Goodreads, Amazon, or book URL..."
+                placeholder="Paste an Amazon book URL..."
                 value={urlInput}
                 onChange={(e) => setUrlInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleURL()}
@@ -395,7 +395,7 @@ export default function AddBookPage() {
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Import'}
               </motion.button>
             </div>
-            <p className="text-xs text-ink-muted">Works with Amazon, Goodreads, and most bookstore URLs.</p>
+            <p className="text-xs text-ink-muted">Currently only <strong>Amazon</strong> book links are supported. Copy the URL from a book's Amazon page.</p>
           </motion.div>
         )}
 

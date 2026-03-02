@@ -95,6 +95,12 @@ create policy "Anyone can view public shelves"
   on public.profiles for select
   using (shelf_public = true);
 
+-- 8a. Library customization columns
+alter table public.profiles add column if not exists shelf_accent_color text default 'gold';
+alter table public.profiles add column if not exists shelf_show_currently_reading boolean default true;
+alter table public.profiles add column if not exists shelf_show_stats boolean default true;
+alter table public.profiles add column if not exists shelf_bio_override text;
+
 -- 8. Supabase Storage bucket for avatars
 -- NOTE: You must create the 'avatars' bucket manually in the Supabase Dashboard:
 --   1. Go to Storage in your Supabase dashboard
@@ -133,6 +139,122 @@ create policy "Anyone can view avatars"
 -- ============================================================
 -- 9. Comments / Discussions on public shelves
 -- ============================================================
+
+-- 9a. Discussion Groups (Marginalia)
+create table if not exists public.discussions (
+  id uuid primary key default gen_random_uuid(),
+  creator_id uuid references public.profiles(id) on delete cascade not null,
+  title text not null,
+  description text,
+  book_title text,
+  book_author text,
+  book_cover_url text,
+  accent_color text default 'gold',
+  is_public boolean default true,
+  created_at timestamptz default now()
+);
+
+alter table public.discussions enable row level security;
+
+-- Anyone can view public discussions
+drop policy if exists "Anyone can view public discussions" on public.discussions;
+create policy "Anyone can view public discussions"
+  on public.discussions for select
+  using (is_public = true);
+
+-- Authenticated users can create discussions
+drop policy if exists "Users can create discussions" on public.discussions;
+create policy "Users can create discussions"
+  on public.discussions for insert
+  with check (auth.uid() = creator_id);
+
+-- Creators can update their discussions
+drop policy if exists "Creators can update discussions" on public.discussions;
+create policy "Creators can update discussions"
+  on public.discussions for update
+  using (auth.uid() = creator_id);
+
+-- Creators can delete their discussions
+drop policy if exists "Creators can delete discussions" on public.discussions;
+create policy "Creators can delete discussions"
+  on public.discussions for delete
+  using (auth.uid() = creator_id);
+
+create index if not exists discussions_creator_idx on public.discussions (creator_id);
+create index if not exists discussions_created_at_idx on public.discussions (created_at desc);
+
+-- 9b. Discussion Members
+create table if not exists public.discussion_members (
+  id uuid primary key default gen_random_uuid(),
+  discussion_id uuid references public.discussions(id) on delete cascade not null,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  joined_at timestamptz default now(),
+  unique(discussion_id, user_id)
+);
+
+alter table public.discussion_members enable row level security;
+
+-- Anyone can view members of public discussions
+drop policy if exists "Anyone can view discussion members" on public.discussion_members;
+create policy "Anyone can view discussion members"
+  on public.discussion_members for select
+  using (true);
+
+-- Authenticated users can join discussions
+drop policy if exists "Users can join discussions" on public.discussion_members;
+create policy "Users can join discussions"
+  on public.discussion_members for insert
+  with check (auth.uid() = user_id);
+
+-- Users can leave discussions
+drop policy if exists "Users can leave discussions" on public.discussion_members;
+create policy "Users can leave discussions"
+  on public.discussion_members for delete
+  using (auth.uid() = user_id);
+
+create index if not exists discussion_members_discussion_idx on public.discussion_members (discussion_id);
+create index if not exists discussion_members_user_idx on public.discussion_members (user_id);
+
+-- 9c. Discussion Posts
+create table if not exists public.discussion_posts (
+  id uuid primary key default gen_random_uuid(),
+  discussion_id uuid references public.discussions(id) on delete cascade not null,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  content text not null,
+  created_at timestamptz default now()
+);
+
+alter table public.discussion_posts enable row level security;
+
+-- Anyone can view posts in public discussions
+drop policy if exists "Anyone can view discussion posts" on public.discussion_posts;
+create policy "Anyone can view discussion posts"
+  on public.discussion_posts for select
+  using (true);
+
+-- Members can post in discussions
+drop policy if exists "Members can post in discussions" on public.discussion_posts;
+create policy "Members can post in discussions"
+  on public.discussion_posts for insert
+  with check (
+    auth.uid() = user_id
+    and exists (
+      select 1 from public.discussion_members
+      where discussion_members.discussion_id = discussion_posts.discussion_id
+      and discussion_members.user_id = auth.uid()
+    )
+  );
+
+-- Users can delete their own posts
+drop policy if exists "Users can delete own posts" on public.discussion_posts;
+create policy "Users can delete own posts"
+  on public.discussion_posts for delete
+  using (auth.uid() = user_id);
+
+create index if not exists discussion_posts_discussion_idx on public.discussion_posts (discussion_id);
+create index if not exists discussion_posts_created_at_idx on public.discussion_posts (created_at);
+
+-- 9d. Shelf Comments (legacy)
 
 create table if not exists public.comments (
   id uuid primary key default gen_random_uuid(),

@@ -2,9 +2,11 @@
 
 import Navigation from '@/components/Navigation';
 import FloatingParticles from '@/components/FloatingParticles';
+import OnboardingTutorial from '@/components/OnboardingTutorial';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/lib/auth';
 
 /** Lotus-shaped scroll-to-top button */
 function LotusScrollButton() {
@@ -93,11 +95,13 @@ function LotusScrollButton() {
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { user } = useAuth();
 
   return (
     <>
       <FloatingParticles />
       <Navigation />
+      {user && <OnboardingTutorial />}
       <main className="md:ml-20 lg:ml-64 pb-24 md:pb-8 relative z-10 min-h-screen">
         <AnimatePresence mode="wait">
           <motion.div
