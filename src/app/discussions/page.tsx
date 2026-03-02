@@ -16,8 +16,13 @@ import {
   X,
   ChevronRight,
   AlertCircle,
+  Edit3,
+  Check,
+  UserPlus,
+  Search,
 } from 'lucide-react';
 import Link from 'next/link';
+import { Book } from '@/lib/types';
 
 interface Discussion {
   id: string;
@@ -70,6 +75,26 @@ export default function DiscussionsPage() {
   const [sending, setSending] = useState(false);
   const [isMember, setIsMember] = useState(false);
   const [joining, setJoining] = useState(false);
+
+  // Edit state
+  const [editingDiscussion, setEditingDiscussion] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editBookTitle, setEditBookTitle] = useState('');
+  const [editBookAuthor, setEditBookAuthor] = useState('');
+  const [editSaving, setEditSaving] = useState(false);
+
+  // Add member state
+  const [showAddMember, setShowAddMember] = useState(false);
+  const [memberSearch, setMemberSearch] = useState('');
+  const [memberResults, setMemberResults] = useState<{ id: string; reader_name: string; avatar_url: string | null }[]>([]);
+  const [memberSearching, setMemberSearching] = useState(false);
+  const [members, setMembers] = useState<{ id: string; reader_name: string; avatar_url: string | null }[]>([]);
+
+  // User's books for linking
+  const [userBooks, setUserBooks] = useState<Book[]>([]);
+  const [showBookPicker, setShowBookPicker] = useState(false);
+  const [bookPickerSearch, setBookPickerSearch] = useState('');
 
   // Create form
   const [formTitle, setFormTitle] = useState('');
@@ -181,8 +206,100 @@ export default function DiscussionsPage() {
         .eq('user_id', user.id)
         .maybeSingle();
       setIsMember(!!mem);
+
+      // Fetch user's books for linking
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('reading_data')
+        .eq('id', user.id)
+        .single();
+      if (profile?.reading_data?.books) {
+        setUserBooks(profile.reading_data.books);
+      }
     }
+
+    // Fetch members list
+    const { data: membersData } = await supabase
+      .from('discussion_members')
+      .select('user_id, profiles:user_id(reader_name, avatar_url)')
+      .eq('discussion_id', disc.id)
+      .limit(50);
+    if (membersData) {
+      setMembers(membersData.map((m: any) => ({
+        id: m.user_id,
+        reader_name: (m.profiles as any)?.reader_name || 'Unknown',
+        avatar_url: (m.profiles as any)?.avatar_url || null,
+      })));
+    }
+
     setPostsLoading(false);
+  };
+
+  const handleEditDiscussion = async () => {
+    if (!selectedDiscussion || !editTitle.trim()) return;
+    setEditSaving(true);
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('discussions')
+      .update({
+        title: editTitle.trim(),
+        description: editDescription.trim() || null,
+        book_title: editBookTitle.trim() || null,
+        book_author: editBookAuthor.trim() || null,
+      })
+      .eq('id', selectedDiscussion.id);
+
+    if (!error) {
+      setSelectedDiscussion({
+        ...selectedDiscussion,
+        title: editTitle.trim(),
+        description: editDescription.trim() || null,
+        book_title: editBookTitle.trim() || null,
+        book_author: editBookAuthor.trim() || null,
+      });
+      setEditingDiscussion(null);
+      fetchDiscussions();
+    }
+    setEditSaving(false);
+  };
+
+  const handleSearchMembers = async (query: string) => {
+    setMemberSearch(query);
+    if (query.length < 2) { setMemberResults([]); return; }
+    setMemberSearching(true);
+    const supabase = createClient();
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, reader_name, avatar_url')
+      .ilike('reader_name', `%${query}%`)
+      .limit(8);
+    if (data) {
+      // Filter out existing members
+      const memberIds = members.map(m => m.id);
+      setMemberResults(data.filter((p: any) => !memberIds.includes(p.id)));
+    }
+    setMemberSearching(false);
+  };
+
+  const handleAddMember = async (userId: string, readerName: string, avatarUrl: string | null) => {
+    if (!selectedDiscussion) return;
+    const supabase = createClient();
+    const { error } = await supabase.from('discussion_members').insert({
+      discussion_id: selectedDiscussion.id,
+      user_id: userId,
+    });
+    if (!error) {
+      setMembers(prev => [...prev, { id: userId, reader_name: readerName, avatar_url: avatarUrl }]);
+      setMemberResults(prev => prev.filter(p => p.id !== userId));
+    }
+  };
+
+  const handleLinkBook = (book: Book) => {
+    if (!selectedDiscussion) return;
+    setEditBookTitle(book.title);
+    setEditBookAuthor(book.author);
+    setShowBookPicker(false);
+    setBookPickerSearch('');
   };
 
   const handleJoin = async () => {
@@ -236,33 +353,219 @@ export default function DiscussionsPage() {
         <div className="px-4 pt-4 pb-4 border-b border-gold-light/20 bg-cream/50">
           <div className="md:max-w-2xl md:mx-auto">
             <button
-              onClick={() => { setSelectedDiscussion(null); setPosts([]); }}
+              onClick={() => { setSelectedDiscussion(null); setPosts([]); setEditingDiscussion(null); setShowAddMember(false); }}
               className="flex items-center gap-1 text-sm text-ink-muted hover:text-ink transition-colors mb-3"
             >
               <ArrowLeft className="w-4 h-4" /> Back to Marginalia
             </button>
-            <div className="flex items-center gap-3 mb-1">
-              <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: theme.color }} />
-              <h1 className="text-2xl font-bold text-ink" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
-                {selectedDiscussion.title}
-              </h1>
-            </div>
-            {selectedDiscussion.description && (
-              <p className="text-sm text-ink-muted italic ml-6">{selectedDiscussion.description}</p>
-            )}
-            {selectedDiscussion.book_title && (
-              <div className="flex items-center gap-2 mt-2 ml-6">
-                <BookOpen className="w-4 h-4 text-ink-muted" />
-                <span className="text-sm text-ink-muted">
-                  {selectedDiscussion.book_title}
-                  {selectedDiscussion.book_author && ` by ${selectedDiscussion.book_author}`}
-                </span>
+
+            {/* Editing mode */}
+            {editingDiscussion === selectedDiscussion.id ? (
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-lg font-bold"
+                  style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+                  placeholder="Discussion title"
+                />
+                <input
+                  type="text"
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm"
+                  placeholder="Description (optional)"
+                />
+                <div className="flex gap-2 items-end">
+                  <div className="flex-1">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={editBookTitle}
+                        onChange={(e) => setEditBookTitle(e.target.value)}
+                        className="flex-1 px-3 py-2 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm"
+                        placeholder="Linked book title"
+                      />
+                      <input
+                        type="text"
+                        value={editBookAuthor}
+                        onChange={(e) => setEditBookAuthor(e.target.value)}
+                        className="flex-1 px-3 py-2 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm"
+                        placeholder="Author"
+                      />
+                    </div>
+                    {/* Pick from your library */}
+                    <button
+                      onClick={() => setShowBookPicker(!showBookPicker)}
+                      className="text-xs text-gold-dark hover:text-gold mt-1.5 flex items-center gap-1"
+                    >
+                      <BookOpen className="w-3 h-3" /> Pick from your library
+                    </button>
+                    <AnimatePresence>
+                      {showBookPicker && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="overflow-hidden mt-2"
+                        >
+                          <input
+                            type="text"
+                            value={bookPickerSearch}
+                            onChange={(e) => setBookPickerSearch(e.target.value)}
+                            className="w-full px-3 py-1.5 rounded-lg bg-cream/80 border border-gold-light/20 text-xs text-ink mb-1"
+                            placeholder="Search your books..."
+                          />
+                          <div className="max-h-32 overflow-y-auto space-y-1">
+                            {userBooks
+                              .filter(b => !bookPickerSearch || b.title.toLowerCase().includes(bookPickerSearch.toLowerCase()))
+                              .slice(0, 8)
+                              .map(b => (
+                                <button
+                                  key={b.id}
+                                  onClick={() => handleLinkBook(b)}
+                                  className="w-full flex items-center gap-2 px-2 py-1 rounded text-left hover:bg-gold-light/10 transition-colors text-xs"
+                                >
+                                  {b.coverUrl ? (
+                                    <img src={b.coverUrl} alt="" className="w-5 h-7 rounded object-cover flex-shrink-0" />
+                                  ) : (
+                                    <BookOpen className="w-4 h-4 text-ink-muted flex-shrink-0" />
+                                  )}
+                                  <span className="text-ink truncate">{b.title}</span>
+                                  <span className="text-ink-muted ml-auto">{b.author}</span>
+                                </button>
+                              ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleEditDiscussion}
+                    disabled={editSaving || !editTitle.trim()}
+                    className="px-4 py-2 rounded-xl text-xs font-medium text-parchment flex items-center gap-1"
+                    style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}
+                  >
+                    {editSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                    Save
+                  </motion.button>
+                  <button
+                    onClick={() => setEditingDiscussion(null)}
+                    className="px-4 py-2 rounded-xl text-xs text-ink-muted border border-gold-light/30"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
+            ) : (
+              <>
+                <div className="flex items-center gap-3 mb-1">
+                  <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: theme.color }} />
+                  <h1 className="text-2xl font-bold text-ink flex-1" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+                    {selectedDiscussion.title}
+                  </h1>
+                  {user?.id === selectedDiscussion.creator_id && (
+                    <button
+                      onClick={() => {
+                        setEditingDiscussion(selectedDiscussion.id);
+                        setEditTitle(selectedDiscussion.title);
+                        setEditDescription(selectedDiscussion.description || '');
+                        setEditBookTitle(selectedDiscussion.book_title || '');
+                        setEditBookAuthor(selectedDiscussion.book_author || '');
+                      }}
+                      className="p-1.5 rounded-lg text-ink-muted hover:text-ink hover:bg-gold-light/10 transition-all"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+                {selectedDiscussion.description && (
+                  <p className="text-sm text-ink-muted italic ml-6">{selectedDiscussion.description}</p>
+                )}
+                {selectedDiscussion.book_title && (
+                  <div className="flex items-center gap-2 mt-2 ml-6">
+                    <BookOpen className="w-4 h-4 text-ink-muted" />
+                    <span className="text-sm text-ink-muted">
+                      {selectedDiscussion.book_title}
+                      {selectedDiscussion.book_author && ` by ${selectedDiscussion.book_author}`}
+                    </span>
+                  </div>
+                )}
+                <div className="flex items-center gap-4 mt-2 ml-6 text-xs text-ink-muted">
+                  <button
+                    onClick={() => setShowAddMember(!showAddMember)}
+                    className="flex items-center gap-0.5 hover:text-gold-dark transition-colors"
+                  >
+                    <Users className="w-3.5 h-3.5" /> {members.length} members
+                    {user?.id === selectedDiscussion.creator_id && <UserPlus className="w-3 h-3 ml-0.5" />}
+                  </button>
+                  <span className="flex items-center gap-0.5"><MessageSquare className="w-3.5 h-3.5" /> {posts.length} posts</span>
+                </div>
+
+                {/* Members & Add Member Panel */}
+                <AnimatePresence>
+                  {showAddMember && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden mt-3"
+                    >
+                      <div className="glass-card rounded-xl p-3 space-y-2">
+                        <p className="text-xs font-medium text-ink-muted uppercase tracking-wider">Members</p>
+                        <div className="flex flex-wrap gap-2">
+                          {members.map(m => (
+                            <div key={m.id} className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-gold-light/10 text-xs text-ink">
+                              {m.avatar_url ? (
+                                <img src={m.avatar_url} alt="" className="w-4 h-4 rounded-full object-cover" />
+                              ) : (
+                                <div className="w-4 h-4 rounded-full bg-gold/20 flex items-center justify-center text-[8px] font-bold text-gold-dark">
+                                  {m.reader_name.charAt(0).toUpperCase()}
+                                </div>
+                              )}
+                              {m.reader_name}
+                            </div>
+                          ))}
+                        </div>
+                        {user?.id === selectedDiscussion.creator_id && (
+                          <div className="pt-2 border-t border-gold-light/20">
+                            <div className="relative">
+                              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ink-muted" />
+                              <input
+                                type="text"
+                                value={memberSearch}
+                                onChange={(e) => handleSearchMembers(e.target.value)}
+                                className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-cream/50 border border-gold-light/20 text-xs text-ink"
+                                placeholder="Search users to invite..."
+                              />
+                            </div>
+                            {memberSearching && <Loader2 className="w-3.5 h-3.5 animate-spin text-gold mx-auto mt-2" />}
+                            {memberResults.length > 0 && (
+                              <div className="mt-2 space-y-1 max-h-24 overflow-y-auto">
+                                {memberResults.map(p => (
+                                  <button
+                                    key={p.id}
+                                    onClick={() => handleAddMember(p.id, p.reader_name, p.avatar_url)}
+                                    className="w-full flex items-center gap-2 px-2 py-1 rounded text-left hover:bg-gold-light/10 transition-colors text-xs"
+                                  >
+                                    <UserPlus className="w-3 h-3 text-gold-dark" />
+                                    <span className="text-ink">{p.reader_name}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </>
             )}
-            <div className="flex items-center gap-4 mt-2 ml-6 text-xs text-ink-muted">
-              <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" /> {selectedDiscussion.member_count} members</span>
-              <span className="flex items-center gap-1"><MessageSquare className="w-3.5 h-3.5" /> {posts.length} posts</span>
-            </div>
           </div>
         </div>
 

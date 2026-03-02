@@ -759,15 +759,8 @@ export default function ProfilePage() {
           </AnimatePresence>
         </div>
 
-        {/* Share Link Section */}
-        <AnimatePresence>
-          {shelfPublic && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="space-y-3"
-            >
+        {/* Share Link Section — always visible, even for private profiles */}
+        <div className="space-y-3 mt-4">
               <div className="glass-card rounded-xl p-4">
                 <label className="block text-xs font-medium text-ink-muted mb-1.5 uppercase tracking-wider">
                   Your profile URL
@@ -799,43 +792,58 @@ export default function ProfilePage() {
               </div>
 
               {publicSlug && (
-                <div className="flex gap-2">
-                  <motion.button
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={handleCopyLink}
-                    className="flex-1 glass-card rounded-xl p-4 flex items-center gap-3 text-left hover:bg-cream/40 transition-colors"
-                  >
-                    {slugCopied ? (
-                      <Check className="w-5 h-5 text-forest" />
-                    ) : (
-                      <Copy className="w-5 h-5 text-gold" />
-                    )}
-                    <div className="flex-1">
-                      <div className="text-sm font-medium text-ink">
-                        {slugCopied ? 'Link copied!' : 'Copy share link'}
-                      </div>
-                      <div className="text-xs text-ink-muted truncate">
-                        {typeof window !== 'undefined' ? window.location.origin : ''}/user/{publicSlug}
-                      </div>
-                    </div>
-                  </motion.button>
-                  <motion.a
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    whileTap={{ scale: 0.98 }}
-                    href={`/user/${publicSlug}`}
-                    target="_blank"
-                    className="glass-card rounded-xl p-4 flex items-center justify-center hover:bg-cream/40 transition-colors"
-                  >
-                    <Eye className="w-5 h-5 text-gold" />
-                  </motion.a>
+                <div className="glass-card rounded-2xl p-5 border-2 border-gold/20 bg-gradient-to-br from-gold/5 to-amber/5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Link2 className="w-5 h-5 text-gold" />
+                    <h3 className="text-sm font-semibold text-ink" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+                      Share Your Profile
+                    </h3>
+                  </div>
+                  <p className="text-xs text-ink-muted mb-4">
+                    Share this link with friends to let them see your reading library and follow you.
+                  </p>
+                  <div className="flex gap-2">
+                    <motion.button
+                      whileTap={{ scale: 0.98 }}
+                      whileHover={{ scale: 1.02 }}
+                      onClick={handleCopyLink}
+                      className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium text-parchment shadow-lg"
+                      style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}
+                    >
+                      {slugCopied ? (
+                        <>
+                          <Check className="w-4 h-4" />
+                          Copied!
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-4 h-4" />
+                          Copy Share Link
+                        </>
+                      )}
+                    </motion.button>
+                    <motion.a
+                      whileTap={{ scale: 0.95 }}
+                      whileHover={{ scale: 1.05 }}
+                      href={`/user/${publicSlug}`}
+                      target="_blank"
+                      className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium border border-gold/30 hover:bg-gold-light/10 transition-colors text-gold-dark"
+                    >
+                      <Eye className="w-4 h-4" />
+                      Preview
+                    </motion.a>
+                  </div>
+                  <p className="text-[10px] text-ink-muted mt-2 text-center">
+                    {typeof window !== 'undefined' ? window.location.origin : ''}/user/{publicSlug}
+                  </p>
+                  {!shelfPublic && (
+                    <p className="text-[10px] text-gold mt-2 text-center">
+                      Your profile is private — visitors can follow you but will only see your name and bio.
+                    </p>
+                  )}
                 </div>
               )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </div>
       </motion.div>
 
       {/* Divider */}

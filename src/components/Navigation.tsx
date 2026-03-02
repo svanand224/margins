@@ -21,6 +21,7 @@ import {
   MessageSquare,
   Compass,
   Newspaper,
+  HelpCircle,
 } from 'lucide-react';
 import { useThemeStore } from '@/lib/themeStore';
 import { useAuth } from '@/lib/auth';
@@ -54,6 +55,15 @@ export default function Navigation() {
     await signOut();
     router.push('/login');
     router.refresh();
+  };
+
+  const handleReplayTutorial = () => {
+    // Clear all tutorial flags
+    localStorage.removeItem('margins-tutorial-seen');
+    const keys = Object.keys(localStorage).filter(k => k.startsWith('margins-page-tip-'));
+    keys.forEach(k => localStorage.removeItem(k));
+    // Reload to trigger tutorial
+    window.location.reload();
   };
 
   return (
@@ -154,6 +164,22 @@ export default function Navigation() {
             </span>
           </button>
 
+          {/* Replay Tutorial */}
+          {user && (
+            <button
+              onClick={handleReplayTutorial}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 hover:bg-gold-light/10 group"
+              aria-label="Replay tutorial"
+            >
+              <div className="w-10 h-10 lg:w-9 lg:h-9 rounded-full flex items-center justify-center bg-gold-light/20">
+                <HelpCircle className="w-4 h-4 text-gold-dark" />
+              </div>
+              <span className="hidden lg:block text-sm font-medium text-ink-muted group-hover:text-ink transition-colors">
+                Replay Tutorial
+              </span>
+            </button>
+          )}
+
           {/* Sign Out */}
           {user && (
             <button
@@ -221,6 +247,18 @@ export default function Navigation() {
             {isNight ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
             <span className="text-xs font-medium">{isNight ? 'Day' : 'Night'}</span>
           </motion.button>
+          {/* Mobile replay tutorial */}
+          {user && (
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={handleReplayTutorial}
+              className="flex flex-col items-center gap-1 px-4 py-2 rounded-xl text-ink-muted min-w-[56px]"
+              aria-label="Replay tutorial"
+            >
+              <HelpCircle className="w-6 h-6" />
+              <span className="text-xs font-medium">Help</span>
+            </motion.button>
+          )}
           {/* Mobile sign out */}
           {user && (
             <motion.button

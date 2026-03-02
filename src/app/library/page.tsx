@@ -1,7 +1,7 @@
 'use client';
 
 import { useBookStore } from '@/lib/store';
-import { Book, ReadingStatus, SortOption, ViewMode } from '@/lib/types';
+import { Book, ReadingStatus, SortOption, ViewMode, Thread } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   BookOpen,
@@ -50,10 +50,12 @@ function LibraryContent() {
   const initialStatus = (searchParams.get('status') as ReadingStatus | null) || 'all';
 
   const [books, setBooks] = useState<Book[]>([]);
+  const [threads, setThreads] = useState<Thread[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<ReadingStatus | 'all'>(initialStatus);
   const [genreFilter, setGenreFilter] = useState<string>('all');
+  const [shelfFilter, setShelfFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<SortOption>('dateAdded');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -77,8 +79,13 @@ function LibraryContent() {
         .select('reading_data')
         .eq('id', user.id)
         .single();
-      if (profile && profile.reading_data && Array.isArray(profile.reading_data.books)) {
-        setBooks(profile.reading_data.books);
+      if (profile && profile.reading_data) {
+        if (Array.isArray(profile.reading_data.books)) {
+          setBooks(profile.reading_data.books);
+        }
+        if (Array.isArray(profile.reading_data.threads)) {
+          setThreads(profile.reading_data.threads);
+        }
       }
       setLoading(false);
     }
@@ -153,6 +160,14 @@ function LibraryContent() {
       result = result.filter(b => b.genre === genreFilter);
     }
 
+    // Shelf filter
+    if (shelfFilter !== 'all') {
+      const shelf = threads.find(t => t.id === shelfFilter);
+      if (shelf) {
+        result = result.filter(b => shelf.bookIds.includes(b.id));
+      }
+    }
+
     // Sort
     result.sort((a, b) => {
       switch (sortBy) {
@@ -171,7 +186,7 @@ function LibraryContent() {
     });
 
     return result;
-  }, [books, searchQuery, statusFilter, genreFilter, sortBy]);
+  }, [books, threads, searchQuery, statusFilter, genreFilter, shelfFilter, sortBy]);
 
   return (
     <div className="min-h-screen p-4 pb-24 md:p-8 md:pb-8 max-w-6xl mx-auto">
@@ -355,6 +370,21 @@ function LibraryContent() {
                     </select>
                   </div>
                 )}
+                {threads.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Library className="w-4 h-4 text-ink-muted" />
+                    <select
+                      value={shelfFilter}
+                      onChange={(e) => setShelfFilter(e.target.value)}
+                      className="text-sm bg-cream/50 border border-gold-light/30 rounded-lg px-3 py-1.5 text-ink"
+                    >
+                      <option value="all">All Shelves</option>
+                      {threads.map(t => (
+                        <option key={t.id} value={t.id}>{t.name} ({t.bookIds.length})</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
             </motion.div>
           )}
@@ -453,6 +483,15 @@ function GridBookCard({ book, index, onToggleFavorite, relatedCount }: { book: B
                 />
               </div>
             )}
+            {/* Recommended badge */}
+            {book.isRecommended && (
+              <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-forest/90 backdrop-blur-sm flex items-center gap-0.5">
+                <svg width="10" height="10" viewBox="0 0 10 10" className="text-white">
+                  <path d="M5 1L6.2 3.5L9 3.8L7 5.8L7.5 8.5L5 7.2L2.5 8.5L3 5.8L1 3.8L3.8 3.5Z" fill="currentColor" />
+                </svg>
+                <span className="text-[8px] text-white font-medium">Rec&apos;d</span>
+              </div>
+            )}
           </div>
           <div className="min-w-0">
             {/* Info */}
@@ -519,7 +558,14 @@ function ListBookCard({ book, index, onToggleFavorite, relatedCount }: { book: B
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <h3 className="text-sm font-semibold text-ink truncate">{book.title}</h3>
+                <div className="flex items-center gap-1.5">
+                  <h3 className="text-sm font-semibold text-ink truncate">{book.title}</h3>
+                  {book.isRecommended && (
+                    <span className="flex-shrink-0 px-1.5 py-0.5 rounded-md bg-forest/10 text-forest text-[9px] font-medium border border-forest/20">
+                      Recommended
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-ink-muted truncate">{book.author} · {book.genre}</p>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">

@@ -3,6 +3,8 @@
 import Navigation from '@/components/Navigation';
 import FloatingParticles from '@/components/FloatingParticles';
 import OnboardingTutorial from '@/components/OnboardingTutorial';
+import PageTutorial from '@/components/PageTutorial';
+import LocalClock from '@/components/LocalClock';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -102,7 +104,9 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       <FloatingParticles />
       <Navigation />
       {user && <OnboardingTutorial />}
+      {user && <LocalClock />}
       <main className="md:ml-20 lg:ml-64 pb-24 md:pb-8 relative z-10 min-h-screen">
+        {user && <PageTutorial pathname={pathname} />}
         <AnimatePresence mode="wait">
           <motion.div
             key={pathname}

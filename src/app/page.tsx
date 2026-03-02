@@ -920,14 +920,14 @@ export default function HomePage() {
         </motion.div>
       )}
 
-      {/* Lotus Divider before Threads */}
+      {/* Lotus Divider before Shelves */}
       {(books.length >= 2 || threads.length > 0) && (
         <div className="mb-4 -mt-4">
           <LotusDivider className="h-10 opacity-70" />
         </div>
       )}
 
-      {/* Threads — Custom collections + auto-genre groups */}
+      {/* Shelves — Custom collections to organize your library */}
       {(books.length >= 2 || threads.length > 0) && (
         <motion.section
           initial={{ opacity: 0, y: 20 }}
@@ -936,20 +936,20 @@ export default function HomePage() {
           className="mb-8"
         >
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-ink flex items-center gap-2" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-              <svg width="18" height="18" viewBox="0 0 18 18" className="text-copper">
-                <path d="M1 9 C5 4, 13 4, 17 9" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-                <path d="M1 9 C5 14, 13 14, 17 9" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" opacity="0.4" />
-              </svg>
-              Threads
-            </h2>
+            <div>
+              <h2 className="text-xl font-semibold text-ink flex items-center gap-2" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+                <Lucide.Library className="w-5 h-5 text-copper" />
+                Reading Shelves
+              </h2>
+              <p className="text-xs text-ink-muted mt-0.5">Organize your books into custom collections</p>
+            </div>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowNewThread(!showNewThread)}
-              className="flex items-center gap-1 text-xs text-gold-dark hover:text-gold transition-colors"
+              className="flex items-center gap-1 text-xs text-gold-dark hover:text-gold transition-colors px-3 py-1.5 rounded-lg border border-gold-light/30 hover:bg-gold-light/10"
             >
-              <Lucide.Plus className="w-3.5 h-3.5" /> New Thread
+              <Lucide.Plus className="w-3.5 h-3.5" /> New Shelf
             </motion.button>
           </div>
 
@@ -967,7 +967,7 @@ export default function HomePage() {
                     type="text"
                     value={newThreadName}
                     onChange={(e) => setNewThreadName(e.target.value)}
-                    placeholder="Thread name (e.g., Marginalia 2026, Comfort Reads)"
+                    placeholder="Shelf name (e.g., Summer 2025, Comfort Reads, Deep Dives)"
                     className="w-full px-3 py-2 bg-cream/50 border border-gold-light/30 rounded-lg text-sm text-ink"
                   />
                   <input
@@ -1023,7 +1023,7 @@ export default function HomePage() {
                       }}
                       className="flex-1 py-2 bg-gradient-to-r from-gold to-amber text-white rounded-lg text-xs font-medium"
                     >
-                      Create Thread
+                      Create Shelf
                     </motion.button>
                     <button onClick={() => setShowNewThread(false)} className="px-3 py-2 text-xs text-ink-muted">
                       Cancel
@@ -1131,7 +1131,7 @@ export default function HomePage() {
                         )}
                       </div>
                     )) : (
-                      <p className="text-[10px] text-ink-muted italic py-2">Click <Lucide.Settings className="w-3 h-3 inline" /> to add books to this thread.</p>
+                      <p className="text-[10px] text-ink-muted italic py-2">Click <Lucide.Settings className="w-3 h-3 inline" /> to add books to this shelf.</p>
                     )}
                   </div>
                 </div>
@@ -1140,7 +1140,11 @@ export default function HomePage() {
 
             {/* Show hint when no custom threads exist */}
             {threads.length === 0 && (
-              <p className="text-sm text-ink-muted italic">Create your first thread above to organize books into custom collections.</p>
+              <div className="glass-card rounded-xl p-6 text-center border-2 border-dashed border-gold-light/20">
+                <Lucide.Library className="w-10 h-10 text-gold-light/30 mx-auto mb-2" />
+                <p className="text-sm text-ink-muted">Create your first shelf to organize books into collections.</p>
+                <p className="text-xs text-ink-muted/60 mt-1">Shelves work like bookshelves — group books by theme, mood, or any way you like.</p>
+              </div>
             )}
           </div>
         </motion.section>

@@ -207,14 +207,18 @@ export default function BookPage() {
     setBook(updatedBook);
     // Sync form state too
     setForm(f => ({ ...f, currentPage: updatedBook.currentPage, status: updatedBook.status }));
-    // Also update Zustand store
-    useBookStore.getState().updateBook(book.id, {
+    // Also update Zustand store — addSession already calls logDaily
+    const store = useBookStore.getState();
+    store.updateBook(book.id, {
       currentPage: updatedBook.currentPage,
       status: updatedBook.status,
       sessions: updatedBook.sessions,
       startDate: updatedBook.startDate,
       finishDate: updatedBook.finishDate,
     });
+    // Log daily activity for goals/analytics tracking
+    const dateKey = new Date().toISOString().split('T')[0];
+    store.logDaily(dateKey, sessionForm.pagesRead, sessionForm.minutesSpent, book.id);
     setShowSessionModal(false);
     setSessionForm({ pagesRead: 0, minutesSpent: 0, notes: '' });
   };

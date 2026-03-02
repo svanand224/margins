@@ -27,6 +27,8 @@ export interface Book {
   favorite: boolean;
   sessions: ReadingSession[];
   tags: string[];
+  isRecommended?: boolean; // badge for books added via recommendations
+  recommendedBy?: string; // who recommended this book
 }
 
 export interface ReadingGoal {
@@ -59,4 +61,16 @@ export interface Thread {
   coverUrl?: string;
   author?: string;
   genre?: string;
+}
+
+// Achievement badge definitions
+export interface Achievement {
+  id: string;
+  label: string;
+  description: string;
+  icon: string; // SVG path or emoji
+  color: string; // CSS color
+  unlocked: boolean;
+  progress: number; // 0–100
+  requirement: string;
 }

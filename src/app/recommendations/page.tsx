@@ -78,6 +78,7 @@ export default function RecommendationsPage() {
   const [sendMessage, setSendMessage] = useState('');
   const [sendingRec, setSendingRec] = useState(false);
   const [sendSuccess, setSendSuccess] = useState(false);
+  const [shareNetworkSuccess, setShareNetworkSuccess] = useState(false);
 
   const completedBooks = useMemo(() => books.filter(b => b.status === 'completed'), [books]);
   const autoRecsUnlocked = completedBooks.length >= 5;
@@ -381,6 +382,35 @@ export default function RecommendationsPage() {
         fetchRecommendations();
       }, 1500);
     }
+    setSendingRec(false);
+  };
+
+  const handleShareWithNetwork = async () => {
+    if (!user || !selectedBook) return;
+    setSendingRec(true);
+    const supabase = createClient();
+
+    // Post as activity to the user's feed for their followers to see
+    await supabase.from('activities').insert({
+      user_id: user.id,
+      type: 'recommended',
+      data: {
+        book_title: selectedBook.title,
+        book_author: selectedBook.author,
+        book_cover_url: selectedBook.coverUrl,
+        message: sendMessage.trim() || `I just finished "${selectedBook.title}" and highly recommend it!`,
+        shared_to_network: true,
+      },
+    });
+
+    setShareNetworkSuccess(true);
+    setTimeout(() => {
+      setShowSendModal(false);
+      setSelectedBook(null);
+      setSendBookQuery('');
+      setSendMessage('');
+      setShareNetworkSuccess(false);
+    }, 1500);
     setSendingRec(false);
   };
 
@@ -840,10 +870,12 @@ export default function RecommendationsPage() {
                 Recommend a Book
               </h3>
 
-              {sendSuccess ? (
+              {sendSuccess || shareNetworkSuccess ? (
                 <div className="text-center py-8">
                   <Check className="w-12 h-12 text-forest mx-auto mb-2" />
-                  <p className="text-sm font-medium text-forest">Recommendation sent!</p>
+                  <p className="text-sm font-medium text-forest">
+                    {shareNetworkSuccess ? 'Shared with your network!' : 'Recommendation sent!'}
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -905,25 +937,51 @@ export default function RecommendationsPage() {
                     )}
                   </div>
 
-                  {/* Step 2: Choose a user */}
+                  {/* Step 2: Choose how to share */}
                   {selectedBook && (
                     <div>
-                      <label className="block text-xs font-medium text-ink-muted mb-1.5 uppercase tracking-wider">
-                        2. Send to
+                      <label className="block text-xs font-medium text-ink-muted mb-2 uppercase tracking-wider">
+                        2. How would you like to share?
                       </label>
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" />
-                        <input
-                          type="text"
-                          value={sendUserQuery}
-                          onChange={(e) => setSendUserQuery(e.target.value)}
-                          placeholder="Search for a reader..."
-                          className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm"
-                        />
+
+                      {/* Share with Network option */}
+                      <motion.button
+                        whileTap={{ scale: 0.98 }}
+                        onClick={handleShareWithNetwork}
+                        disabled={sendingRec}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl mb-3 bg-gradient-to-r from-gold/10 to-amber/5 border border-gold/20 hover:from-gold/20 hover:to-amber/10 transition-all text-left"
+                      >
+                        <div className="w-9 h-9 rounded-full bg-gold/20 flex items-center justify-center flex-shrink-0">
+                          <Sparkles className="w-4 h-4 text-gold-dark" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-ink">Share with Network</p>
+                          <p className="text-[10px] text-ink-muted">Post to your activity feed for followers to see</p>
+                        </div>
+                        {sendingRec && <Loader2 className="w-4 h-4 animate-spin text-gold" />}
+                      </motion.button>
+
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="flex-1 h-px bg-gold-light/20" />
+                        <span className="text-[10px] text-ink-muted uppercase">or send to a friend</span>
+                        <div className="flex-1 h-px bg-gold-light/20" />
                       </div>
-                      {sendUsers.length > 0 && (
-                        <div className="mt-2 space-y-1 max-h-32 overflow-y-auto">
-                          {sendUsers.map((u) => (
+
+                      {/* Send to specific user */}
+                      <div>
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" />
+                          <input
+                            type="text"
+                            value={sendUserQuery}
+                            onChange={(e) => setSendUserQuery(e.target.value)}
+                            placeholder="Search for a reader..."
+                            className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm"
+                          />
+                        </div>
+                        {sendUsers.length > 0 && (
+                          <div className="mt-2 space-y-1 max-h-32 overflow-y-auto">
+                            {sendUsers.map((u) => (
                             <button
                               key={u.id}
                               onClick={() => handleSendRec(u.id)}
@@ -946,6 +1004,7 @@ export default function RecommendationsPage() {
                           ))}
                         </div>
                       )}
+                      </div>
                     </div>
                   )}
 

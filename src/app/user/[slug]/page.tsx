@@ -72,13 +72,19 @@ export default function PublicProfilePage() {
         .from('profiles')
         .select('id, reader_name, avatar_url, bio, favorite_genre, public_slug, shelf_public, shelf_accent_color, shelf_show_currently_reading, shelf_show_stats, shelf_bio_override, reading_data, created_at')
         .eq('public_slug', slug)
-        .eq('shelf_public', true)
         .single();
 
       if (error || !profileData) {
         setNotFound(true);
         setLoading(false);
         return;
+      }
+
+      // For private profiles, strip detailed reading data — only show name/bio
+      if (!profileData.shelf_public) {
+        profileData.reading_data = { books: [], goals: {}, dailyLogs: {} };
+        profileData.shelf_show_currently_reading = false;
+        profileData.shelf_show_stats = false;
       }
 
       setProfile(profileData as PublicProfile);
@@ -207,7 +213,7 @@ export default function PublicProfilePage() {
           Profile Not Found
         </h1>
         <p className="text-ink-muted mb-6">
-          This profile does not exist, is not public, or the link is incorrect.
+          This profile does not exist or the link is incorrect.
         </p>
         <Link
           href="/"
@@ -306,6 +312,25 @@ export default function PublicProfilePage() {
                 </motion.button>
               </div>
             )}
+            {/* Sign up prompt for non-logged-in visitors */}
+            {!user && (
+              <div className="mt-1">
+                <Link href="/login">
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ scale: 1.02 }}
+                    className="px-5 py-2.5 rounded-xl text-sm font-medium text-parchment shadow-lg flex items-center gap-2"
+                    style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    Sign up to follow {profile.reader_name}
+                  </motion.button>
+                </Link>
+                <p className="text-[10px] text-ink-muted mt-1.5">
+                  Join Margins to follow readers, share your library, and get book recommendations.
+                </p>
+              </div>
+            )}
             {isOwnProfile && (
               <Link href="/profile" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-cream border border-gold-light/30 text-ink-muted hover:text-ink transition-colors">
                 <Lucide.Edit3 className="w-4 h-4" /> Edit Profile
@@ -396,6 +421,26 @@ export default function PublicProfilePage() {
             )}
           </motion.div>
         </div>
+      )}
+
+      {/* Private profile notice */}
+      {!profile.shelf_public && !isOwnProfile && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-card mx-4 mt-4 rounded-2xl p-5 md:mx-auto md:max-w-2xl border border-gold-light/20 text-center"
+        >
+          <Lucide.Lock className="w-8 h-8 mx-auto mb-2 text-gold/60" />
+          <h3
+            className="text-base font-semibold text-ink mb-1"
+            style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+          >
+            Private Reader
+          </h3>
+          <p className="text-xs text-ink-muted max-w-xs mx-auto">
+            {profile.reader_name} keeps their library private. You can still follow them to stay connected and send book recommendations.
+          </p>
+        </motion.div>
       )}
 
       {/* Currently Reading */}
@@ -506,6 +551,36 @@ export default function PublicProfilePage() {
           ))}
         </div>
       </motion.section>
+
+      {/* Floating sign-up banner for non-logged-in visitors */}
+      {!user && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1 }}
+          className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-cream/95 backdrop-blur-md border-t border-gold/20 md:max-w-2xl md:mx-auto md:rounded-t-2xl md:bottom-0"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-ink" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+                Join Margins
+              </p>
+              <p className="text-xs text-ink-muted">
+                Track your reading, share your library, and discover books with friends.
+              </p>
+            </div>
+            <Link href="/login">
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                className="px-5 py-2.5 rounded-xl text-sm font-medium text-parchment shadow-md whitespace-nowrap"
+                style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}
+              >
+                Sign Up Free
+              </motion.button>
+            </Link>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }
