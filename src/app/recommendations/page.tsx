@@ -80,12 +80,48 @@ export default function RecommendationsPage() {
   const [sendSuccess, setSendSuccess] = useState(false);
   const [shareNetworkSuccess, setShareNetworkSuccess] = useState(false);
 
+  // Friends (mutual followers)
+  const [friends, setFriends] = useState<Array<{ id: string; username: string; reader_name: string; avatar_url: string | null; public_slug: string }>>([]);
+  const [friendsLoading, setFriendsLoading] = useState(false);
+
   const completedBooks = useMemo(() => books.filter(b => b.status === 'completed'), [books]);
   const autoRecsUnlocked = completedBooks.length >= 5;
 
   useEffect(() => {
     if (user) fetchRecommendations();
   }, [user]);
+
+  // Fetch mutual followers (friends) when send modal opens
+  useEffect(() => {
+    if (!showSendModal || !user || !isSupabaseConfigured()) return;
+    const fetchFriends = async () => {
+      setFriendsLoading(true);
+      const supabase = createClient();
+      // Get users I follow
+      const { data: iFollow } = await supabase
+        .from('follows')
+        .select('following_id')
+        .eq('follower_id', user.id);
+      if (!iFollow || iFollow.length === 0) { setFriends([]); setFriendsLoading(false); return; }
+      const iFollowIds = iFollow.map(f => f.following_id);
+      // Get users who follow me back (mutual)
+      const { data: followMeBack } = await supabase
+        .from('follows')
+        .select('follower_id')
+        .eq('following_id', user.id)
+        .in('follower_id', iFollowIds);
+      if (!followMeBack || followMeBack.length === 0) { setFriends([]); setFriendsLoading(false); return; }
+      const mutualIds = followMeBack.map(f => f.follower_id);
+      // Fetch profiles for mutual followers
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, username, reader_name, avatar_url, public_slug')
+        .in('id', mutualIds);
+      setFriends((profiles || []).map(p => ({ ...p, public_slug: p.public_slug || '' })));
+      setFriendsLoading(false);
+    };
+    fetchFriends();
+  }, [showSendModal, user]);
 
   const fetchRecommendations = async () => {
     if (!user || !isSupabaseConfigured()) { setLoading(false); return; }
@@ -969,6 +1005,46 @@ export default function RecommendationsPage() {
                         <span className="text-[10px] text-ink-muted uppercase">or send to a friend</span>
                         <div className="flex-1 h-px bg-gold-light/20" />
                       </div>
+
+                      {/* Friends (mutual followers) quick-send */}
+                      {friendsLoading ? (
+                        <div className="flex items-center justify-center py-3">
+                          <Loader2 className="w-4 h-4 animate-spin text-gold" />
+                          <span className="text-xs text-ink-muted ml-2">Loading friends...</span>
+                        </div>
+                      ) : friends.length > 0 ? (
+                        <div className="mb-3">
+                          <p className="text-[10px] font-medium text-ink-muted uppercase tracking-wider mb-2">Friends</p>
+                          <div className="space-y-1 max-h-36 overflow-y-auto">
+                            {friends.map((f) => (
+                              <button
+                                key={f.id}
+                                onClick={() => handleSendRec(f.id)}
+                                disabled={sendingRec}
+                                className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-cream/40 transition-colors"
+                              >
+                                {f.avatar_url ? (
+                                  <img src={f.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" />
+                                ) : (
+                                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-parchment text-xs font-bold" style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-amber))' }}>
+                                    {f.reader_name.charAt(0).toUpperCase()}
+                                  </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-medium text-ink">{f.reader_name}</p>
+                                  <p className="text-[10px] text-ink-muted">@{f.username || f.public_slug}</p>
+                                </div>
+                                <Send className="w-4 h-4 text-gold" />
+                              </button>
+                            ))}
+                          </div>
+                          <div className="flex items-center gap-3 mt-3 mb-2">
+                            <div className="flex-1 h-px bg-gold-light/20" />
+                            <span className="text-[10px] text-ink-muted uppercase">or search anyone</span>
+                            <div className="flex-1 h-px bg-gold-light/20" />
+                          </div>
+                        </div>
+                      ) : null}
 
                       {/* Send to specific user */}
                       <div>

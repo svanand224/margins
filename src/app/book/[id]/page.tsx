@@ -7,6 +7,7 @@ import type { Book, Thread, ReadingStatus } from '@/lib/types';
 import { useState, useEffect } from 'react';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import { useRouter, useParams } from 'next/navigation';
+import Link from 'next/link';
 
 export default function BookPage() {
   const params = useParams();
@@ -401,6 +402,18 @@ export default function BookPage() {
                 );
               })}
             </div>
+
+            {/* Share / Recommend button for completed books */}
+            {form.status === 'completed' && (
+              <Link
+                href={`/recommendations`}
+                className="flex items-center justify-center gap-2 mt-3 w-full min-h-[48px] rounded-xl text-sm font-semibold text-parchment shadow-lg transition-all hover:shadow-xl active:scale-[0.98] touch-manipulation"
+                style={{ background: 'linear-gradient(135deg, var(--th-forest), var(--th-teal))' }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                Recommend This Book
+              </Link>
+            )}
           </div>
 
           {/* Reading Progress Card */}

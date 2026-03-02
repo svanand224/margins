@@ -110,6 +110,7 @@ export default function DiscussionsPage() {
 
   // Polling fallback ref (in case realtime isn't enabled)
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
+  const postsRef = useRef<DiscussionPost[]>([]);
 
   // Scroll to bottom ref
   const postsEndRef = useRef<HTMLDivElement>(null);
@@ -132,6 +133,12 @@ export default function DiscussionsPage() {
       }
     };
   }, []);
+
+  // Keep postsRef in sync with posts state
+  useEffect(() => {
+    postsRef.current = posts;
+  }, [posts]);
+
   // Create form
   const [formTitle, setFormTitle] = useState('');
   const [formDescription, setFormDescription] = useState('');
@@ -358,7 +365,8 @@ export default function DiscussionsPage() {
 
       // Polling fallback — fetch new posts every 5s in case realtime isn't enabled
       pollingRef.current = setInterval(async () => {
-        const lastPost = posts.length > 0 ? posts[posts.length - 1] : null;
+        const currentPosts = postsRef.current;
+        const lastPost = currentPosts.length > 0 ? currentPosts[currentPosts.length - 1] : null;
         const { data: newPosts } = await supabase
           .from('discussion_posts')
           .select('*, user:user_id(reader_name, avatar_url)')
@@ -1005,8 +1013,8 @@ export default function DiscussionsPage() {
                 onChange={handleTextareaResize}
                 placeholder="Share your thoughts..."
                 rows={1}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm placeholder:text-ink-muted/60 resize-none overflow-hidden"
-                style={{ minHeight: '42px', maxHeight: '150px' }}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm placeholder:text-ink-muted/60 resize-none touch-manipulation"
+                style={{ minHeight: '42px', maxHeight: '150px', overflow: newPost.includes('\n') || newPost.length > 80 ? 'auto' : 'hidden', fontSize: '16px' }}
                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendPost(); } }}
               />
               <motion.button

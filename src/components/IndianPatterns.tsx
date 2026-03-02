@@ -950,10 +950,10 @@ export function LotusProgressBar({
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       {/* Progress track */}
-      <div className={`flex-1 bg-cream rounded-full overflow-hidden ${barHeight}`}>
+      <div className={`flex-1 rounded-full overflow-hidden ${barHeight}`} style={{ background: 'color-mix(in srgb, var(--th-ink) 10%, var(--th-cream))', boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.08)', border: '1px solid color-mix(in srgb, var(--th-gold-light) 30%, transparent)' }}>
         <div 
-          className={`h-full bg-gradient-to-r from-gold via-amber to-copper rounded-full transition-all duration-500 ease-out ${barClassName}`}
-          style={{ width: `${p * 100}%` }}
+          className={`h-full rounded-full transition-all duration-500 ease-out ${barClassName}`}
+          style={{ width: `${p * 100}%`, minWidth: p > 0 ? '6px' : '0px', background: 'linear-gradient(90deg, var(--th-gold), var(--th-amber), var(--th-copper))' }}
         />
       </div>
       
@@ -1039,7 +1039,7 @@ export function LotusProgressBar({
       
       {/* Optional percentage */}
       {showPercentage && (
-        <span className="text-sm font-medium text-gold-dark min-w-[3rem] text-right">
+        <span className="text-sm font-medium min-w-[3rem] text-right" style={{ color: 'var(--th-gold-dark)' }}>
           {Math.round(p * 100)}%
         </span>
       )}
