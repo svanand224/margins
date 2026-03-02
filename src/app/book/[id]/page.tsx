@@ -694,9 +694,18 @@ export default function BookPage() {
           {/* Log Session Modal */}
           {showSessionModal && (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-50" onClick={() => setShowSessionModal(false)}>
-              <div className="bg-parchment rounded-t-2xl sm:rounded-2xl shadow-2xl p-6 pb-8 w-full sm:max-w-sm max-h-[90vh] overflow-y-auto border border-gold-light/30 touch-manipulation" onClick={e => e.stopPropagation()} style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom, 2rem))' }}>
-                <h2 className="text-lg font-bold text-ink mb-4" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>Log Reading Session</h2>
-                <div className="space-y-3">
+              <div className="bg-parchment rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm max-h-[90vh] border border-gold-light/30 touch-manipulation flex flex-col" onClick={e => e.stopPropagation()} style={{ paddingBottom: 'max(0rem, env(safe-area-inset-bottom, 0rem))' }}>
+                {/* Sticky header with save button */}
+                <div className="flex items-center justify-between p-4 pb-2 border-b border-gold-light/20">
+                  <h2 className="text-lg font-bold text-ink" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>Log Reading Session</h2>
+                  <button
+                    onClick={handleLogSession}
+                    disabled={!sessionForm.pagesRead || savingSession}
+                    className="px-4 py-2 min-h-[40px] rounded-xl text-sm font-bold text-parchment disabled:opacity-40 touch-manipulation shadow-md active:scale-[0.97] transition-all"
+                    style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}
+                  >{savingSession ? 'Saving...' : 'Save'}</button>
+                </div>
+                <div className="p-4 pt-3 overflow-y-auto flex-1 space-y-3">
                   <div>
                     <label className="block text-xs text-ink-muted mb-1 uppercase tracking-wider">Pages read</label>
                     <input
@@ -737,18 +746,13 @@ export default function BookPage() {
                       placeholder="Great chapter about..."
                     />
                   </div>
-                  <div className="flex gap-2 pt-1">
-                    <button
-                      onClick={() => setShowSessionModal(false)}
-                      className="flex-1 px-4 min-h-[44px] rounded-xl text-sm text-ink-muted border border-gold-light/30 hover:bg-cream/40 active:bg-cream/60 transition-colors touch-manipulation"
-                    >Cancel</button>
-                    <button
-                      onClick={handleLogSession}
-                      disabled={!sessionForm.pagesRead || savingSession}
-                      className="flex-1 px-4 min-h-[44px] rounded-xl text-sm font-medium text-parchment disabled:opacity-50 touch-manipulation"
-                      style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}
-                    >{savingSession ? 'Saving...' : 'Save Session'}</button>
-                  </div>
+                </div>
+                {/* Bottom cancel button */}
+                <div className="p-4 pt-2 border-t border-gold-light/20 bg-parchment rounded-b-2xl" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 1rem))' }}>
+                  <button
+                    onClick={() => setShowSessionModal(false)}
+                    className="w-full px-4 min-h-[44px] rounded-xl text-sm text-ink-muted border border-gold-light/30 hover:bg-cream/40 active:bg-cream/60 transition-colors touch-manipulation"
+                  >Cancel</button>
                 </div>
               </div>
             </div>
@@ -757,9 +761,17 @@ export default function BookPage() {
           {/* Edit Modal */}
           {showEdit && (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-50" onClick={() => setShowEdit(false)}>
-              <div className="bg-parchment rounded-t-2xl sm:rounded-2xl shadow-2xl p-6 w-full sm:max-w-sm max-h-[85vh] overflow-y-auto border border-gold-light/30 touch-manipulation" onClick={e => e.stopPropagation()}>
-                <h2 className="text-lg font-bold text-ink mb-4" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>Edit Book Details</h2>
-                <div className="space-y-3">
+              <div className="bg-parchment rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm max-h-[85vh] border border-gold-light/30 touch-manipulation flex flex-col" onClick={e => e.stopPropagation()}>
+                {/* Sticky header with save button */}
+                <div className="flex items-center justify-between p-4 pb-2 border-b border-gold-light/20">
+                  <h2 className="text-lg font-bold text-ink" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>Edit Book Details</h2>
+                  <button
+                    onClick={handleEditSave}
+                    className="px-4 py-2 min-h-[40px] rounded-xl text-sm font-bold text-parchment touch-manipulation shadow-md active:scale-[0.97] transition-all"
+                    style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}
+                  >Save</button>
+                </div>
+                <div className="p-4 pt-3 overflow-y-auto flex-1 space-y-3">
                   <div>
                     <label className="block text-xs text-ink-muted mb-1 uppercase tracking-wider">Status</label>
                     <select name="status" value={form.status} onChange={handleEditChange} className="w-full px-3 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm touch-manipulation">
@@ -790,10 +802,10 @@ export default function BookPage() {
                     <label className="block text-xs text-ink-muted mb-1 uppercase tracking-wider">Notes / Review</label>
                     <textarea name="notes" value={form.notes} onChange={handleEditChange} className="w-full px-3 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm resize-none touch-manipulation" rows={3} placeholder="Your thoughts..." />
                   </div>
-                  <div className="flex gap-2 pt-1">
-                    <button onClick={() => setShowEdit(false)} className="flex-1 px-4 min-h-[44px] rounded-xl text-sm text-ink-muted border border-gold-light/30 hover:bg-cream/40 active:bg-cream/60 transition-colors touch-manipulation">Cancel</button>
-                    <button onClick={handleEditSave} className="flex-1 px-4 min-h-[44px] rounded-xl text-sm font-medium text-parchment touch-manipulation" style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}>Save</button>
-                  </div>
+                </div>
+                {/* Bottom cancel button */}
+                <div className="p-4 pt-2 border-t border-gold-light/20 bg-parchment rounded-b-2xl">
+                  <button onClick={() => setShowEdit(false)} className="w-full px-4 min-h-[44px] rounded-xl text-sm text-ink-muted border border-gold-light/30 hover:bg-cream/40 active:bg-cream/60 transition-colors touch-manipulation">Cancel</button>
                 </div>
               </div>
             </div>
@@ -841,8 +853,17 @@ export default function BookPage() {
           {showDetailsEdit && (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-50" onClick={() => setShowDetailsEdit(false)}>
               <div className="bg-parchment rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm max-h-[90vh] border border-gold-light/30 touch-manipulation flex flex-col" onClick={e => e.stopPropagation()}>
-                <div className="p-6 pb-3 overflow-y-auto flex-1">
-                  <h2 className="text-lg font-bold text-ink mb-4" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>Edit Book Info</h2>
+                {/* Sticky header with save button */}
+                <div className="flex items-center justify-between p-4 pb-2 border-b border-gold-light/20">
+                  <h2 className="text-lg font-bold text-ink" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>Edit Book Info</h2>
+                  <button
+                    onClick={handleDetailsSave}
+                    disabled={savingDetails}
+                    className="px-4 py-2 min-h-[40px] rounded-xl text-sm font-bold text-parchment disabled:opacity-50 touch-manipulation shadow-md active:scale-[0.97] transition-all"
+                    style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}
+                  >{savingDetails ? 'Saving...' : '✓ Save'}</button>
+                </div>
+                <div className="p-4 pt-3 overflow-y-auto flex-1">
                   <div className="space-y-3">
                     <div>
                       <label className="block text-xs text-ink-muted mb-1 uppercase tracking-wider">Title</label>
@@ -912,12 +933,9 @@ export default function BookPage() {
                     </div>
                   </div>
                 </div>
-                {/* Sticky save/cancel buttons at bottom */}
-                <div className="flex gap-2 p-4 border-t border-gold-light/20 bg-parchment rounded-b-2xl" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 1rem))' }}>
-                  <button onClick={() => setShowDetailsEdit(false)} className="flex-1 px-4 min-h-[52px] rounded-xl text-sm text-ink-muted border border-gold-light/30 hover:bg-cream/40 active:bg-cream/60 transition-colors touch-manipulation">Cancel</button>
-                  <button onClick={handleDetailsSave} disabled={savingDetails} className="flex-1 px-4 min-h-[52px] rounded-xl text-base font-bold text-parchment disabled:opacity-50 touch-manipulation shadow-lg active:scale-[0.97] transition-all" style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}>
-                    {savingDetails ? 'Saving...' : '✓ Save Changes'}
-                  </button>
+                {/* Bottom cancel button */}
+                <div className="p-4 pt-2 border-t border-gold-light/20 bg-parchment rounded-b-2xl" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 1rem))' }}>
+                  <button onClick={() => setShowDetailsEdit(false)} className="w-full px-4 min-h-[44px] rounded-xl text-sm text-ink-muted border border-gold-light/30 hover:bg-cream/40 active:bg-cream/60 transition-colors touch-manipulation">Cancel</button>
                 </div>
               </div>
             </div>
