@@ -151,19 +151,22 @@ export default function DiscoverPage() {
     return { total: books.length, completed };
   };
 
-  // Pick the "reading" book with the most recent session (or most recent dateAdded as fallback)
+  // Pick the "reading" book with the most recent activity (session date, page progress, or dateAdded)
   const getMostRecentReading = (user: PublicUser): Book | undefined => {
     const reading = (user.reading_data?.books || []).filter(b => b.status === 'reading');
     if (reading.length === 0) return undefined;
     if (reading.length === 1) return reading[0];
     return reading.sort((a, b) => {
-      const aLatest = (a.sessions || []).length > 0
-        ? Math.max(...a.sessions.map(s => new Date(s.date).getTime()))
-        : new Date(a.dateAdded || 0).getTime();
-      const bLatest = (b.sessions || []).length > 0
-        ? Math.max(...b.sessions.map(s => new Date(s.date).getTime()))
-        : new Date(b.dateAdded || 0).getTime();
-      return bLatest - aLatest;
+      const getRecency = (book: Book) => {
+        const sessionDates = (book.sessions || []).map(s => new Date(s.date).getTime());
+        const latestSession = sessionDates.length > 0 ? Math.max(...sessionDates) : 0;
+        // Higher currentPage relative to totalPages = more recently active
+        const pageProgress = book.totalPages > 0 ? book.currentPage / book.totalPages : 0;
+        const dateAdded = new Date(book.dateAdded || 0).getTime();
+        // Prioritize: latest session > dateAdded, with page progress as tiebreaker
+        return (latestSession || dateAdded) + pageProgress;
+      };
+      return getRecency(b) - getRecency(a);
     })[0];
   };
 

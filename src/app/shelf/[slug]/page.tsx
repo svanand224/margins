@@ -235,6 +235,13 @@ export default function PublicShelfPage() {
               <motion.div key={book.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }} className="glass-card rounded-xl overflow-hidden group">
                 <div className="aspect-[2/3] relative bg-cream/50">
                   {book.coverUrl ? <img src={book.coverUrl} alt={book.title} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center p-2"><p className="text-[10px] md:text-xs text-ink-muted text-center line-clamp-3">{book.title}</p></div>}
+                  {book.goldRecommended && (
+                    <div className="absolute top-1 left-1 z-10" title={book.goldRecommendedNote || 'Gold Pick'}>
+                      <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full shadow-md text-[9px] font-bold" style={{ background: 'linear-gradient(135deg, #D4A855, #E8C878)', color: '#3A2C22' }}>
+                        ★ Gold
+                      </div>
+                    </div>
+                  )}
                   {book.status === 'reading' && book.totalPages > 0 && (
                     <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-cream/50">
                       <div className="h-full rounded-r-full" style={{ width: `${Math.min(100, (book.currentPage / book.totalPages) * 100)}%`, background: `linear-gradient(90deg, ${theme.accent}, ${theme.accentLight})` }} />

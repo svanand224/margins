@@ -718,8 +718,21 @@ export default function PublicProfilePage() {
                       <BookOpen className="w-6 h-6 text-gold/50" />
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-black/60 sm:opacity-0 sm:group-hover:opacity-100 opacity-0 active:opacity-100 transition-opacity rounded-lg flex items-center justify-center p-1">
-                    <p className="text-white text-[10px] md:text-xs text-center line-clamp-3">{book.title}</p>
+                  {/* Gold Pick badge */}
+                  {book.goldRecommended && (
+                    <div className="absolute top-1 left-1 z-10" title={book.goldRecommendedNote || 'Gold Pick'}>
+                      <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full shadow-md text-[9px] font-bold cursor-default" style={{ background: 'linear-gradient(135deg, #D4A855, #E8C878)', color: '#3A2C22' }}>
+                        ★
+                      </div>
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-black/60 sm:opacity-0 sm:group-hover:opacity-100 opacity-0 active:opacity-100 transition-opacity rounded-lg flex flex-col items-center justify-center p-1.5">
+                    <p className="text-white text-[10px] md:text-xs text-center line-clamp-2">{book.title}</p>
+                    {book.goldRecommended && (
+                      <div className="mt-1 px-2 py-0.5 rounded-full text-[9px] font-bold" style={{ background: 'linear-gradient(135deg, #D4A855, #E8C878)', color: '#3A2C22' }}>
+                        ★ Gold Pick{book.goldRecommendedNote ? `: "${book.goldRecommendedNote}"` : ''}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
