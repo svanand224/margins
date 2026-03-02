@@ -74,7 +74,7 @@ export default function SupabaseSync() {
     const unlockedNow = getUnlockedBadges(books);
     if (unlockedNow.length === 0) return;
 
-    // Get previously notified badges from localStorage
+    // Get previously notified badges from localStorage (fast local cache)
     const storageKey = `badges-notified-${userId}`;
     let previouslyNotified: string[] = [];
     try {
@@ -82,10 +82,33 @@ export default function SupabaseSync() {
       if (stored) previouslyNotified = JSON.parse(stored);
     } catch { /* ignore */ }
 
-    const newBadges = unlockedNow.filter(id => !previouslyNotified.includes(id));
+    let newBadges = unlockedNow.filter(id => !previouslyNotified.includes(id));
     if (newBadges.length === 0) return;
 
-    // Create a notification for each new badge
+    // Double-check against DB to avoid re-creating notifications that were
+    // already sent (and possibly read/dismissed) — handles localStorage being
+    // cleared or user switching browsers.
+    try {
+      const { data: existing } = await supabaseRef.current
+        .from('notifications')
+        .select('data')
+        .eq('user_id', userId)
+        .eq('type', 'badge_unlocked');
+      if (existing) {
+        const alreadyNotified = new Set(
+          existing.map((n: { data: Record<string, unknown> }) => n.data?.badge_id as string).filter(Boolean)
+        );
+        newBadges = newBadges.filter(id => !alreadyNotified.has(id));
+      }
+    } catch { /* ignore — fall through to insert */ }
+
+    if (newBadges.length === 0) {
+      // Sync localStorage cache with DB state
+      try { localStorage.setItem(storageKey, JSON.stringify(unlockedNow)); } catch { /* ignore */ }
+      return;
+    }
+
+    // Create a notification for each genuinely new badge
     for (const badgeId of newBadges) {
       await supabaseRef.current.from('notifications').insert({
         user_id: userId,
