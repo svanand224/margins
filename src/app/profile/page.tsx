@@ -32,11 +32,25 @@ import {
   Sparkles,
   // MessageCircle icon removed
   Users,
+  Award,
+  Crown,
+  PartyPopper,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { MehndiDivider, LotusDivider, OrnateFrame, MandalaCorner } from '@/components/IndianPatterns';
+
+interface ProfileBadge {
+  id: string;
+  type: string;
+  label: string;
+  rank?: number;
+  week?: string;
+  from_user_name?: string;
+  from_user_id?: string;
+  awarded_at: string;
+}
 
 const genres = [
   'Fiction', 'Non-Fiction', 'Mystery', 'Thriller', 'Romance', 'Science Fiction',
@@ -90,6 +104,9 @@ export default function ProfilePage() {
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [avatarError, setAvatarError] = useState('');
 
+  // Badges
+  const [badges, setBadges] = useState<ProfileBadge[]>([]);
+
   useEffect(() => {
     if (profile) {
       setFormFirstName((profile as any).first_name || profile.reader_name?.split(' ')[0] || '');
@@ -112,6 +129,16 @@ export default function ProfilePage() {
     const fetchSocial = async () => {
       setSocialLoading(true);
       const supabase = createClient();
+
+      // Fetch badges
+      const { data: badgeData } = await supabase
+        .from('profiles')
+        .select('badges')
+        .eq('id', user.id)
+        .single();
+      if (badgeData && Array.isArray(badgeData.badges)) {
+        setBadges(badgeData.badges as ProfileBadge[]);
+      }
       // Fetch followers
       const { data: followerData } = await supabase
         .from('follows')
@@ -744,6 +771,49 @@ export default function ProfilePage() {
       {/* Profile Tab */}
       {activeTab === 'profile' && (
         <>
+
+      {/* Badges & Recognition */}
+      {badges.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6"
+        >
+          <h2
+            className="text-lg font-semibold text-ink mb-3 flex items-center gap-2"
+            style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+          >
+            <Award className="w-5 h-5 text-gold" />
+            Badges & Recognition
+          </h2>
+          <div className="glass-card rounded-xl p-4">
+            <div className="flex flex-wrap gap-2">
+              {badges.filter(b => b.type === 'top_reader').map(badge => (
+                <div
+                  key={badge.id}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gold/10 border border-gold/20 text-xs font-medium text-gold-dark"
+                >
+                  <Crown className="w-3.5 h-3.5" />
+                  {badge.label}
+                  {badge.week && <span className="text-[10px] text-ink-muted ml-1">({badge.week})</span>}
+                </div>
+              ))}
+              {badges.filter(b => b.type === 'confetti').map(badge => (
+                <div
+                  key={badge.id}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber/10 border border-amber/20 text-xs font-medium text-amber"
+                >
+                  <PartyPopper className="w-3.5 h-3.5" />
+                  {badge.label}
+                </div>
+              ))}
+            </div>
+            <p className="text-[10px] md:text-xs text-ink-muted mt-2 italic">
+              Earned through consistent reading and community recognition.
+            </p>
+          </div>
+        </motion.div>
+      )}
 
       {/* Stats Grid */}
       <motion.div

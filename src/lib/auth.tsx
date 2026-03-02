@@ -28,6 +28,7 @@ export interface UserProfile {
   shelf_show_currently_reading: boolean;
   shelf_show_stats: boolean;
   shelf_bio_override: string | null;
+  badges: any[];
   created_at: string;
   updated_at: string;
 }

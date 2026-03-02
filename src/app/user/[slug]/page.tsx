@@ -23,6 +23,17 @@ import { Book } from '@/lib/types';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
+interface ProfileBadge {
+  id: string;
+  type: string;
+  label: string;
+  rank?: number;
+  week?: string;
+  from_user_name?: string;
+  from_user_id?: string;
+  awarded_at: string;
+}
+
 interface PublicProfile {
   id: string;
   username: string;
@@ -36,6 +47,7 @@ interface PublicProfile {
   shelf_show_currently_reading: boolean;
   shelf_show_stats: boolean;
   shelf_bio_override: string | null;
+  badges: ProfileBadge[];
   reading_data: {
     books?: Book[];
     goals?: { pagesPerDay?: number; booksPerYear?: number };
@@ -95,6 +107,7 @@ export default function PublicProfilePage() {
             shelf_show_currently_reading: false,
             shelf_show_stats: false,
             shelf_bio_override: null,
+            badges: [],
             reading_data: { books: [], goals: {}, dailyLogs: {} },
           } as PublicProfile);
         }
@@ -104,9 +117,14 @@ export default function PublicProfilePage() {
 
       const { data: profileData, error } = await supabase
         .from('profiles')
-        .select('id, username, reader_name, avatar_url, bio, favorite_genre, public_slug, shelf_public, shelf_accent_color, shelf_show_currently_reading, shelf_show_stats, shelf_bio_override, reading_data, created_at')
+        .select('id, username, reader_name, avatar_url, bio, favorite_genre, public_slug, shelf_public, shelf_accent_color, shelf_show_currently_reading, shelf_show_stats, shelf_bio_override, badges, reading_data, created_at')
         .eq('public_slug', slug)
         .single();
+
+      // Normalize badges
+      if (profileData) {
+        (profileData as any).badges = Array.isArray((profileData as any).badges) ? (profileData as any).badges : [];
+      }
 
       if (error || !profileData) {
         setNotFound(true);
@@ -590,6 +608,49 @@ export default function PublicProfilePage() {
             }
           </p>
         </motion.div>
+      )}
+
+      {/* Badges & Achievements */}
+      {profile.badges && profile.badges.length > 0 && (
+        <motion.section
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="glass-card mx-4 mt-4 rounded-2xl p-5 md:mx-auto md:max-w-2xl lg:max-w-4xl"
+        >
+          <h2
+            className="text-lg font-semibold text-ink mb-3 flex items-center gap-2"
+            style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+          >
+            <Lucide.Award className="w-5 h-5" style={{ color: accent.accent }} />
+            Badges & Recognition
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {/* Top Reader badges */}
+            {profile.badges.filter((b: ProfileBadge) => b.type === 'top_reader').map((badge: ProfileBadge) => (
+              <div
+                key={badge.id}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gold/10 border border-gold/20 text-xs font-medium text-gold-dark"
+              >
+                <Lucide.Crown className="w-3.5 h-3.5" />
+                {badge.label}
+                {badge.week && <span className="text-[10px] text-ink-muted ml-1">({badge.week})</span>}
+              </div>
+            ))}
+            {/* Confetti badges */}
+            {profile.badges.filter((b: ProfileBadge) => b.type === 'confetti').map((badge: ProfileBadge) => (
+              <div
+                key={badge.id}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber/10 border border-amber/20 text-xs font-medium text-amber"
+              >
+                🎉 {badge.label}
+              </div>
+            ))}
+          </div>
+          <p className="text-[10px] md:text-xs text-ink-muted mt-2 italic">
+            Earned through consistent reading and community recognition.
+          </p>
+        </motion.section>
       )}
 
       {/* Currently Reading */}

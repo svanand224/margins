@@ -17,6 +17,8 @@ import {
   Award,
   Lock,
   UserCheck,
+  Crown,
+  PartyPopper,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -99,6 +101,8 @@ export default function NotificationsPage() {
       case 'new_discussion_post': return <MessageSquare className="w-4 h-4 text-teal" />;
       case 'new_comment': return <MessageSquare className="w-4 h-4 text-copper" />;
       case 'badge_unlocked': return <Award className="w-4 h-4 text-amber" />;
+      case 'top_reader_badge': return <Crown className="w-4 h-4 text-gold" />;
+      case 'confetti_received': return <PartyPopper className="w-4 h-4 text-amber" />;
       case 'follow_request': return <Lock className="w-4 h-4 text-gold" />;
       case 'follow_request_accepted': return <UserCheck className="w-4 h-4 text-forest" />;
       default: return <Bell className="w-4 h-4 text-gold" />;
@@ -114,6 +118,8 @@ export default function NotificationsPage() {
       case 'new_discussion_post': return <><strong>{name}</strong> posted in <em>&ldquo;{n.data.discussion_title || 'a discussion'}&rdquo;</em></>;
       case 'new_comment': return <><strong>{name}</strong> commented on your shelf</>;
       case 'badge_unlocked': return <>You earned the <strong>{n.data.badge_label || 'achievement'}</strong> badge!</>;
+      case 'top_reader_badge': return <><strong>{name}</strong> {n.data.message || `is a Top ${n.data.rank || ''} reader this week!`} 🏆</>;
+      case 'confetti_received': return <><strong>{name}</strong> sent you confetti for being an amazing reader! 🎉</>;
       case 'follow_request': return <><strong>{name}</strong> wants to follow you</>;
       case 'follow_request_accepted': return <><strong>{name}</strong> accepted your follow request</>;
       default: return <>{n.data.message || 'You have a notification'}</>;
@@ -127,6 +133,8 @@ export default function NotificationsPage() {
       case 'discussion_join': return '/discussions';
       case 'new_discussion_post': return '/discussions';
       case 'badge_unlocked': return '/goals';
+      case 'top_reader_badge': return (n.from_user as any)?.public_slug ? `/user/${(n.from_user as any).public_slug}` : '/discover';
+      case 'confetti_received': return '/profile';
       case 'follow_request': return '/profile';
       case 'follow_request_accepted': return (n.from_user as any)?.public_slug ? `/user/${(n.from_user as any).public_slug}` : null;
       default: return null;

@@ -558,3 +558,10 @@ create policy "Users can delete own notifications"
 
 create index if not exists notifications_user_id_idx on public.notifications (user_id);
 create index if not exists notifications_unread_idx on public.notifications (user_id, read) where read = false;
+
+-- ============================================================
+-- 14. Reader Badges (Top Reader of the Week, Confetti, etc.)
+-- ============================================================
+-- Badges are stored as a JSONB array on profiles.
+-- Each badge: { id, type, label, rank?, week?, from_user_name?, from_user_id?, awarded_at }
+alter table public.profiles add column if not exists badges jsonb not null default '[]'::jsonb;
