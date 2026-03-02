@@ -21,6 +21,10 @@ import {
   UserPlus,
   Search,
   Lock,
+  Heart,
+  ThumbsUp,
+  ThumbsDown,
+  Pin,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Book } from '@/lib/types';
@@ -47,7 +51,11 @@ interface DiscussionPost {
   user_id: string;
   content: string;
   created_at: string;
+  is_pinned?: boolean;
+  pinned_at?: string;
+  pinned_by?: string;
   user?: { reader_name: string; avatar_url: string | null };
+  reactions?: { heart: string[]; upvote: string[]; downvote: string[] };
 }
 
 // Use CSS variable colors that match the app's theme
@@ -100,8 +108,12 @@ export default function DiscussionsPage() {
   // Realtime subscription ref
   const realtimeChannelRef = useRef<ReturnType<ReturnType<typeof createClient>['channel']> | null>(null);
 
+  // Polling fallback ref (in case realtime isn't enabled)
+  const pollingRef = useRef<NodeJS.Timeout | null>(null);
+
   // Scroll to bottom ref
   const postsEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const scrollToBottom = useCallback(() => {
     postsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
@@ -113,6 +125,10 @@ export default function DiscussionsPage() {
         const supabase = createClient();
         supabase.removeChannel(realtimeChannelRef.current);
         realtimeChannelRef.current = null;
+      }
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
       }
     };
   }, []);
@@ -230,11 +246,15 @@ export default function DiscussionsPage() {
   };
 
   const openDiscussion = async (disc: Discussion) => {
-    // Clean up previous realtime subscription
+    // Clean up previous realtime subscription and polling
     if (realtimeChannelRef.current) {
       const sb = createClient();
       sb.removeChannel(realtimeChannelRef.current);
       realtimeChannelRef.current = null;
+    }
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
     }
 
     setSelectedDiscussion(disc);
@@ -248,7 +268,19 @@ export default function DiscussionsPage() {
         .eq('discussion_id', disc.id)
         .order('created_at', { ascending: true })
         .limit(100);
-      setPosts((postsData as unknown as DiscussionPost[]) || []);
+      
+      let enrichedPosts = (postsData as unknown as DiscussionPost[]) || [];
+      
+      // Fetch reactions for all posts
+      if (enrichedPosts.length > 0) {
+        const reactionsMap = await fetchReactions(enrichedPosts.map(p => p.id));
+        enrichedPosts = enrichedPosts.map(p => ({
+          ...p,
+          reactions: reactionsMap[p.id] || { heart: [], upvote: [], downvote: [] },
+        }));
+      }
+      
+      setPosts(enrichedPosts);
 
       if (user) {
         const { data: mem } = await supabase
@@ -323,6 +355,33 @@ export default function DiscussionsPage() {
         .subscribe();
 
       realtimeChannelRef.current = channel;
+
+      // Polling fallback — fetch new posts every 5s in case realtime isn't enabled
+      pollingRef.current = setInterval(async () => {
+        const lastPost = posts.length > 0 ? posts[posts.length - 1] : null;
+        const { data: newPosts } = await supabase
+          .from('discussion_posts')
+          .select('*, user:user_id(reader_name, avatar_url)')
+          .eq('discussion_id', disc.id)
+          .order('created_at', { ascending: true })
+          .gt('created_at', lastPost?.created_at || new Date(0).toISOString())
+          .limit(50);
+        if (newPosts && newPosts.length > 0) {
+          const postIds = newPosts.map((p: any) => p.id);
+          const reactionsMap = await fetchReactions(postIds);
+          const enriched = newPosts.map((p: any) => ({
+            ...p,
+            reactions: reactionsMap[p.id] || { heart: [], upvote: [], downvote: [] },
+          }));
+          setPosts(prev => {
+            const existingIds = new Set(prev.map(p => p.id));
+            const genuinelyNew = enriched.filter((p: any) => !existingIds.has(p.id));
+            if (genuinelyNew.length === 0) return prev;
+            setTimeout(scrollToBottom, 100);
+            return [...prev, ...genuinelyNew as DiscussionPost[]];
+          });
+        }
+      }, 5000);
     } finally {
       setPostsLoading(false);
       setTimeout(scrollToBottom, 300);
@@ -432,6 +491,10 @@ export default function DiscussionsPage() {
     if (post && !error) {
       setPosts(prev => [...prev, post as unknown as DiscussionPost]);
       setNewPost('');
+      // Reset textarea height
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto';
+      }
 
       // Notify all other members in this discussion
       const { data: memberList } = await supabase
@@ -459,6 +522,93 @@ export default function DiscussionsPage() {
     setSending(false);
   };
 
+  // Fetch reactions for posts
+  const fetchReactions = async (postIds: string[]) => {
+    if (postIds.length === 0) return {};
+    const supabase = createClient();
+    const { data } = await supabase
+      .from('post_reactions')
+      .select('post_id, user_id, reaction_type')
+      .in('post_id', postIds);
+    if (!data) return {};
+    const map: Record<string, { heart: string[]; upvote: string[]; downvote: string[] }> = {};
+    data.forEach((r: any) => {
+      if (!map[r.post_id]) map[r.post_id] = { heart: [], upvote: [], downvote: [] };
+      if (r.reaction_type in map[r.post_id]) {
+        map[r.post_id][r.reaction_type as 'heart' | 'upvote' | 'downvote'].push(r.user_id);
+      }
+    });
+    return map;
+  };
+
+  // Toggle a reaction on a post
+  const handleReaction = async (postId: string, reactionType: 'heart' | 'upvote' | 'downvote') => {
+    if (!user) return;
+    const supabase = createClient();
+    const post = posts.find(p => p.id === postId);
+    if (!post) return;
+    const currentReactions = post.reactions || { heart: [], upvote: [], downvote: [] };
+    const hasReacted = currentReactions[reactionType]?.includes(user.id);
+
+    if (hasReacted) {
+      // Remove reaction
+      await supabase
+        .from('post_reactions')
+        .delete()
+        .match({ post_id: postId, user_id: user.id, reaction_type: reactionType });
+      setPosts(prev => prev.map(p => {
+        if (p.id !== postId) return p;
+        const r = { ...(p.reactions || { heart: [], upvote: [], downvote: [] }) };
+        r[reactionType] = r[reactionType].filter((id: string) => id !== user.id);
+        return { ...p, reactions: r };
+      }));
+    } else {
+      // Add reaction
+      await supabase
+        .from('post_reactions')
+        .insert({ post_id: postId, user_id: user.id, reaction_type: reactionType });
+      setPosts(prev => prev.map(p => {
+        if (p.id !== postId) return p;
+        const r = { ...(p.reactions || { heart: [], upvote: [], downvote: [] }) };
+        r[reactionType] = [...r[reactionType], user.id];
+        return { ...p, reactions: r };
+      }));
+    }
+  };
+
+  // Pin/unpin a message (max 3 pinned per discussion)
+  const handleTogglePin = async (postId: string) => {
+    if (!user || !selectedDiscussion) return;
+    const post = posts.find(p => p.id === postId);
+    if (!post) return;
+
+    const supabase = createClient();
+    if (post.is_pinned) {
+      // Unpin
+      await supabase
+        .from('discussion_posts')
+        .update({ is_pinned: false, pinned_at: null, pinned_by: null })
+        .eq('id', postId);
+      setPosts(prev => prev.map(p => p.id === postId ? { ...p, is_pinned: false, pinned_at: undefined, pinned_by: undefined } : p));
+    } else {
+      // Check max pins
+      const pinnedCount = posts.filter(p => p.is_pinned).length;
+      if (pinnedCount >= 3) return; // silently fail, UI disables this
+      await supabase
+        .from('discussion_posts')
+        .update({ is_pinned: true, pinned_at: new Date().toISOString(), pinned_by: user.id })
+        .eq('id', postId);
+      setPosts(prev => prev.map(p => p.id === postId ? { ...p, is_pinned: true, pinned_at: new Date().toISOString(), pinned_by: user.id } : p));
+    }
+  };
+
+  // Auto-resize textarea
+  const handleTextareaResize = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setNewPost(e.target.value);
+    e.target.style.height = 'auto';
+    e.target.style.height = Math.min(e.target.scrollHeight, 150) + 'px';
+  };
+
   const formatTime = (date: string) => {
     const now = new Date();
     const then = new Date(date);
@@ -482,11 +632,15 @@ export default function DiscussionsPage() {
           <div className="md:max-w-2xl md:mx-auto">
             <button
               onClick={() => {
-                // Clean up realtime subscription when leaving
+                // Clean up realtime subscription and polling when leaving
                 if (realtimeChannelRef.current) {
                   const sb = createClient();
                   sb.removeChannel(realtimeChannelRef.current);
                   realtimeChannelRef.current = null;
+                }
+                if (pollingRef.current) {
+                  clearInterval(pollingRef.current);
+                  pollingRef.current = null;
                 }
                 setSelectedDiscussion(null); setPosts([]); setEditingDiscussion(null); setShowAddMember(false);
               }}
@@ -717,33 +871,126 @@ export default function DiscussionsPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {posts.map((post, i) => (
-                <motion.div
-                  key={post.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.03 }}
-                  className="flex gap-3"
-                >
-                  {(post.user as any)?.avatar_url ? (
-                    <img src={(post.user as any).avatar_url} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
-                  ) : (
-                    <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-parchment text-xs font-bold flex-shrink-0"
-                      style={{ background: `linear-gradient(135deg, ${theme.color}, ${theme.light})` }}
-                    >
-                      {((post.user as any)?.reader_name || '?').charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-sm font-medium text-ink">{(post.user as any)?.reader_name || 'Unknown'}</span>
-                      <span className="text-[10px] text-ink-muted">{formatTime(post.created_at)}</span>
-                    </div>
-                    <p className="text-sm text-ink mt-0.5 whitespace-pre-wrap break-words">{post.content}</p>
+              {/* Pinned messages */}
+              {(() => {
+                const pinnedPosts = posts.filter(p => p.is_pinned);
+                if (pinnedPosts.length === 0) return null;
+                return (
+                  <div className="mb-4 space-y-2">
+                    <p className="text-[10px] font-medium text-ink-muted uppercase tracking-wider flex items-center gap-1">
+                      <Pin className="w-3 h-3" /> Pinned ({pinnedPosts.length}/3)
+                    </p>
+                    {pinnedPosts.sort((a, b) => (a.pinned_at || '').localeCompare(b.pinned_at || '')).map(post => (
+                      <div
+                        key={`pin-${post.id}`}
+                        className="flex gap-3 p-3 rounded-xl border border-gold-light/30 bg-gold/5 cursor-pointer hover:bg-gold/10 transition-colors"
+                        onClick={() => {
+                          const el = document.getElementById(`post-${post.id}`);
+                          el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          el?.classList.add('ring-2', 'ring-gold/50');
+                          setTimeout(() => el?.classList.remove('ring-2', 'ring-gold/50'), 2000);
+                        }}
+                      >
+                        <Pin className="w-3.5 h-3.5 text-gold flex-shrink-0 mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-xs font-medium text-ink">{(post.user as any)?.reader_name || 'Unknown'}</span>
+                            <span className="text-[10px] text-ink-muted">{formatTime(post.created_at)}</span>
+                          </div>
+                          <p className="text-xs text-ink-muted mt-0.5 line-clamp-2">{post.content}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </motion.div>
-              ))}
+                );
+              })()}
+
+              {/* All messages */}
+              {posts.map((post, i) => {
+                const reactions = post.reactions || { heart: [], upvote: [], downvote: [] };
+                const isCreator = user?.id === selectedDiscussion.creator_id;
+                const pinnedCount = posts.filter(p => p.is_pinned).length;
+                const canPin = isCreator && (!post.is_pinned && pinnedCount < 3 || post.is_pinned);
+                return (
+                  <motion.div
+                    key={post.id}
+                    id={`post-${post.id}`}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.03 }}
+                    className={`flex gap-3 group rounded-xl transition-all ${post.is_pinned ? 'bg-gold/[0.03]' : ''}`}
+                  >
+                    {(post.user as any)?.avatar_url ? (
+                      <img src={(post.user as any).avatar_url} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                    ) : (
+                      <div
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-parchment text-xs font-bold flex-shrink-0"
+                        style={{ background: `linear-gradient(135deg, ${theme.color}, ${theme.light})` }}
+                      >
+                        {((post.user as any)?.reader_name || '?').charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-sm font-medium text-ink">{(post.user as any)?.reader_name || 'Unknown'}</span>
+                        <span className="text-[10px] text-ink-muted">{formatTime(post.created_at)}</span>
+                        {post.is_pinned && <Pin className="w-3 h-3 text-gold inline-block" />}
+                        {/* Pin button (creator only) */}
+                        {canPin && (
+                          <button
+                            onClick={() => handleTogglePin(post.id)}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity ml-auto p-1 rounded hover:bg-gold-light/15"
+                            title={post.is_pinned ? 'Unpin message' : 'Pin message'}
+                          >
+                            <Pin className={`w-3 h-3 ${post.is_pinned ? 'text-gold' : 'text-ink-muted'}`} />
+                          </button>
+                        )}
+                      </div>
+                      <p className="text-sm text-ink mt-0.5 whitespace-pre-wrap break-words">{post.content}</p>
+                      
+                      {/* Reactions */}
+                      <div className="flex items-center gap-1 mt-1.5 -ml-1">
+                        {/* Heart */}
+                        <button
+                          onClick={() => handleReaction(post.id, 'heart')}
+                          className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] transition-all ${
+                            reactions.heart.includes(user?.id || '') 
+                              ? 'bg-rose/15 text-rose border border-rose/20' 
+                              : 'text-ink-muted hover:bg-rose/10 hover:text-rose border border-transparent'
+                          }`}
+                        >
+                          <Heart className={`w-3 h-3 ${reactions.heart.includes(user?.id || '') ? 'fill-rose' : ''}`} />
+                          {reactions.heart.length > 0 && <span>{reactions.heart.length}</span>}
+                        </button>
+                        {/* Upvote */}
+                        <button
+                          onClick={() => handleReaction(post.id, 'upvote')}
+                          className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] transition-all ${
+                            reactions.upvote.includes(user?.id || '') 
+                              ? 'bg-forest/15 text-forest border border-forest/20' 
+                              : 'text-ink-muted hover:bg-forest/10 hover:text-forest border border-transparent'
+                          }`}
+                        >
+                          <ThumbsUp className={`w-3 h-3 ${reactions.upvote.includes(user?.id || '') ? 'fill-forest' : ''}`} />
+                          {reactions.upvote.length > 0 && <span>{reactions.upvote.length}</span>}
+                        </button>
+                        {/* Downvote */}
+                        <button
+                          onClick={() => handleReaction(post.id, 'downvote')}
+                          className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] transition-all ${
+                            reactions.downvote.includes(user?.id || '') 
+                              ? 'bg-copper/15 text-copper border border-copper/20' 
+                              : 'text-ink-muted hover:bg-copper/10 hover:text-copper border border-transparent'
+                          }`}
+                        >
+                          <ThumbsDown className={`w-3 h-3 ${reactions.downvote.includes(user?.id || '') ? 'fill-copper' : ''}`} />
+                          {reactions.downvote.length > 0 && <span>{reactions.downvote.length}</span>}
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
               <div ref={postsEndRef} />
             </div>
           )}
@@ -751,21 +998,23 @@ export default function DiscussionsPage() {
 
         {user && isMember ? (
           <div className="border-t border-gold-light/20 px-4 py-3 bg-parchment/80 backdrop-blur-sm">
-            <div className="md:max-w-2xl md:mx-auto flex gap-2">
-              <input
-                type="text"
+            <div className="md:max-w-2xl md:mx-auto flex gap-2 items-end">
+              <textarea
+                ref={textareaRef}
                 value={newPost}
-                onChange={(e) => setNewPost(e.target.value)}
+                onChange={handleTextareaResize}
                 placeholder="Share your thoughts..."
-                className="flex-1 px-4 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm placeholder:text-ink-muted/60"
+                rows={1}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm placeholder:text-ink-muted/60 resize-none overflow-hidden"
+                style={{ minHeight: '42px', maxHeight: '150px' }}
                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendPost(); } }}
               />
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={handleSendPost}
                 disabled={!newPost.trim() || sending}
-                className="px-4 py-2.5 rounded-xl text-parchment disabled:opacity-40"
-                style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}
+                className="px-4 py-2.5 rounded-xl text-parchment disabled:opacity-40 flex-shrink-0"
+                style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))', minHeight: '42px' }}
               >
                 {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               </motion.button>
