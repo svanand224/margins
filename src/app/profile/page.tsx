@@ -29,6 +29,7 @@ import {
   Upload,
   Lock,
   Eye,
+  Sparkles,
   // MessageCircle icon removed
   Users,
 } from 'lucide-react';
@@ -1003,108 +1004,133 @@ export default function ProfilePage() {
               </div>
             )}
           </motion.div>
-        </>
-      )}
 
-      {/* Library Tab */}
-      {activeTab === 'library' && (
-        <>
+          {/* Divider */}
+          <MehndiDivider className="h-4 mb-6 mt-2 opacity-20" />
 
-      {/* Profile Privacy Section - Pinterest Style */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
-        className="mb-8"
-      >
-        <h2
-          className="text-lg font-semibold text-ink mb-4 flex items-center gap-2"
-          style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
-        >
-          <Shield className="w-5 h-5 text-gold" />
-          Profile Privacy
-        </h2>
-
-        {/* Privacy Toggle Card */}
-        <div className={`glass-card rounded-xl p-5 mb-4 border-2 transition-colors ${
-          shelfPublic ? 'border-forest/30' : 'border-gold-light/20'
-        }`}>
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-start gap-4">
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                shelfPublic 
-                  ? 'bg-forest/20 text-forest' 
-                  : 'bg-gold-light/20 text-gold'
-              }`}>
-                {shelfPublic ? <Eye className="w-6 h-6" /> : <Lock className="w-6 h-6" />}
-              </div>
-              <div>
-                <div className="text-base font-semibold text-ink">
-                  {shelfPublic ? 'Public Profile' : 'Private Profile'}
-                </div>
-                <div className="text-sm text-ink-muted mt-1">
-                  {shelfPublic 
-                    ? 'Anyone with your link can view your profile'
-                    : 'Only you can see your reading activity'
-                  }
-                </div>
-              </div>
-            </div>
-            <button
-              onClick={handleTogglePublicShelf}
-              className={`relative w-14 h-8 rounded-full transition-colors duration-300 flex-shrink-0 ${
-                shelfPublic ? 'bg-forest' : 'bg-gold-light/30'
-              }`}
+          {/* Profile Privacy Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="mb-8"
+          >
+            <h2
+              className="text-lg font-semibold text-ink mb-4 flex items-center gap-2"
+              style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
             >
-              <motion.div
-                className="absolute top-1 w-6 h-6 rounded-full bg-parchment shadow-sm"
-                animate={{ left: shelfPublic ? '1.75rem' : '0.25rem' }}
-                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-              />
-            </button>
-          </div>
+              <Shield className="w-5 h-5 text-gold" />
+              Profile Privacy
+            </h2>
 
-          {/* What's visible when public */}
-          <AnimatePresence>
-            {shelfPublic && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-              >
-                <div className="mt-4 pt-4 border-t border-gold-light/20">
-                  <div className="text-xs font-medium text-ink-muted uppercase tracking-wider mb-3">
-                    What others can see
+            {/* Privacy Toggle Card */}
+            <div className={`glass-card rounded-xl p-5 mb-4 border-2 transition-colors ${
+              shelfPublic ? 'border-forest/30' : 'border-rose/20'
+            }`}>
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-4">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                    shelfPublic 
+                      ? 'bg-forest/20 text-forest' 
+                      : 'bg-rose/10 text-rose'
+                  }`}>
+                    {shelfPublic ? <Eye className="w-6 h-6" /> : <Lock className="w-6 h-6" />}
                   </div>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div className="flex items-center gap-2 text-ink">
-                      <Check className="w-4 h-4 text-forest" />
-                      Your name & bio
+                  <div>
+                    <div className="text-base font-semibold text-ink">
+                      {shelfPublic ? 'Public Profile' : 'Private Profile'}
                     </div>
-                    <div className="flex items-center gap-2 text-ink">
-                      <Check className="w-4 h-4 text-forest" />
-                      Book collection
+                    <div className="text-sm text-ink-muted mt-1">
+                      {shelfPublic 
+                        ? 'Anyone with your link can view your profile'
+                        : 'Only approved followers can see your reading activity'
+                      }
                     </div>
-                    <div className="flex items-center gap-2 text-ink">
-                      <Check className="w-4 h-4 text-forest" />
-                      Reading progress
-                    </div>
-                    <div className="flex items-center gap-2 text-ink">
-                      <Check className="w-4 h-4 text-forest" />
-                      Ratings & reviews
-                    </div>
-                  </div>
-                  <div className="mt-3 p-3 rounded-lg bg-forest/10 flex items-center gap-2">
-                    {/* DM and comments UI removed */}
                   </div>
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+                <button
+                  onClick={handleTogglePublicShelf}
+                  className={`relative w-14 h-8 rounded-full transition-colors duration-300 flex-shrink-0 ${
+                    shelfPublic ? 'bg-forest' : 'bg-rose/30'
+                  }`}
+                >
+                  <motion.div
+                    className="absolute top-1 w-6 h-6 rounded-full bg-parchment shadow-sm"
+                    animate={{ left: shelfPublic ? '1.75rem' : '0.25rem' }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  />
+                </button>
+              </div>
 
-        {/* Share Link Section — always visible, even for private profiles */}
-        <div className="space-y-3 mt-4">
+              {/* Public benefits / Private warning */}
+              <AnimatePresence mode="wait">
+                {shelfPublic ? (
+                  <motion.div
+                    key="public-info"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                  >
+                    <div className="mt-4 pt-4 border-t border-gold-light/20">
+                      <div className="text-xs font-medium text-ink-muted uppercase tracking-wider mb-3">
+                        What others can see
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div className="flex items-center gap-2 text-ink">
+                          <Check className="w-4 h-4 text-forest" />
+                          Your name & bio
+                        </div>
+                        <div className="flex items-center gap-2 text-ink">
+                          <Check className="w-4 h-4 text-forest" />
+                          Book collection
+                        </div>
+                        <div className="flex items-center gap-2 text-ink">
+                          <Check className="w-4 h-4 text-forest" />
+                          Reading progress
+                        </div>
+                        <div className="flex items-center gap-2 text-ink">
+                          <Check className="w-4 h-4 text-forest" />
+                          Ratings & reviews
+                        </div>
+                      </div>
+                      <div className="mt-3 p-3 rounded-lg bg-forest/10 border border-forest/20">
+                        <p className="text-xs text-forest font-medium flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5" />
+                          You&apos;re getting the full Margins experience!
+                        </p>
+                        <p className="text-[11px] text-forest/70 mt-1">Friends can find you, send recommendations, and keep up with your reading journey.</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="private-info"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                  >
+                    <div className="mt-4 pt-4 border-t border-rose/15">
+                      <div className="p-3 rounded-lg bg-rose/5 border border-rose/15 space-y-2">
+                        <p className="text-xs font-semibold text-rose flex items-center gap-1.5">
+                          <Lock className="w-3.5 h-3.5" />
+                          You&apos;re missing out on the best of Margins
+                        </p>
+                        <ul className="text-[11px] text-ink-muted space-y-1.5 pl-5">
+                          <li className="list-disc">Friends can&apos;t see your library or reading progress</li>
+                          <li className="list-disc">You won&apos;t appear in featured readers or activity feeds</li>
+                          <li className="list-disc">Followers need approval before they can follow you</li>
+                          <li className="list-disc">Recommendations from friends won&apos;t show your reading context</li>
+                        </ul>
+                        <p className="text-[11px] text-ink-muted italic">Public profiles get the most from Margins — sharing is what makes reading social!</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Share Link Section */}
+            <div className="space-y-3 mt-4">
               <div className="glass-card rounded-xl p-4">
                 <label className="block text-xs font-medium text-ink-muted mb-1.5 uppercase tracking-wider">
                   Your profile URL
@@ -1188,10 +1214,13 @@ export default function ProfilePage() {
                 </div>
               )}
             </div>
-      </motion.div>
+          </motion.div>
+        </>
+      )}
 
-      {/* Divider */}
-      <MehndiDivider className="h-4 mb-8 opacity-20" />
+      {/* Library Tab */}
+      {activeTab === 'library' && (
+        <>
 
       {/* Library Customization */}
       <motion.div

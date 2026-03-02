@@ -181,10 +181,23 @@ export default function PageTutorial({ pathname }: { pathname: string }) {
                 </div>
                 <ul className="space-y-1">
                   {tip.tips.map((t, i) => (
-                    <li key={i} className="flex items-start gap-2 text-xs text-ink-muted">
-                      <span className="text-gold mt-0.5 flex-shrink-0">•</span>
+                    <motion.li
+                      key={i}
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.3 + i * 0.1, duration: 0.3, ease: 'easeOut' }}
+                      className="flex items-start gap-2 text-xs text-ink-muted"
+                    >
+                      <motion.span
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 0.4 + i * 0.1, type: 'spring', stiffness: 400 }}
+                        className="text-gold mt-0.5 flex-shrink-0"
+                      >
+                        •
+                      </motion.span>
                       <span>{t}</span>
-                    </li>
+                    </motion.li>
                   ))}
                 </ul>
               </div>

@@ -16,6 +16,7 @@ import {
   TrendingUp,
   ChevronRight,
   Sparkles,
+  Lock,
 } from 'lucide-react';
 import Link from 'next/link';
 import type { Book } from '@/lib/types';
@@ -30,6 +31,7 @@ interface PublicUser {
   bio: string;
   favorite_genre: string;
   public_slug: string;
+  shelf_public: boolean;
   reading_data: {
     books?: Book[];
   };
@@ -61,14 +63,13 @@ export default function DiscoverPage() {
     if (!isSupabaseConfigured()) { setLoading(false); return; }
     const supabase = createClient();
 
-    // Fetch all public profiles
+    // Fetch all profiles (public + private) so users can find friends
     const { data: profiles } = await supabase
       .from('profiles')
-      .select('id, username, reader_name, first_name, last_name, avatar_url, bio, favorite_genre, public_slug, reading_data')
-      .eq('shelf_public', true)
+      .select('id, username, reader_name, first_name, last_name, avatar_url, bio, favorite_genre, public_slug, shelf_public, reading_data')
       .not('public_slug', 'is', null)
       .order('updated_at', { ascending: false })
-      .limit(30);
+      .limit(50);
 
     if (profiles) {
       setAllUsers(profiles as PublicUser[]);
@@ -138,6 +139,7 @@ export default function DiscoverPage() {
   }, [query, allUsers]);
 
   const getStats = (user: PublicUser) => {
+    if (!user.shelf_public) return { total: 0, completed: 0 };
     const books = user.reading_data?.books || [];
     const completed = books.filter((b) => b.status === 'completed').length;
     return { total: books.length, completed };
@@ -316,6 +318,7 @@ export default function DiscoverPage() {
               <div className="space-y-3">
                 {users.map((u, i) => {
                   const stats = getStats(u);
+                  const isPrivate = !u.shelf_public;
                   return (
                     <motion.div
                       key={u.id}
@@ -335,13 +338,22 @@ export default function DiscoverPage() {
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-sm text-ink group-hover:text-gold-dark transition-colors">{u.reader_name}</h3>
+                          <h3 className="font-semibold text-sm text-ink group-hover:text-gold-dark transition-colors flex items-center gap-1.5">
+                            {u.reader_name}
+                            {isPrivate && <Lock className="w-3 h-3 text-ink-muted/50" />}
+                          </h3>
                           <p className="text-xs text-ink-muted">@{u.username || u.public_slug}</p>
                         </div>
-                        <div className="text-right text-xs text-ink-muted flex-shrink-0">
-                          <p className="flex items-center gap-1"><BookOpen className="w-3 h-3" /> {stats.total}</p>
-                          <p className="flex items-center gap-1"><Trophy className="w-3 h-3" /> {stats.completed}</p>
-                        </div>
+                        {isPrivate ? (
+                          <span className="text-[10px] text-ink-muted/60 bg-cream/60 border border-gold-light/20 px-2 py-1 rounded-full flex items-center gap-1">
+                            <Lock className="w-2.5 h-2.5" /> Private
+                          </span>
+                        ) : (
+                          <div className="text-right text-xs text-ink-muted flex-shrink-0">
+                            <p className="flex items-center gap-1"><BookOpen className="w-3 h-3" /> {stats.total}</p>
+                            <p className="flex items-center gap-1"><Trophy className="w-3 h-3" /> {stats.completed}</p>
+                          </div>
+                        )}
                         <ChevronRight className="w-4 h-4 text-ink-muted/30 flex-shrink-0" />
                       </Link>
                     </motion.div>
