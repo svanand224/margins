@@ -16,6 +16,8 @@ export interface UserProfile {
   id: string;
   username: string;
   reader_name: string;
+  first_name: string;
+  last_name: string;
   email: string | null;
   avatar_url: string | null;
   bio: string;
@@ -54,7 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!supabaseRef.current) return;
     const { data } = await supabaseRef.current
       .from('profiles')
-      .select('id, username, reader_name, email, avatar_url, bio, favorite_genre, public_slug, shelf_public, shelf_accent_color, shelf_show_currently_reading, shelf_show_stats, shelf_bio_override, created_at, updated_at')
+      .select('id, username, reader_name, first_name, last_name, email, avatar_url, bio, favorite_genre, public_slug, shelf_public, shelf_accent_color, shelf_show_currently_reading, shelf_show_stats, shelf_bio_override, created_at, updated_at')
       .eq('id', userId)
       .single();
     if (data) {

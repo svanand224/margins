@@ -365,7 +365,7 @@ export default function DiscussionsPage() {
     const { data } = await supabase
       .from('profiles')
       .select('id, reader_name, avatar_url')
-      .ilike('reader_name', `%${query}%`)
+      .or(`reader_name.ilike.%${query}%,first_name.ilike.%${query}%,last_name.ilike.%${query}%,username.ilike.%${query}%`)
       .limit(8);
     if (data) {
       // Filter out existing members

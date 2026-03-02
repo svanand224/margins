@@ -54,7 +54,8 @@ export default function ProfilePage() {
 
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [formName, setFormName] = useState('');
+  const [formFirstName, setFormFirstName] = useState('');
+  const [formLastName, setFormLastName] = useState('');
   const [formUsername, setFormUsername] = useState('');
   const [formBio, setFormBio] = useState('');
   const [formGenre, setFormGenre] = useState('');
@@ -89,7 +90,8 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (profile) {
-      setFormName(profile.reader_name || '');
+      setFormFirstName((profile as any).first_name || profile.reader_name?.split(' ')[0] || '');
+      setFormLastName((profile as any).last_name || (profile.reader_name?.includes(' ') ? profile.reader_name.split(' ').slice(1).join(' ') : '') || '');
       setFormUsername(profile.username || '');
       setFormBio(profile.bio || '');
       setFormGenre(profile.favorite_genre || '');
@@ -229,10 +231,13 @@ export default function ProfilePage() {
     }
 
     const supabase = createClient();
+    const fullName = `${formFirstName} ${formLastName}`.trim();
     const { error } = await supabase
       .from('profiles')
       .update({
-        reader_name: formName,
+        reader_name: fullName,
+        first_name: formFirstName.trim(),
+        last_name: formLastName.trim(),
         username: cleanUsername,
         bio: formBio,
         favorite_genre: formGenre,
@@ -240,7 +245,7 @@ export default function ProfilePage() {
       .eq('id', user.id);
 
     if (!error) {
-      setReaderName(formName);
+      setReaderName(fullName);
       await refreshProfile();
       setEditing(false);
     }
@@ -261,7 +266,7 @@ export default function ProfilePage() {
     // Auto-generate a slug if enabling and none exists
     let slug = publicSlug;
     if (newValue && !slug) {
-      slug = (formName || readerName || 'reader')
+      slug = (`${formFirstName} ${formLastName}`.trim() || readerName || 'reader')
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '')
@@ -516,7 +521,7 @@ export default function ProfilePage() {
             {profile?.avatar_url ? (
               <img
                 src={profile.avatar_url}
-                alt={formName}
+                alt={`${formFirstName} ${formLastName}`.trim()}
                 className="w-20 h-20 rounded-full object-cover"
               />
             ) : (
@@ -527,7 +532,7 @@ export default function ProfilePage() {
                   color: 'var(--th-parchment)',
                 }}
               >
-                {(formName || readerName || 'U').charAt(0).toUpperCase()}
+                {(formFirstName || readerName || 'U').charAt(0).toUpperCase()}
               </div>
             )}
             {/* Upload overlay */}
@@ -561,16 +566,29 @@ export default function ProfilePage() {
                   exit={{ opacity: 0 }}
                   className="space-y-4"
                 >
-                  <div>
-                    <label className="block text-xs font-medium text-ink-muted mb-1 uppercase tracking-wider">Name</label>
-                    <input
-                      type="text"
-                      value={formName}
-                      onChange={(e) => setFormName(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink"
-                      style={{ fontFamily: "'Lora', Georgia, serif", fontSize: '0.9rem' }}
-                      placeholder="Your reader name"
-                    />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-ink-muted mb-1 uppercase tracking-wider">First Name</label>
+                      <input
+                        type="text"
+                        value={formFirstName}
+                        onChange={(e) => setFormFirstName(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink"
+                        style={{ fontFamily: "'Lora', Georgia, serif", fontSize: '0.9rem' }}
+                        placeholder="First name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-ink-muted mb-1 uppercase tracking-wider">Last Name</label>
+                      <input
+                        type="text"
+                        value={formLastName}
+                        onChange={(e) => setFormLastName(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink"
+                        style={{ fontFamily: "'Lora', Georgia, serif", fontSize: '0.9rem' }}
+                        placeholder="Last name"
+                      />
+                    </div>
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-ink-muted mb-1 uppercase tracking-wider">Username</label>
@@ -628,7 +646,8 @@ export default function ProfilePage() {
                     <button
                       onClick={() => {
                         setEditing(false);
-                        setFormName(profile?.reader_name || '');
+                        setFormFirstName((profile as any)?.first_name || profile?.reader_name?.split(' ')[0] || '');
+                        setFormLastName((profile as any)?.last_name || (profile?.reader_name?.includes(' ') ? profile?.reader_name.split(' ').slice(1).join(' ') : '') || '');
                         setFormUsername(profile?.username || '');
                         setFormBio(profile?.bio || '');
                         setFormGenre(profile?.favorite_genre || '');

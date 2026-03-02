@@ -8,6 +8,8 @@ create table if not exists public.profiles (
   id uuid references auth.users on delete cascade primary key,
   username text unique not null,
   reader_name text not null default '',
+  first_name text not null default '',
+  last_name text not null default '',
   email text,
   avatar_url text,
   bio text default '',
@@ -46,14 +48,35 @@ create policy "Users can delete own profile"
 -- 4. Auto-create profile on signup
 create or replace function public.handle_new_user()
 returns trigger as $$
+declare
+  full_name text;
+  fname text;
+  lname text;
 begin
-  insert into public.profiles (id, reader_name, email, username)
+  full_name := coalesce(
+    new.raw_user_meta_data->>'name',
+    split_part(new.email, '@', 1)
+  );
+
+  fname := coalesce(new.raw_user_meta_data->>'first_name', '');
+  lname := coalesce(new.raw_user_meta_data->>'last_name', '');
+
+  if fname = '' then
+    if full_name like '% %' then
+      fname := split_part(full_name, ' ', 1);
+      lname := trim(substring(full_name from position(' ' in full_name) + 1));
+    else
+      fname := full_name;
+      lname := '';
+    end if;
+  end if;
+
+  insert into public.profiles (id, reader_name, first_name, last_name, email, username)
   values (
     new.id,
-    coalesce(
-      new.raw_user_meta_data->>'name',
-      split_part(new.email, '@', 1)
-    ),
+    trim(fname || ' ' || lname),
+    fname,
+    lname,
     new.email,
     coalesce(
       nullif(new.raw_user_meta_data->>'username', ''),

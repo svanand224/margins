@@ -24,6 +24,8 @@ interface PublicUser {
   id: string;
   username: string;
   reader_name: string;
+  first_name: string;
+  last_name: string;
   avatar_url: string | null;
   bio: string;
   favorite_genre: string;
@@ -62,7 +64,7 @@ export default function DiscoverPage() {
     // Fetch all public profiles
     const { data: profiles } = await supabase
       .from('profiles')
-      .select('id, username, reader_name, avatar_url, bio, favorite_genre, public_slug, reading_data')
+      .select('id, username, reader_name, first_name, last_name, avatar_url, bio, favorite_genre, public_slug, reading_data')
       .eq('shelf_public', true)
       .not('public_slug', 'is', null)
       .order('updated_at', { ascending: false })
@@ -125,10 +127,10 @@ export default function DiscoverPage() {
       const supabase = createClient();
       const { data } = await supabase
         .from('profiles')
-        .select('id, username, reader_name, avatar_url, bio, favorite_genre, public_slug, reading_data')
+        .select('id, username, reader_name, first_name, last_name, avatar_url, bio, favorite_genre, public_slug, reading_data')
         .eq('shelf_public', true)
         .not('public_slug', 'is', null)
-        .or(`reader_name.ilike.%${query}%,public_slug.ilike.%${query}%,username.ilike.%${query}%,bio.ilike.%${query}%`)
+        .or(`reader_name.ilike.%${query}%,first_name.ilike.%${query}%,last_name.ilike.%${query}%,public_slug.ilike.%${query}%,username.ilike.%${query}%,bio.ilike.%${query}%`)
         .order('updated_at', { ascending: false })
         .limit(20);
       setUsers(data as PublicUser[] || []);

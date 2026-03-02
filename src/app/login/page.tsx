@@ -16,7 +16,8 @@ export default function LoginPage() {
   const [mode, setMode] = useState<Mode>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [username, setUsername] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -57,7 +58,12 @@ export default function LoginPage() {
           email,
           password,
           options: {
-            data: { name: name || email.split('@')[0], username: cleanUsername },
+            data: { 
+              name: `${firstName} ${lastName}`.trim() || email.split('@')[0],
+              first_name: firstName.trim(),
+              last_name: lastName.trim(),
+              username: cleanUsername,
+            },
           },
         });
         if (error) throw error;
@@ -235,20 +241,38 @@ export default function LoginPage() {
                   transition={{ duration: 0.2 }}
                   className="space-y-4"
                 >
-                  <div>
-                    <label className="block text-xs font-medium text-ink-muted mb-1.5 uppercase tracking-wider">
-                      Reader Name
-                    </label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" />
-                      <input
-                        type="text"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="What shall we call you?"
-                        className="w-full pl-10 pr-4 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink placeholder:text-ink-muted/50 transition-all duration-200"
-                        style={{ fontFamily: "'Lora', Georgia, serif", fontSize: '0.9rem' }}
-                      />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-ink-muted mb-1.5 uppercase tracking-wider">
+                        First Name
+                      </label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" />
+                        <input
+                          type="text"
+                          value={firstName}
+                          onChange={(e) => setFirstName(e.target.value)}
+                          placeholder="First name"
+                          className="w-full pl-10 pr-4 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink placeholder:text-ink-muted/50 transition-all duration-200"
+                          style={{ fontFamily: "'Lora', Georgia, serif", fontSize: '0.9rem' }}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-ink-muted mb-1.5 uppercase tracking-wider">
+                        Last Name
+                      </label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" />
+                        <input
+                          type="text"
+                          value={lastName}
+                          onChange={(e) => setLastName(e.target.value)}
+                          placeholder="Last name"
+                          className="w-full pl-10 pr-4 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink placeholder:text-ink-muted/50 transition-all duration-200"
+                          style={{ fontFamily: "'Lora', Georgia, serif", fontSize: '0.9rem' }}
+                        />
+                      </div>
                     </div>
                   </div>
                   <div>
