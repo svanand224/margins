@@ -3,10 +3,11 @@
 import { useState, useRef } from 'react';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, User, Eye, EyeOff, BookOpen, Loader2, ArrowRight, Sparkles } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, BookOpen, Loader2, ArrowRight, Sparkles, Sun, Moon } from 'lucide-react';
 import LotusLogo from '@/components/LotusLogo';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useThemeStore } from '@/lib/themeStore';
 
 type Mode = 'signin' | 'signup';
 
@@ -67,8 +68,25 @@ export default function LoginPage() {
     }
   };
 
+  const { theme, toggleTheme } = useThemeStore();
+
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12 relative overflow-hidden">
+      {/* Day / Night mode toggle */}
+      <motion.button
+        onClick={toggleTheme}
+        className="absolute top-5 right-5 z-50 w-10 h-10 rounded-full flex items-center justify-center glass-card shadow-md border border-gold-light/30 transition-colors hover:bg-gold/10"
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.95 }}
+        aria-label={`Switch to ${theme === 'day' ? 'night' : 'day'} mode`}
+        title={`Switch to ${theme === 'day' ? 'night' : 'day'} mode`}
+      >
+        {theme === 'day' ? (
+          <Moon className="w-4.5 h-4.5 text-ink-muted" />
+        ) : (
+          <Sun className="w-4.5 h-4.5 text-gold" />
+        )}
+      </motion.button>
       {/* Decorative background elements */}
       <div className="absolute inset-0 pointer-events-none">
         {/* Floating lotus shapes */}

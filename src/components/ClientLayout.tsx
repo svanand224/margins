@@ -98,7 +98,26 @@ function LotusScrollButton() {
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  // Unauthenticated users see only the page content (login) with no app chrome
+  if (!loading && !user) {
+    return (
+      <main className="relative z-10 min-h-screen">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={pathname}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+          >
+            {children}
+          </motion.div>
+        </AnimatePresence>
+      </main>
+    );
+  }
 
   return (
     <>
