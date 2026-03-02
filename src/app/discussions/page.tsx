@@ -20,6 +20,7 @@ import {
   Check,
   UserPlus,
   Search,
+  Lock,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Book } from '@/lib/types';
@@ -102,6 +103,7 @@ export default function DiscussionsPage() {
   const [formBookTitle, setFormBookTitle] = useState('');
   const [formBookAuthor, setFormBookAuthor] = useState('');
   const [formColor, setFormColor] = useState('gold');
+  const [formIsPublic, setFormIsPublic] = useState(true);
 
   useEffect(() => {
     fetchDiscussions();
@@ -110,21 +112,43 @@ export default function DiscussionsPage() {
   const fetchDiscussions = async () => {
     if (!isSupabaseConfigured()) { setLoading(false); return; }
     const supabase = createClient();
-    const { data, error } = await supabase
+
+    // Fetch public discussions + private discussions the user is a member of
+    let allDiscussions: any[] = [];
+
+    // Public discussions
+    const { data: publicData } = await supabase
       .from('discussions')
       .select('*, creator:creator_id(reader_name, avatar_url)')
       .eq('is_public', true)
       .order('created_at', { ascending: false })
       .limit(30);
+    if (publicData) allDiscussions = [...publicData];
 
-    if (error) {
-      console.error('Fetch discussions error:', error);
-      setLoading(false);
-      return;
+    // Private discussions the user is in (if logged in)
+    if (user) {
+      const { data: myMemberships } = await supabase
+        .from('discussion_members')
+        .select('discussion_id')
+        .eq('user_id', user.id);
+      if (myMemberships && myMemberships.length > 0) {
+        const memberDiscIds = myMemberships.map((m: any) => m.discussion_id);
+        const { data: privateData } = await supabase
+          .from('discussions')
+          .select('*, creator:creator_id(reader_name, avatar_url)')
+          .eq('is_public', false)
+          .in('id', memberDiscIds)
+          .order('created_at', { ascending: false });
+        if (privateData) {
+          // Merge without duplicates
+          const existingIds = new Set(allDiscussions.map((d: any) => d.id));
+          privateData.forEach((d: any) => { if (!existingIds.has(d.id)) allDiscussions.push(d); });
+        }
+      }
     }
 
-    if (data) {
-      const enriched = await Promise.all(data.map(async (d: any) => {
+    if (allDiscussions.length > 0) {
+      const enriched = await Promise.all(allDiscussions.map(async (d: any) => {
         const { count: members } = await supabase.from('discussion_members').select('*', { count: 'exact', head: true }).eq('discussion_id', d.id);
         const { count: postCount } = await supabase.from('discussion_posts').select('*', { count: 'exact', head: true }).eq('discussion_id', d.id);
         return { ...d, member_count: members || 0, post_count: postCount || 0 };
@@ -149,7 +173,7 @@ export default function DiscussionsPage() {
         book_title: formBookTitle.trim() || null,
         book_author: formBookAuthor.trim() || null,
         accent_color: formColor,
-        is_public: true,
+        is_public: formIsPublic,
       }).select().single();
 
       if (error) {
@@ -176,6 +200,7 @@ export default function DiscussionsPage() {
       setFormBookTitle('');
       setFormBookAuthor('');
       setFormColor('gold');
+      setFormIsPublic(true);
       setShowCreate(false);
       fetchDiscussions();
     } catch (err) {
@@ -310,7 +335,18 @@ export default function DiscussionsPage() {
       discussion_id: selectedDiscussion.id,
       user_id: user.id,
     });
-    if (!error) setIsMember(true);
+    if (!error) {
+      setIsMember(true);
+      // Notify the discussion creator
+      if (selectedDiscussion.creator_id !== user.id) {
+        await supabase.from('notifications').insert({
+          user_id: selectedDiscussion.creator_id,
+          type: 'discussion_join',
+          from_user_id: user.id,
+          data: { discussion_title: selectedDiscussion.title, discussion_id: selectedDiscussion.id },
+        });
+      }
+    }
     setJoining(false);
   };
 
@@ -754,6 +790,28 @@ export default function DiscussionsPage() {
                     ))}
                   </div>
                 </div>
+                {/* Public/Private toggle */}
+                <div className="flex items-center justify-between py-2">
+                  <div>
+                    <p className="text-xs font-medium text-ink">
+                      {formIsPublic ? 'Public Discussion' : 'Private Discussion'}
+                    </p>
+                    <p className="text-[10px] text-ink-muted">
+                      {formIsPublic ? 'Anyone can find and join' : 'Only invited members can see and join'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setFormIsPublic(!formIsPublic)}
+                    className={`relative w-12 h-7 rounded-full transition-colors duration-300 flex-shrink-0 ${
+                      formIsPublic ? 'bg-gold' : 'bg-rose/40'
+                    }`}
+                  >
+                    <div
+                      className="absolute top-0.5 w-6 h-6 rounded-full bg-parchment shadow-sm transition-all duration-300"
+                      style={{ left: formIsPublic ? '1.375rem' : '0.125rem' }}
+                    />
+                  </button>
+                </div>
                 <div className="flex gap-2 pt-1">
                   <motion.button
                     whileTap={{ scale: 0.95 }}
@@ -826,7 +884,10 @@ export default function DiscussionsPage() {
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-semibold text-ink group-hover:text-gold-dark transition-colors truncate">{disc.title}</h3>
+                        <h3 className="text-sm font-semibold text-ink group-hover:text-gold-dark transition-colors truncate flex items-center gap-1.5">
+                      {!disc.is_public && <Lock className="w-3 h-3 text-rose/60 flex-shrink-0" />}
+                      {disc.title}
+                    </h3>
                         {disc.description && <p className="text-xs text-ink-muted mt-0.5 line-clamp-1">{disc.description}</p>}
                         {disc.book_title && (
                           <p className="text-xs text-ink-muted mt-1 flex items-center gap-1">

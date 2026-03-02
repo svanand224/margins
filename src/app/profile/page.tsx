@@ -60,7 +60,7 @@ export default function ProfilePage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Tabs
-  const [activeTab, setActiveTab] = useState<'profile' | 'library'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'library' | 'social'>('profile');
 
   // Public shelf
   const [shelfPublic, setShelfPublic] = useState(false);
@@ -73,7 +73,12 @@ export default function ProfilePage() {
   const [shelfShowReading, setShelfShowReading] = useState(true);
   const [shelfShowStats, setShelfShowStats] = useState(true);
   const [shelfBioOverride, setShelfBioOverride] = useState('');
-  const [librarySaving, setLibrarySaving] = useState(false);
+
+  // Social: followers, following, mutuals
+  const [followers, setFollowers] = useState<{ id: string; reader_name: string; avatar_url: string | null; public_slug: string | null }[]>([]);
+  const [following, setFollowing] = useState<{ id: string; reader_name: string; avatar_url: string | null; public_slug: string | null }[]>([]);
+  const [socialTab, setSocialTab] = useState<'followers' | 'following' | 'mutuals'>('mutuals');
+  const [socialLoading, setSocialLoading] = useState(false);  const [librarySaving, setLibrarySaving] = useState(false);
 
   // Avatar
   const [avatarUploading, setAvatarUploading] = useState(false);
@@ -91,6 +96,45 @@ export default function ProfilePage() {
       setShelfBioOverride(profile.shelf_bio_override || '');
     }
   }, [profile]);
+
+  // Fetch social data (followers/following)
+  useEffect(() => {
+    if (!user) return;
+    const fetchSocial = async () => {
+      setSocialLoading(true);
+      const supabase = createClient();
+      // Fetch followers
+      const { data: followerData } = await supabase
+        .from('follows')
+        .select('follower_id, profiles:follower_id(reader_name, avatar_url, public_slug)')
+        .eq('following_id', user.id);
+      if (followerData) {
+        setFollowers(followerData.map((f: any) => ({
+          id: f.follower_id,
+          reader_name: (f.profiles as any)?.reader_name || 'Unknown',
+          avatar_url: (f.profiles as any)?.avatar_url || null,
+          public_slug: (f.profiles as any)?.public_slug || null,
+        })));
+      }
+      // Fetch following
+      const { data: followingData } = await supabase
+        .from('follows')
+        .select('following_id, profiles:following_id(reader_name, avatar_url, public_slug)')
+        .eq('follower_id', user.id);
+      if (followingData) {
+        setFollowing(followingData.map((f: any) => ({
+          id: f.following_id,
+          reader_name: (f.profiles as any)?.reader_name || 'Unknown',
+          avatar_url: (f.profiles as any)?.avatar_url || null,
+          public_slug: (f.profiles as any)?.public_slug || null,
+        })));
+      }
+      setSocialLoading(false);
+    };
+    fetchSocial();
+  }, [user]);
+
+  const mutuals = followers.filter(f => following.some(g => g.id === f.id));
 
   const handleSave = async () => {
     if (!user) return;
@@ -520,7 +564,7 @@ export default function ProfilePage() {
 
       {/* Tab Navigation */}
       <div className="flex gap-1 mb-8 glass-card rounded-xl p-1" style={{ boxShadow: 'var(--th-card-shadow)' }}>
-        {(['profile', 'library'] as const).map(tab => (
+        {(['profile', 'social', 'library'] as const).map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -530,8 +574,8 @@ export default function ProfilePage() {
               : { color: 'var(--th-ink-muted)' }
             }
           >
-            {tab === 'profile' ? <User className="w-4 h-4" /> : <Globe className="w-4 h-4" />}
-            {tab === 'profile' ? 'Profile' : 'My Library'}
+            {tab === 'profile' ? <User className="w-4 h-4" /> : tab === 'social' ? <Users className="w-4 h-4" /> : <Globe className="w-4 h-4" />}
+            {tab === 'profile' ? 'Profile' : tab === 'social' ? 'Social' : 'My Library'}
           </button>
         ))}
       </div>
@@ -659,6 +703,105 @@ export default function ProfilePage() {
           </AnimatePresence>
         </div>
       </motion.div>
+        </>
+      )}
+
+      {/* Social Tab */}
+      {activeTab === 'social' && (
+        <>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8"
+          >
+            {/* Social stats row */}
+            <div className="grid grid-cols-3 gap-3 mb-6">
+              <div className="glass-card rounded-xl p-4 text-center">
+                <div className="text-xl font-bold text-ink" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+                  {mutuals.length}
+                </div>
+                <div className="text-xs text-ink-muted">Mutuals</div>
+              </div>
+              <div className="glass-card rounded-xl p-4 text-center">
+                <div className="text-xl font-bold text-ink" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+                  {followers.length}
+                </div>
+                <div className="text-xs text-ink-muted">Followers</div>
+              </div>
+              <div className="glass-card rounded-xl p-4 text-center">
+                <div className="text-xl font-bold text-ink" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+                  {following.length}
+                </div>
+                <div className="text-xs text-ink-muted">Following</div>
+              </div>
+            </div>
+
+            {/* Sub-tabs */}
+            <div className="flex gap-1 mb-4 bg-cream/50 rounded-lg p-1">
+              {(['mutuals', 'followers', 'following'] as const).map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setSocialTab(tab)}
+                  className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${
+                    socialTab === tab ? 'bg-gold/10 text-gold-dark' : 'text-ink-muted hover:bg-cream'
+                  }`}
+                >
+                  {tab === 'mutuals' ? `Mutuals (${mutuals.length})` : tab === 'followers' ? `Followers (${followers.length})` : `Following (${following.length})`}
+                </button>
+              ))}
+            </div>
+
+            {socialLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-6 h-6 animate-spin text-gold" />
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {(socialTab === 'mutuals' ? mutuals : socialTab === 'followers' ? followers : following).length === 0 ? (
+                  <div className="text-center py-12">
+                    <Users className="w-12 h-12 text-gold/20 mx-auto mb-3" />
+                    <p className="text-sm text-ink-muted">
+                      {socialTab === 'mutuals' ? 'No mutuals yet — follow other readers to build connections!' :
+                       socialTab === 'followers' ? 'No followers yet — share your library link to grow your audience!' :
+                       'Not following anyone yet — explore to find readers!'}
+                    </p>
+                    <Link href="/discover" className="inline-block mt-3 px-4 py-2 rounded-xl text-sm font-medium text-gold-dark hover:bg-gold-light/10 transition-colors">
+                      Explore Readers →
+                    </Link>
+                  </div>
+                ) : (
+                  (socialTab === 'mutuals' ? mutuals : socialTab === 'followers' ? followers : following).map((person, i) => (
+                    <motion.div
+                      key={person.id}
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.03 }}
+                    >
+                      <Link
+                        href={person.public_slug ? `/user/${person.public_slug}` : '#'}
+                        className="glass-card rounded-xl p-3 flex items-center gap-3 hover:bg-cream/40 transition-colors"
+                      >
+                        {person.avatar_url ? (
+                          <img src={person.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gold to-amber flex items-center justify-center text-parchment font-bold">
+                            {person.reader_name.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-ink">{person.reader_name}</p>
+                          {person.public_slug && <p className="text-xs text-ink-muted">@{person.public_slug}</p>}
+                        </div>
+                        {socialTab === 'mutuals' && (
+                          <span className="text-[10px] text-gold-dark bg-gold-light/10 px-2 py-0.5 rounded-full">Mutual</span>
+                        )}
+                      </Link>
+                    </motion.div>
+                  ))
+                )}
+              </div>
+            )}
+          </motion.div>
         </>
       )}
 

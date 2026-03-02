@@ -69,13 +69,39 @@ export default function DiscoverPage() {
 
     if (profiles) {
       setUsers(profiles as PublicUser[]);
-      // Featured = those with most books
+      // Featured = most active readers this week (by reading sessions in last 7 days)
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+      const weekStr = oneWeekAgo.toISOString().split('T')[0];
+
       const sorted = [...(profiles as PublicUser[])].sort((a, b) => {
-        const aBooks = a.reading_data?.books?.length || 0;
-        const bBooks = b.reading_data?.books?.length || 0;
-        return bBooks - aBooks;
+        const aBooks = a.reading_data?.books || [];
+        const bBooks = b.reading_data?.books || [];
+        // Count sessions in last 7 days
+        const aWeekSessions = aBooks.reduce((sum, book) => {
+          return sum + (book.sessions || []).filter(s => s.date >= weekStr).length;
+        }, 0);
+        const bWeekSessions = bBooks.reduce((sum, book) => {
+          return sum + (book.sessions || []).filter(s => s.date >= weekStr).length;
+        }, 0);
+        // Count pages read this week
+        const aWeekPages = aBooks.reduce((sum, book) => {
+          return sum + (book.sessions || []).filter(s => s.date >= weekStr).reduce((ps, s) => ps + s.pagesRead, 0);
+        }, 0);
+        const bWeekPages = bBooks.reduce((sum, book) => {
+          return sum + (book.sessions || []).filter(s => s.date >= weekStr).reduce((ps, s) => ps + s.pagesRead, 0);
+        }, 0);
+        // Score: sessions * 2 + pages
+        const aScore = aWeekSessions * 2 + aWeekPages;
+        const bScore = bWeekSessions * 2 + bWeekPages;
+        return bScore - aScore;
       });
-      setFeaturedUsers(sorted.slice(0, 6));
+      // Only feature those who had activity this week
+      const active = sorted.filter(u => {
+        const books = u.reading_data?.books || [];
+        return books.some(b => (b.sessions || []).some(s => s.date >= weekStr));
+      });
+      setFeaturedUsers(active.length > 0 ? active.slice(0, 6) : sorted.slice(0, 6));
     }
 
     // Fetch recent public activity
@@ -246,7 +272,7 @@ export default function DiscoverPage() {
             {featuredUsers.length > 0 && (
               <section>
                 <h2 className="text-sm font-semibold text-ink uppercase tracking-wider flex items-center gap-2 mb-3">
-                  <Sparkles className="w-4 h-4 text-gold" /> Featured Libraries
+                  <Sparkles className="w-4 h-4 text-gold" /> Most Active This Week
                 </h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {featuredUsers.map((u, i) => {

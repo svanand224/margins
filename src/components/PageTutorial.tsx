@@ -11,6 +11,17 @@ interface PageTip {
 }
 
 const pageTips: Record<string, PageTip> = {
+  '/': {
+    id: 'home',
+    title: 'Welcome to Margins',
+    tips: [
+      'Track your reading with daily sessions — just tap a book and log pages',
+      'Organize books into threads to create curated collections',
+      'Mark your top 3 books as gold recommendations to share with others',
+      'Check your Today\'s Reading card for a quick snapshot of your day',
+      'Use the navigation to explore your library, goals, analytics, and more',
+    ],
+  },
   '/library': {
     id: 'library',
     title: 'Library Tips',
@@ -68,9 +79,21 @@ const pageTips: Record<string, PageTip> = {
     title: 'Explore Tips',
     tips: [
       'Browse public libraries of other readers',
+      'Featured readers are the most active this week',
       'Follow readers to see their activity in your feed',
       'See what others are reading and recently finished',
       'Search for readers by name or username',
+    ],
+  },
+  '/notifications': {
+    id: 'notifications',
+    title: 'Notifications Tips',
+    tips: [
+      'Get notified when someone follows you',
+      'Receive alerts when someone recommends a book to you',
+      'See when readers join your Marginalia discussions',
+      'Tap a notification to go to the related page',
+      'Mark all as read to clear your notification badge',
     ],
   },
   '/profile': {

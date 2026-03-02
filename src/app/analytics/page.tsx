@@ -184,10 +184,10 @@ export default function AnalyticsPage() {
   const getHeatColor = (value: number, max: number) => {
     if (value === 0) return 'bg-cream';
     const intensity = value / max;
-    if (intensity < 0.25) return 'bg-sage-light/40';
-    if (intensity < 0.5) return 'bg-sage/40';
-    if (intensity < 0.75) return 'bg-forest-light/50';
-    return 'bg-forest/60';
+    if (intensity < 0.25) return 'bg-rose-light/40';
+    if (intensity < 0.5) return 'bg-rose/40';
+    if (intensity < 0.75) return 'bg-plum/30';
+    return 'bg-forest/40';
   };
 
   return (
@@ -221,9 +221,9 @@ export default function AnalyticsPage() {
         className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8"
       >
         {[
-          { label: 'Books Read', value: stats.completed.length, icon: BookOpen, color: 'text-forest' },
-          { label: 'Pages Read', value: stats.totalPages.toLocaleString(), icon: TrendingUp, color: 'text-gold-dark' },
-          { label: 'Hours Read', value: Math.round(stats.totalMinutes / 60), icon: Clock, color: 'text-teal' },
+          { label: 'Books Read', value: stats.completed.length, icon: BookOpen, color: 'text-gold-dark' },
+          { label: 'Pages Read', value: stats.totalPages.toLocaleString(), icon: TrendingUp, color: 'text-gold' },
+          { label: 'Hours Read', value: Math.round(stats.totalMinutes / 60), icon: Clock, color: 'text-rose' },
           { label: 'Avg Rating', value: stats.avgRating, icon: Star, color: 'text-copper' },
         ].map((stat, i) => (
           <motion.div
@@ -371,7 +371,7 @@ export default function AnalyticsPage() {
                       initial={{ width: 0 }}
                       animate={{ width: `${(count / stats.maxGenreCount) * 100}%` }}
                       transition={{ duration: 0.5, delay: 0.35 + i * 0.03 }}
-                      className="h-full bg-gradient-to-r from-teal to-teal-light rounded-full"
+                      className="h-full bg-gradient-to-r from-rose to-rose-light rounded-full"
                     />
                   </div>
                   <span className="text-xs font-medium text-ink w-4 text-right">{count}</span>
@@ -409,10 +409,10 @@ export default function AnalyticsPage() {
         <div className="flex items-center gap-2 mt-3 text-[10px] text-ink-muted">
           <span>Less</span>
           <div className="w-3 h-3 rounded-sm bg-cream" />
-          <div className="w-3 h-3 rounded-sm bg-sage-light/40" />
-          <div className="w-3 h-3 rounded-sm bg-sage/40" />
-          <div className="w-3 h-3 rounded-sm bg-forest-light/50" />
-          <div className="w-3 h-3 rounded-sm bg-forest/60" />
+          <div className="w-3 h-3 rounded-sm bg-rose-light/40" />
+          <div className="w-3 h-3 rounded-sm bg-rose/40" />
+          <div className="w-3 h-3 rounded-sm bg-plum/30" />
+          <div className="w-3 h-3 rounded-sm bg-forest/40" />
           <span>More</span>
         </div>
       </motion.section>

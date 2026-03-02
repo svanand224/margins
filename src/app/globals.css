@@ -1,88 +1,88 @@
 @import "tailwindcss";
 
-/* ─── Day Mode: Warm Gold, Rich Forest, Soft Parchment ─── */
+/* ─── Day Mode: Pistachio, Laurel, Berry Porridge, Dark Plum ─── */
 :root,
 [data-theme="day"] {
-  --th-parchment: #FAF8F2;
-  --th-cream: #F0EDE4;
-  --th-warm-white: #FEFDFB;
+  --th-parchment: #dfe0cc;
+  --th-cream: #d2d4be;
+  --th-warm-white: #eaebda;
   --th-gold: #8B7233;
   --th-gold-light: #B8A56A;
   --th-gold-dark: #6A5528;
   --th-amber: #C4956A;
   --th-copper: #A67050;
-  --th-forest: #3D6B4E;
-  --th-forest-light: #5E9470;
-  --th-sage: #7A9A6A;
-  --th-sage-light: #BDD4A0;
-  --th-bark: #3A2C22;
-  --th-bark-light: #5A463B;
-  --th-espresso: #2A1C16;
-  --th-ink: #2E2420;
-  --th-ink-light: #5A463B;
-  --th-ink-muted: #8A7E70;
-  --th-rose: #C25858;
-  --th-rose-light: #E0A8A8;
-  --th-teal: #3A7A7A;
-  --th-teal-light: #8AB8B8;
-  --th-plum: #7A4868;
-  --th-lavender: #B88DA0;
+  --th-forest: #631b40;
+  --th-forest-light: #8A3A5B;
+  --th-sage: #aeb080;
+  --th-sage-light: #c9cbaa;
+  --th-bark: #3D1828;
+  --th-bark-light: #5D3448;
+  --th-espresso: #2A1018;
+  --th-ink: #351E28;
+  --th-ink-light: #5B3A48;
+  --th-ink-muted: #887078;
+  --th-rose: #d292a8;
+  --th-rose-light: #e5bece;
+  --th-teal: #9e6880;
+  --th-teal-light: #c8a0b0;
+  --th-plum: #7A2858;
+  --th-lavender: #d292a8;
 
   /* Effect colors */
-  --th-glass-bg: rgba(250, 248, 242, 0.8);
+  --th-glass-bg: rgba(223, 224, 204, 0.8);
   --th-glass-border: rgba(139, 114, 51, 0.15);
-  --th-card-shadow: 0 20px 40px rgba(46, 36, 32, 0.1), 0 0 30px rgba(139, 114, 51, 0.08);
+  --th-card-shadow: 0 20px 40px rgba(53, 30, 40, 0.08), 0 0 30px rgba(139, 114, 51, 0.06);
   --th-selection: rgba(139, 114, 51, 0.2);
   --th-focus-ring: rgba(139, 114, 51, 0.2);
   --th-particle-inner: rgba(139, 114, 51, 0.35);
-  --th-particle-outer: rgba(196, 149, 106, 0.2);
-  --th-shimmer: rgba(255, 255, 255, 0.4);
-  --th-status-reading: #3D6B4E;
-  --th-status-want: #3A7A7A;
+  --th-particle-outer: rgba(210, 146, 168, 0.2);
+  --th-shimmer: rgba(255, 255, 255, 0.3);
+  --th-status-reading: #631b40;
+  --th-status-want: #9e6880;
   --th-status-completed: #8B7233;
-  --th-status-dnf: #C25858;
+  --th-status-dnf: #d292a8;
 }
 
-/* ─── Night Mode: Deep Walnut, Warm Brass, Soft Ivory ─── */
+/* ─── Night Mode: Plum Noir, Crimson Violet, Ice Sky ─── */
 [data-theme="night"] {
-  --th-parchment: #1C1410;
-  --th-cream: #2A1E18;
-  --th-warm-white: #3A2E25;
+  --th-parchment: #351E28;
+  --th-cream: #422838;
+  --th-warm-white: #503040;
   --th-gold: #D4A855;
   --th-gold-light: #8A7040;
   --th-gold-dark: #E8C878;
-  --th-amber: #9A6040;
-  --th-copper: #B87050;
-  --th-forest: #5AAA78;
-  --th-forest-light: #48906A;
-  --th-sage: #4A8A60;
-  --th-sage-light: #2A4A38;
-  --th-bark: #4A3028;
-  --th-bark-light: #6A4838;
-  --th-espresso: #100A06;
+  --th-amber: #B08050;
+  --th-copper: #C07858;
+  --th-forest: #B7E1DA;
+  --th-forest-light: #90C5BE;
+  --th-sage: #7AADA5;
+  --th-sage-light: #3D5E5A;
+  --th-bark: #502838;
+  --th-bark-light: #6A3850;
+  --th-espresso: #1E0E15;
   --th-ink: #EAE4D4;
-  --th-ink-light: #C8C0AE;
-  --th-ink-muted: #9A9080;
-  --th-rose: #D0607A;
-  --th-rose-light: #4A2030;
-  --th-teal: #4AB8C8;
-  --th-teal-light: #2A5560;
-  --th-plum: #9868B8;
-  --th-lavender: #5A3878;
+  --th-ink-light: #C8C0B0;
+  --th-ink-muted: #9A908A;
+  --th-rose: #E090A8;
+  --th-rose-light: #502838;
+  --th-teal: #B7E1DA;
+  --th-teal-light: #3D6860;
+  --th-plum: #E090A8;
+  --th-lavender: #5B1E32;
 
   /* Effect colors */
-  --th-glass-bg: rgba(28, 20, 16, 0.85);
+  --th-glass-bg: rgba(53, 30, 40, 0.85);
   --th-glass-border: rgba(212, 168, 85, 0.15);
   --th-card-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(212, 168, 85, 0.06);
   --th-selection: rgba(212, 168, 85, 0.25);
   --th-focus-ring: rgba(212, 168, 85, 0.2);
   --th-particle-inner: rgba(212, 168, 85, 0.3);
-  --th-particle-outer: rgba(154, 96, 64, 0.25);
+  --th-particle-outer: rgba(183, 225, 218, 0.15);
   --th-shimmer: rgba(212, 168, 85, 0.1);
-  --th-status-reading: #6A9A80;
-  --th-status-want: #4AB8C8;
-  --th-status-completed: #D4A855;
-  --th-status-dnf: #D0607A;
+  --th-status-reading: #B7E1DA;
+  --th-status-want: #D4A855;
+  --th-status-completed: #E8C878;
+  --th-status-dnf: #E090A8;
 }
 
 @theme {

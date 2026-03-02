@@ -148,6 +148,13 @@ export default function PublicProfilePage() {
             type: 'followed',
             data: { following_name: profile.reader_name, following_slug: profile.public_slug },
           }).then(() => {});
+          // Send notification to the followed user
+          supabase.from('notifications').insert({
+            user_id: profile.id,
+            type: 'new_follower',
+            from_user_id: user.id,
+            data: {},
+          }).then(() => {});
         } else {
           console.error('Follow error:', error.message);
         }
@@ -173,6 +180,13 @@ export default function PublicProfilePage() {
 
     if (!error) {
       setRecommendSuccess(true);
+      // Send notification to the recommended user
+      supabase.from('notifications').insert({
+        user_id: profile.id,
+        type: 'new_recommendation',
+        from_user_id: user.id,
+        data: { book_title: recommendBook.title.trim() },
+      }).then(() => {});
       setTimeout(() => {
         setShowRecommendModal(false);
         setRecommendBook({ title: '', author: '', message: '' });

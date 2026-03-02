@@ -38,6 +38,7 @@ const navItems = [
   { href: '/discover', icon: Compass, label: 'Explore' },
   { href: '/recommendations', icon: Gift, label: 'For You' },
   { href: '/discussions', icon: MessageSquare, label: 'Marginalia' },
+  { href: '/notifications', icon: Bell, label: 'Alerts' },
   { href: '/goals', icon: Target, label: 'Goals' },
   { href: '/analytics', icon: BarChart3, label: 'Analytics' },
   { href: '/profile', icon: UserCircle, label: 'Profile' },
@@ -49,7 +50,24 @@ export default function Navigation() {
   const { user, signOut } = useAuth();
   const router = useRouter();
   const isNight = theme === 'night';
-  // Alerts/notifications logic removed
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Fetch unread notification count
+  useEffect(() => {
+    if (!user || !isSupabaseConfigured()) return;
+    const fetchUnread = async () => {
+      const supabase = createClient();
+      const { count } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('read', false);
+      setUnreadCount(count || 0);
+    };
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 30000); // poll every 30s
+    return () => clearInterval(interval);
+  }, [user]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -92,7 +110,7 @@ export default function Navigation() {
           {navItems.map((item) => {
             const isActive = pathname === item.href || 
               (item.href !== '/' && pathname.startsWith(item.href));
-            // Alerts/notifications logic removed
+            const hasNotifBadge = item.href === '/notifications' && unreadCount > 0;
             return (
               <Link key={item.href} href={item.href}>
                 <motion.div
@@ -112,9 +130,15 @@ export default function Navigation() {
                       transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
                     />
                   )}
-                  <item.icon className={`w-5 h-5 ${isActive ? 'text-gold-dark' : ''}`} />
+                  <div className="relative">
+                    <item.icon className={`w-5 h-5 ${isActive ? 'text-gold-dark' : ''}`} />
+                    {hasNotifBadge && (
+                      <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-rose text-parchment text-[8px] font-bold flex items-center justify-center">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
+                  </div>
                   <span className="hidden lg:block text-sm font-medium">{item.label}</span>
-                  {/* Alerts/notifications indicator removed */}
                   {isActive && (
                     <motion.div
                       initial={{ scale: 0 }}
@@ -215,6 +239,7 @@ export default function Navigation() {
           {navItems.map((item) => {
             const isActive = pathname === item.href || 
               (item.href !== '/' && pathname.startsWith(item.href));
+            const hasNotifBadge = item.href === '/notifications' && unreadCount > 0;
             return (
               <Link key={item.href} href={item.href}>
                 <motion.div
@@ -231,7 +256,14 @@ export default function Navigation() {
                       transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
                     />
                   )}
-                  <item.icon className="w-6 h-6" />
+                  <div className="relative">
+                    <item.icon className="w-6 h-6" />
+                    {hasNotifBadge && (
+                      <span className="absolute -top-1 -right-1.5 w-3.5 h-3.5 rounded-full bg-rose text-parchment text-[7px] font-bold flex items-center justify-center">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
+                  </div>
                   <span className="text-xs font-medium">{item.label}</span>
                 </motion.div>
               </Link>
