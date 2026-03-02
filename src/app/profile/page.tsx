@@ -85,10 +85,10 @@ export default function ProfilePage() {
       setFormGenre(profile.favorite_genre || '');
       setShelfPublic(profile.shelf_public || false);
       setPublicSlug(profile.public_slug || '');
-      setShelfAccent((profile as any).shelf_accent_color || 'gold');
-      setShelfShowReading((profile as any).shelf_show_currently_reading !== false);
-      setShelfShowStats((profile as any).shelf_show_stats !== false);
-      setShelfBioOverride((profile as any).shelf_bio_override || '');
+      setShelfAccent(profile.shelf_accent_color || 'gold');
+      setShelfShowReading(profile.shelf_show_currently_reading !== false);
+      setShelfShowStats(profile.shelf_show_stats !== false);
+      setShelfBioOverride(profile.shelf_bio_override || '');
     }
   }, [profile]);
 

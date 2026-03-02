@@ -14,8 +14,6 @@ import {
   ChevronRight,
   ChevronLeft,
   X,
-  Sparkles,
-  Search,
   Compass,
 } from 'lucide-react';
 
@@ -28,9 +26,9 @@ interface TutorialStep {
 
 const steps: TutorialStep[] = [
   {
-    icon: Sparkles,
+    icon: BookOpen,
     title: 'Welcome to Margins',
-    description: 'Your personal reading companion. Track books, set goals, and connect with fellow readers. Let\'s take a quick tour!',
+    description: 'Your personal reading companion. Track books, set goals, and connect with fellow readers. Let\u2019s take a quick tour!',
     color: 'var(--th-gold)',
   },
   {
@@ -42,7 +40,7 @@ const steps: TutorialStep[] = [
   {
     icon: Library,
     title: 'Your Library',
-    description: 'All your books in one place. Filter by status — Currently Reading, Want to Read, Completed, or DNF. Sort by title, author, date, or rating.',
+    description: 'All your books in one place. Filter by status \u2014 Currently Reading, Want to Read, Completed, or DNF. Sort by title, author, date, or rating.',
     color: 'var(--th-teal)',
   },
   {
@@ -89,15 +87,130 @@ const steps: TutorialStep[] = [
   },
 ];
 
+/* Inline lotus SVG for the tutorial \u2014 ornamental, minimal line art */
+function LotusDecoration({ color, size = 48 }: { color: string; size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 64 64"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {/* Center petal */}
+      <path
+        d="M32 12 C28 22, 27 30, 32 40 C37 30, 36 22, 32 12Z"
+        stroke={color}
+        strokeWidth="1.3"
+        fill={color}
+        fillOpacity="0.08"
+        strokeLinejoin="round"
+      />
+      {/* Inner teardrop */}
+      <path
+        d="M32 22 C30.5 27, 30 31, 32 34 C34 31, 33.5 27, 32 22Z"
+        stroke={color}
+        strokeWidth="0.7"
+        fill="none"
+        opacity="0.45"
+      />
+      {/* Inner left */}
+      <path
+        d="M32 40 C27 34, 22 27, 22 20 C22 25, 25 34, 32 40Z"
+        stroke={color}
+        strokeWidth="1.1"
+        fill={color}
+        fillOpacity="0.05"
+        strokeLinejoin="round"
+      />
+      {/* Inner right */}
+      <path
+        d="M32 40 C37 34, 42 27, 42 20 C42 25, 39 34, 32 40Z"
+        stroke={color}
+        strokeWidth="1.1"
+        fill={color}
+        fillOpacity="0.05"
+        strokeLinejoin="round"
+      />
+      {/* Outer left */}
+      <path
+        d="M32 40 C24 37, 16 30, 14 24 C15 30, 21 37, 32 40Z"
+        stroke={color}
+        strokeWidth="1"
+        fill={color}
+        fillOpacity="0.03"
+        strokeLinejoin="round"
+      />
+      {/* Outer right */}
+      <path
+        d="M32 40 C40 37, 48 30, 50 24 C49 30, 43 37, 32 40Z"
+        stroke={color}
+        strokeWidth="1"
+        fill={color}
+        fillOpacity="0.03"
+        strokeLinejoin="round"
+      />
+      {/* Far outer left */}
+      <path
+        d="M32 40 C22 38, 10 32, 8 26 C10 31, 18 38, 32 40Z"
+        stroke={color}
+        strokeWidth="0.9"
+        fill="none"
+        opacity="0.5"
+        strokeLinejoin="round"
+      />
+      {/* Far outer right */}
+      <path
+        d="M32 40 C42 38, 54 32, 56 26 C54 31, 46 38, 32 40Z"
+        stroke={color}
+        strokeWidth="0.9"
+        fill="none"
+        opacity="0.5"
+        strokeLinejoin="round"
+      />
+      {/* Bottom curve / water line */}
+      <path
+        d="M18 44 Q25 40, 32 42 Q39 40, 46 44"
+        stroke={color}
+        strokeWidth="0.8"
+        fill="none"
+        opacity="0.35"
+      />
+      <path
+        d="M14 48 Q23 43, 32 46 Q41 43, 50 48"
+        stroke={color}
+        strokeWidth="0.6"
+        fill="none"
+        opacity="0.2"
+      />
+    </svg>
+  );
+}
+
+/* Lotus petal step indicator */
+function LotusPetal({ active, color, onClick }: { active: boolean; color: string; onClick: () => void }) {
+  return (
+    <button onClick={onClick} className="transition-all" style={{ transform: active ? 'scale(1.4)' : 'scale(1)' }}>
+      <svg width="12" height="14" viewBox="0 0 12 14" fill="none">
+        <path
+          d="M6 1 C4.5 4, 4 7, 6 12 C8 7, 7.5 4, 6 1Z"
+          fill={active ? color : 'var(--th-gold-light)'}
+          opacity={active ? 1 : 0.4}
+          stroke={active ? color : 'none'}
+          strokeWidth="0.5"
+        />
+      </svg>
+    </button>
+  );
+}
+
 export default function OnboardingTutorial() {
   const [show, setShow] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
 
   useEffect(() => {
-    // Check if user has seen the tutorial
     const hasSeen = localStorage.getItem('margins-tutorial-seen');
     if (!hasSeen) {
-      // Small delay so the page loads first
       const timer = setTimeout(() => setShow(true), 800);
       return () => clearTimeout(timer);
     }
@@ -139,16 +252,22 @@ export default function OnboardingTutorial() {
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="bg-parchment rounded-2xl shadow-2xl w-full max-w-md border border-gold-light/30 overflow-hidden"
+            className="bg-parchment rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative"
+            style={{ border: '1px solid color-mix(in srgb, var(--th-gold) 25%, transparent)' }}
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Decorative lotus watermark in background */}
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 opacity-[0.07] pointer-events-none">
+              <LotusDecoration color="var(--th-gold-dark)" size={160} />
+            </div>
+
             {/* Progress bar */}
-            <div className="h-1 bg-cream">
+            <div className="h-1 bg-cream relative overflow-hidden">
               <motion.div
                 className="h-full rounded-full"
-                style={{ background: 'linear-gradient(90deg, var(--th-gold), var(--th-amber))' }}
+                style={{ background: 'linear-gradient(90deg, var(--th-gold), var(--th-amber), var(--th-gold-dark))' }}
                 animate={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
-                transition={{ duration: 0.3 }}
+                transition={{ duration: 0.4, ease: 'easeOut' }}
               />
             </div>
 
@@ -161,7 +280,7 @@ export default function OnboardingTutorial() {
             </button>
 
             {/* Content */}
-            <div className="px-6 pt-8 pb-6">
+            <div className="px-6 pt-8 pb-6 relative z-[1]">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={currentStep}
@@ -171,18 +290,35 @@ export default function OnboardingTutorial() {
                   transition={{ duration: 0.25 }}
                   className="text-center"
                 >
-                  {/* Icon */}
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: 'spring', delay: 0.1 }}
-                    className="w-16 h-16 rounded-2xl mx-auto mb-5 flex items-center justify-center"
-                    style={{
-                      background: `linear-gradient(135deg, ${step.color}, color-mix(in srgb, ${step.color} 60%, transparent))`,
-                    }}
-                  >
-                    <step.icon className="w-8 h-8 text-parchment" />
-                  </motion.div>
+                  {/* Lotus + Icon composite */}
+                  <div className="relative w-20 h-20 mx-auto mb-5">
+                    {/* Lotus behind the icon */}
+                    <motion.div
+                      initial={{ scale: 0, rotate: -30 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      transition={{ type: 'spring', delay: 0.05, damping: 15 }}
+                      className="absolute inset-0 flex items-center justify-center opacity-30"
+                    >
+                      <LotusDecoration color={step.color} size={80} />
+                    </motion.div>
+                    {/* Icon circle */}
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: 'spring', delay: 0.15 }}
+                      className="absolute inset-0 flex items-center justify-center"
+                    >
+                      <div
+                        className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                        style={{
+                          background: `linear-gradient(135deg, ${step.color}, color-mix(in srgb, ${step.color} 60%, transparent))`,
+                          boxShadow: `0 4px 20px color-mix(in srgb, ${step.color} 30%, transparent)`,
+                        }}
+                      >
+                        <step.icon className="w-7 h-7 text-parchment" />
+                      </div>
+                    </motion.div>
+                  </div>
 
                   {/* Title */}
                   <h2
@@ -199,22 +335,25 @@ export default function OnboardingTutorial() {
                 </motion.div>
               </AnimatePresence>
 
-              {/* Step indicator dots */}
-              <div className="flex justify-center gap-1.5 mt-6 mb-5">
+              {/* Lotus petal step indicators */}
+              <div className="flex justify-center gap-2 mt-6 mb-5 items-end">
                 {steps.map((_, i) => (
-                  <button
+                  <LotusPetal
                     key={i}
+                    active={i === currentStep}
+                    color={steps[i].color}
                     onClick={() => setCurrentStep(i)}
-                    className="transition-all"
-                    style={{
-                      width: i === currentStep ? '20px' : '6px',
-                      height: '6px',
-                      borderRadius: '3px',
-                      background: i === currentStep ? 'var(--th-gold)' : 'var(--th-gold-light)',
-                      opacity: i === currentStep ? 1 : 0.5,
-                    }}
                   />
                 ))}
+              </div>
+
+              {/* Decorative lotus divider */}
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, transparent, var(--th-gold-light), transparent)' }} />
+                <svg width="16" height="10" viewBox="0 0 16 10" fill="none" className="opacity-30">
+                  <path d="M8 0 C6 3, 5.5 6, 8 9 C10.5 6, 10 3, 8 0Z" fill="var(--th-gold-dark)" />
+                </svg>
+                <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, transparent, var(--th-gold-light), transparent)' }} />
               </div>
 
               {/* Navigation buttons */}
@@ -229,13 +368,21 @@ export default function OnboardingTutorial() {
                 )}
                 <button
                   onClick={handleNext}
-                  className="flex-1 flex items-center justify-center gap-1 px-4 py-2.5 rounded-xl text-sm font-medium text-parchment"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-parchment transition-all"
                   style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}
                 >
                   {currentStep < steps.length - 1 ? (
                     <>Next <ChevronRight className="w-4 h-4" /></>
                   ) : (
-                    <>Start Reading <Sparkles className="w-4 h-4" /></>
+                    <>
+                      Begin Reading
+                      {/* Mini lotus icon for final button */}
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M8 2 C6.5 5, 6 8, 8 13 C10 8, 9.5 5, 8 2Z" fill="currentColor" opacity="0.9" />
+                        <path d="M8 13 C6 10, 3 7, 3 4 C3 7, 5 10, 8 13Z" fill="currentColor" opacity="0.6" />
+                        <path d="M8 13 C10 10, 13 7, 13 4 C13 7, 11 10, 8 13Z" fill="currentColor" opacity="0.6" />
+                      </svg>
+                    </>
                   )}
                 </button>
               </div>
