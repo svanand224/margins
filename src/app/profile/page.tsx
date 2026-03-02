@@ -88,6 +88,7 @@ export default function ProfilePage() {
 
   // Avatar
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarError, setAvatarError] = useState('');
 
   useEffect(() => {
     if (profile) {
@@ -313,7 +314,8 @@ export default function ProfilePage() {
   };
 
   const handleCopyLink = () => {
-    const url = `${window.location.origin}/user/${publicSlug}`;
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const url = `${origin}/user/${publicSlug}`;
     navigator.clipboard.writeText(url);
     setSlugCopied(true);
     setTimeout(() => setSlugCopied(false), 2000);
@@ -352,11 +354,12 @@ export default function ProfilePage() {
     // Validate
     if (!file.type.startsWith('image/')) return;
     if (file.size > 5 * 1024 * 1024) {
-      alert('Image must be under 5MB');
+      setAvatarError('Image must be under 5MB');
       return;
     }
 
     setAvatarUploading(true);
+    setAvatarError('');
 
     // Compress image client-side for faster upload
     const compressImage = (file: File): Promise<Blob> => {
@@ -400,7 +403,7 @@ export default function ProfilePage() {
 
     const compressedBlob = await compressImage(file).catch(() => null);
     if (!compressedBlob) {
-      alert('Failed to process image. Please try a different file.');
+      setAvatarError('Failed to process image. Please try a different file.');
       setAvatarUploading(false);
       return;
     }
@@ -415,7 +418,7 @@ export default function ProfilePage() {
 
     if (uploadError) {
       console.error('Upload error:', uploadError);
-      alert('Failed to upload avatar. Please try again.');
+      setAvatarError('Failed to upload avatar. Please try again.');
       setAvatarUploading(false);
       return;
     }
@@ -434,7 +437,7 @@ export default function ProfilePage() {
 
     if (updateError) {
       console.error('Profile update error:', updateError);
-      alert('Avatar uploaded but profile update failed. Please try again.');
+      setAvatarError('Avatar uploaded but profile update failed. Please try again.');
     }
 
     await refreshProfile();
@@ -478,11 +481,11 @@ export default function ProfilePage() {
         await signOut();
         router.replace('/login');
       } else {
-        alert(result.error || 'Account deletion failed. Please try again.');
+        setAvatarError(result.error || 'Account deletion failed. Please try again.');
       }
     } catch (err) {
       // Network error — do NOT sign out, show error
-      alert('Could not reach the server. Your account was not deleted. Please try again.');
+      setAvatarError('Could not reach the server. Your account was not deleted. Please try again.');
     }
     setSaving(false);
   };
@@ -537,7 +540,7 @@ export default function ProfilePage() {
               </div>
             )}
             {/* Upload overlay */}
-            <label className="absolute inset-0 rounded-full flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+            <label className="absolute inset-0 rounded-full flex items-center justify-center bg-black/40 sm:opacity-0 sm:group-hover:opacity-100 opacity-0 active:opacity-100 cursor-pointer transition-opacity">
               {avatarUploading ? (
                 <Loader2 className="w-5 h-5 text-white animate-spin" />
               ) : (
@@ -555,6 +558,11 @@ export default function ProfilePage() {
               <Check className="w-3 h-3 text-parchment" />
             </div>
           </div>
+
+          {/* Avatar error message */}
+          {avatarError && (
+            <p className="text-xs text-rose mt-1 text-center max-w-[120px]">{avatarError}</p>
+          )}
 
           {/* Info */}
           <div className="flex-1 min-w-0">

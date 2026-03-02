@@ -281,7 +281,7 @@ export default function HomePage() {
         .select('id, reader_name, avatar_url, public_slug')
         .eq('shelf_public', true)
         .not('public_slug', 'is', null)
-        .or(`reader_name.ilike.%${recommendSearchQuery}%,public_slug.ilike.%${recommendSearchQuery}%`)
+        .or(`reader_name.ilike.%${recommendSearchQuery.replace(/[%_(),.]/g, '')}%,public_slug.ilike.%${recommendSearchQuery.replace(/[%_(),.]/g, '')}%`)
         .neq('id', user?.id || '')
         .limit(5);
       setRecommendUsers(data || []);

@@ -600,7 +600,7 @@ export default function PublicProfilePage() {
                       <BookOpen className="w-6 h-6 text-gold/50" />
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center p-1">
+                  <div className="absolute inset-0 bg-black/60 sm:opacity-0 sm:group-hover:opacity-100 opacity-0 active:opacity-100 transition-opacity rounded-lg flex items-center justify-center p-1">
                     <p className="text-white text-[10px] md:text-xs text-center line-clamp-3">{book.title}</p>
                   </div>
                 </div>
@@ -636,7 +636,7 @@ export default function PublicProfilePage() {
                   <BookOpen className="w-6 h-6 text-gold/30" />
                 </div>
               )}
-              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center p-1">
+              <div className="absolute inset-0 bg-black/60 sm:opacity-0 sm:group-hover:opacity-100 opacity-0 active:opacity-100 transition-opacity rounded-lg flex items-center justify-center p-1">
                 <p className="text-white text-[10px] md:text-xs text-center line-clamp-3">{book.title}</p>
               </div>
             </div>

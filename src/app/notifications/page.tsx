@@ -231,7 +231,7 @@ export default function NotificationsPage() {
                     </div>
                     <button
                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); deleteNotification(n.id); }}
-                      className="p-1.5 rounded-lg text-ink-muted/30 hover:text-rose hover:bg-rose/10 transition-all opacity-0 group-hover:opacity-100"
+                      className="p-1.5 rounded-lg text-ink-muted/30 hover:text-rose hover:bg-rose/10 transition-all md:opacity-0 md:group-hover:opacity-100"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>

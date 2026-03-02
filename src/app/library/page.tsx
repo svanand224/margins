@@ -523,7 +523,7 @@ function GridBookCard({ book, index, onToggleFavorite, relatedCount }: { book: B
           e.stopPropagation();
           onToggleFavorite(book.id);
         }}
-        className="absolute top-2 right-2 p-1 rounded-full bg-white/20 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"
+        className="absolute top-2 right-2 p-1 rounded-full bg-white/20 backdrop-blur-sm md:opacity-0 md:group-hover:opacity-100 transition-opacity"
       >
         <Heart
           className={`w-3.5 h-3.5 ${book.favorite ? 'text-rose fill-rose' : 'text-white'}`}

@@ -285,10 +285,10 @@ body::before {
   color: var(--color-ink);
 }
 
-/* Input styling */
+/* Input styling – 16px minimum prevents iOS Safari auto-zoom on focus */
 input, textarea, select {
   font-family: 'Homemade Apple', cursive;
-  font-size: 0.925rem;
+  font-size: 16px;
   line-height: 1.6;
 }
 
