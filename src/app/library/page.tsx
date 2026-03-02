@@ -14,6 +14,7 @@ import {
   X,
   SortAsc,
   Library,
+  Compass,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useMemo, Suspense, useEffect } from 'react';
@@ -248,6 +249,10 @@ function LibraryContent() {
           My Library
         </h1>
         <p className="text-ink-muted mt-1">{books.length} books in your collection</p>
+        <Link href="/discover" className="mt-3 flex items-center gap-2 text-xs text-teal bg-teal/5 border border-teal/15 rounded-lg px-3 py-2 w-fit hover:bg-teal/10 transition-colors">
+          <Compass className="w-3.5 h-3.5 flex-shrink-0" />
+          <span>This is your public profile — other readers see your library on the <span className="font-semibold underline underline-offset-2">Explore</span> page</span>
+        </Link>
         <div className="mt-2">
           <MehndiDivider className="h-4 opacity-50" />
         </div>
