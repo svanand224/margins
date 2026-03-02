@@ -475,6 +475,8 @@ export default function DiscussionsPage() {
 
   const handleJoin = async () => {
     if (!user || !selectedDiscussion) return;
+    // Private discussions are invite-only — users cannot self-join
+    if (!selectedDiscussion.is_public) return;
     setJoining(true);
     const supabase = createClient();
     const { error } = await supabase.from('discussion_members').insert({
@@ -1306,15 +1308,21 @@ export default function DiscussionsPage() {
           </div>
         ) : user && !isMember ? (
           <div className="border-t border-gold-light/20 px-4 py-4 bg-parchment/80 backdrop-blur-sm text-center">
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={handleJoin}
-              disabled={joining}
-              className="px-6 py-2.5 rounded-xl text-sm font-medium text-parchment"
-              style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}
-            >
-              {joining ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Join Discussion to Post'}
-            </motion.button>
+            {selectedDiscussion.is_public ? (
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={handleJoin}
+                disabled={joining}
+                className="px-6 py-2.5 rounded-xl text-sm font-medium text-parchment"
+                style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}
+              >
+                {joining ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Join Discussion to Post'}
+              </motion.button>
+            ) : (
+              <p className="text-sm text-ink-muted flex items-center justify-center gap-1.5">
+                <Lock className="w-3.5 h-3.5" /> This is a private discussion — invite only
+              </p>
+            )}
           </div>
         ) : (
           <div className="border-t border-gold-light/20 px-4 py-4 bg-parchment/80 text-center">

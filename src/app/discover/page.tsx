@@ -110,10 +110,11 @@ export default function DiscoverPage() {
       setFeaturedUsers(active.length > 0 ? active.slice(0, 6) : sorted.slice(0, 6));
     }
 
-    // Fetch recent public activity
+    // Fetch recent public activity — only noteworthy social events
     const { data: activities } = await supabase
       .from('activities')
       .select('*, user:user_id(reader_name, avatar_url, public_slug)')
+      .in('type', ['gold_recommend', 'follow', 'followed', 'book_completed', 'finished_book'])
       .order('created_at', { ascending: false })
       .limit(10);
     if (activities) setRecentActivity(activities as unknown as RecentActivity[]);
