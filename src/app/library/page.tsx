@@ -249,9 +249,9 @@ function LibraryContent() {
           My Library
         </h1>
         <p className="text-ink-muted mt-1">{books.length} books in your collection</p>
-        <Link href="/discover" className="mt-3 flex items-center gap-2 text-xs text-gold-dark bg-gold/10 border border-gold/25 rounded-lg px-3 py-2.5 w-fit hover:bg-gold/20 transition-colors shadow-sm">
-          <Compass className="w-4 h-4 flex-shrink-0 text-gold" />
-          <span>This is your public profile — other readers see your library on the <span className="font-bold underline underline-offset-2">Explore</span> page</span>
+        <Link href="/discover" className="mt-3 flex items-center gap-2.5 text-sm rounded-xl px-4 py-3 hover:opacity-90 transition-all shadow-md border" style={{ background: 'linear-gradient(135deg, color-mix(in srgb, var(--th-gold) 15%, var(--th-parchment)), color-mix(in srgb, var(--th-amber) 10%, var(--th-parchment)))', borderColor: 'color-mix(in srgb, var(--th-gold) 35%, transparent)' }}>
+          <Compass className="w-5 h-5 flex-shrink-0 text-gold" />
+          <span className="text-ink font-medium">This is your public profile — readers see this on the <span className="font-bold text-gold-dark underline underline-offset-2">Explore</span> page →</span>
         </Link>
         <div className="mt-2">
           <MehndiDivider className="h-4 opacity-50" />

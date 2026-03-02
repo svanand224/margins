@@ -15,6 +15,8 @@ import {
   ChevronRight,
   Sparkles,
   Lock,
+  Crown,
+  Flame,
 } from 'lucide-react';
 import Link from 'next/link';
 import type { Book } from '@/lib/types';
@@ -235,6 +237,14 @@ export default function DiscoverPage() {
                   {featuredUsers.map((u, i) => {
                     const stats = getStats(u);
                     const currentlyReading = u.reading_data?.books?.find(b => b.status === 'reading');
+                    const rank = i + 1;
+                    const rankColors = [
+                      'from-yellow-400 to-amber-500', // #1 gold
+                      'from-gray-300 to-gray-400',    // #2 silver
+                      'from-amber-600 to-orange-700', // #3 bronze
+                      'from-teal to-teal-light',
+                      'from-teal to-teal-light',
+                    ];
                     return (
                       <motion.div
                         key={u.id}
@@ -243,9 +253,19 @@ export default function DiscoverPage() {
                         transition={{ delay: i * 0.06 }}
                       >
                         <Link
-                          href={`/shelf/${u.public_slug}`}
-                          className="glass-card rounded-xl p-4 hover:bg-cream/40 transition-colors group block text-center"
+                          href={`/user/${u.public_slug}`}
+                          className="glass-card rounded-xl p-4 hover:bg-cream/40 transition-colors group block text-center relative"
                         >
+                          {/* Rank badge */}
+                          {rank <= 5 && (
+                            <div className={`absolute -top-2 -right-2 w-7 h-7 rounded-full bg-gradient-to-br ${rankColors[Math.min(rank - 1, 4)]} flex items-center justify-center shadow-md border-2 border-parchment z-10`}>
+                              {rank <= 3 ? (
+                                <Crown className="w-3.5 h-3.5 text-white" />
+                              ) : (
+                                <Flame className="w-3.5 h-3.5 text-white" />
+                              )}
+                            </div>
+                          )}
                           {u.avatar_url ? (
                             <img src={u.avatar_url} alt="" className="w-14 h-14 rounded-full object-cover mx-auto ring-2 ring-gold-light/30 group-hover:ring-gold transition-all" />
                           ) : (
@@ -347,6 +367,14 @@ export default function DiscoverPage() {
                             {isPrivate && <Lock className="w-3 h-3 text-ink-muted/50" />}
                           </h3>
                           <p className="text-xs text-ink-muted">@{u.username || u.public_slug}</p>
+                          {!isPrivate && (() => {
+                            const reading = u.reading_data?.books?.find(b => b.status === 'reading');
+                            return reading ? (
+                              <p className="text-[10px] md:text-xs text-gold-dark mt-0.5 truncate flex items-center gap-1">
+                                <BookOpen className="w-3 h-3 flex-shrink-0" /> Currently reading: {reading.title}
+                              </p>
+                            ) : null;
+                          })()}
                         </div>
                         {isPrivate ? (
                           <span className="text-[10px] md:text-xs text-ink-muted/60 bg-cream/60 border border-gold-light/20 px-2 py-1 rounded-full flex items-center gap-1">
