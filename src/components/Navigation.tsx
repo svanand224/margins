@@ -33,12 +33,12 @@ import { PaisleyBorder, ChintzFloral } from './IndianPatterns';
 
 const navItems = [
   { href: '/', icon: Home, label: 'Home' },
+  { href: '/profile', icon: UserCircle, label: 'Profile' },
   { href: '/library', icon: Library, label: 'Library' },
   { href: '/add', icon: PlusCircle, label: 'Add Book' },
   { href: '/discover', icon: Compass, label: 'Explore' },
   { href: '/notifications', icon: Bell, label: 'Alerts' },
   { href: '/discussions', icon: MessageSquare, label: 'Marginalia' },
-  { href: '/profile', icon: UserCircle, label: 'Profile' },
   { href: '/goals', icon: Target, label: 'Goals' },
   { href: '/analytics', icon: BarChart3, label: 'Analytics' },
   { href: '/recommendations', icon: Gift, label: 'For You' },
