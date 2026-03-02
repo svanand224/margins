@@ -14,6 +14,7 @@ import {
   X,
   SortAsc,
   Library,
+  Layers,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useMemo, Suspense, useEffect } from 'react';
@@ -283,6 +284,63 @@ function LibraryContent() {
           )}
         </div>
 
+        {/* Thread filter bar — always visible when threads exist */}
+        {threads.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Layers className="w-4 h-4 text-gold flex-shrink-0" />
+              <span className="text-xs font-semibold text-ink uppercase tracking-wider">Threads</span>
+              {shelfFilter !== 'all' && (
+                <button
+                  onClick={() => setShelfFilter('all')}
+                  className="ml-auto text-[10px] text-ink-muted hover:text-ink flex items-center gap-1 transition-colors"
+                >
+                  <X className="w-3 h-3" /> Clear
+                </button>
+              )}
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
+              <button
+                onClick={() => setShelfFilter('all')}
+                className={`flex-shrink-0 flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium border-2 transition-all touch-manipulation ${
+                  shelfFilter === 'all'
+                    ? 'border-gold bg-gold/10 text-gold-dark shadow-sm'
+                    : 'border-gold-light/20 bg-cream/30 text-ink-muted hover:border-gold-light/40 hover:bg-cream/50'
+                }`}
+              >
+                <Library className="w-3.5 h-3.5" />
+                All Books
+                <span className="opacity-60">({books.length})</span>
+              </button>
+              {threads.map(t => {
+                const count = books.filter(b => t.bookIds.includes(b.id)).length;
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => setShelfFilter(shelfFilter === t.id ? 'all' : t.id)}
+                    className={`flex-shrink-0 flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium border-2 transition-all touch-manipulation ${
+                      shelfFilter === t.id
+                        ? 'shadow-sm'
+                        : 'bg-cream/30 text-ink-muted hover:bg-cream/50'
+                    }`}
+                    style={shelfFilter === t.id
+                      ? { borderColor: t.color, background: `color-mix(in srgb, ${t.color} 12%, transparent)`, color: t.color }
+                      : { borderColor: `color-mix(in srgb, ${t.color} 20%, transparent)` }
+                    }
+                  >
+                    <div
+                      className="w-3 h-3 rounded-full flex-shrink-0"
+                      style={{ background: t.color }}
+                    />
+                    <span className="max-w-[120px] truncate">{t.name}</span>
+                    <span className="opacity-60">({count})</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Filter bar */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Status pills */}
@@ -366,21 +424,6 @@ function LibraryContent() {
                       <option value="all">All Genres</option>
                       {genres.map(g => (
                         <option key={g} value={g}>{g}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-                {threads.length > 0 && (
-                  <div className="flex items-center gap-2">
-                    <Library className="w-4 h-4 text-ink-muted" />
-                    <select
-                      value={shelfFilter}
-                      onChange={(e) => setShelfFilter(e.target.value)}
-                      className="text-sm bg-cream/50 border border-gold-light/30 rounded-lg px-3 py-1.5 text-ink"
-                    >
-                      <option value="all">All Threads</option>
-                      {threads.map(t => (
-                        <option key={t.id} value={t.id}>{t.name} ({t.bookIds.length})</option>
                       ))}
                     </select>
                   </div>
