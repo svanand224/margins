@@ -7,6 +7,8 @@ import type { Book, Thread, ReadingStatus } from '@/lib/types';
 import { useState, useEffect } from 'react';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import { useRouter, useParams } from 'next/navigation';
+import { useAuth } from '@/lib/auth';
+import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 
 export default function BookPage() {
@@ -48,6 +50,19 @@ export default function BookPage() {
   const [savingDetails, setSavingDetails] = useState(false);
   const [savingSession, setSavingSession] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
+  const { user } = useAuth();
+  // Share modal state
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareMode, setShareMode] = useState<'choose' | 'gold' | 'post' | 'friend'>('choose');
+  const [shareMessage, setShareMessage] = useState('');
+  const [shareSearchQuery, setShareSearchQuery] = useState('');
+  const [shareUsers, setShareUsers] = useState<Array<{id: string; reader_name: string; avatar_url: string | null; public_slug: string | null; username: string | null}>>([]);
+  const [shareSending, setShareSending] = useState(false);
+  const [shareSent, setShareSent] = useState<string | null>(null);
+  const [goldNote, setGoldNote] = useState('');
+  const [goldSaved, setGoldSaved] = useState(false);
+  const [networkPostSent, setNetworkPostSent] = useState(false);
+  const goldRecommendedCount = useBookStore(state => state.books.filter(b => b.goldRecommended).length);
 
   // Helper to update book in Supabase and local state
   const updateBookInSupabase = async (updatedBook: Book) => {
@@ -173,6 +188,31 @@ export default function BookPage() {
     }
   }, [form.status, form.currentPage, book]);
 
+  // Auto-complete when progress reaches 100%
+  useEffect(() => {
+    if (book && book.totalPages > 0 && form.currentPage >= book.totalPages && form.status === 'reading') {
+      setForm(f => ({ ...f, status: 'completed' }));
+    }
+  }, [form.currentPage, book?.totalPages]);
+
+  // Search users for share modal
+  useEffect(() => {
+    if (!shareSearchQuery.trim() || !user) { setShareUsers([]); return; }
+    const timer = setTimeout(async () => {
+      if (!isSupabaseConfigured()) return;
+      const supabase = createClient();
+      const q = shareSearchQuery.replace(/[%_(),.]/g, '');
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, username, reader_name, avatar_url, public_slug')
+        .or(`reader_name.ilike.%${q}%,public_slug.ilike.%${q}%,username.ilike.%${q}%`)
+        .neq('id', user.id)
+        .limit(5);
+      setShareUsers(data || []);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [shareSearchQuery, user?.id]);
+
   const handleEditChange = (e: any) => {
     const { name, value } = e.target;
     setForm(f => ({ ...f, [name]: name === 'rating' || name === 'currentPage' ? Number(value) : value }));
@@ -268,6 +308,69 @@ export default function BookPage() {
     store.logDaily(dateKey, sessionForm.pagesRead, sessionForm.minutesSpent, book.id);
     setShowSessionModal(false);
     setSessionForm({ pagesRead: 0, minutesSpent: 0, notes: '' });
+  };
+
+  // Share handlers
+  const handleGoldRecommend = async () => {
+    if (!book || !user || shareSending) return;
+    if (goldRecommendedCount >= 3 && !book.goldRecommended) return;
+    setShareSending(true);
+    const store = useBookStore.getState();
+    store.updateBook(book.id, { goldRecommended: true, goldRecommendedNote: goldNote.trim() || undefined });
+    if (isSupabaseConfigured()) {
+      const supabase = createClient();
+      await supabase.from('activities').insert({
+        user_id: user.id,
+        type: 'gold_recommend',
+        data: { book_title: book.title, book_author: book.author, note: goldNote.trim() || null },
+      });
+    }
+    const updatedBook = { ...book, goldRecommended: true, goldRecommendedNote: goldNote.trim() || undefined };
+    await updateBookInSupabase(updatedBook);
+    setShareSending(false);
+    setGoldSaved(true);
+    setTimeout(() => { setShowShareModal(false); setShareMode('choose'); setGoldNote(''); setGoldSaved(false); }, 1500);
+  };
+
+  const handleNetworkPost = async () => {
+    if (!book || !user || shareSending || !shareMessage.trim()) return;
+    setShareSending(true);
+    if (isSupabaseConfigured()) {
+      const supabase = createClient();
+      await supabase.from('activities').insert({
+        user_id: user.id,
+        type: 'recommended',
+        data: { book_title: book.title, book_author: book.author, message: shareMessage.trim() },
+      });
+    }
+    setShareSending(false);
+    setNetworkPostSent(true);
+    setTimeout(() => { setShowShareModal(false); setShareMode('choose'); setShareMessage(''); setNetworkPostSent(false); }, 1500);
+  };
+
+  const handleSendToFriend = async (toUserId: string) => {
+    if (!book || !user || shareSending || !shareMessage.trim()) return;
+    setShareSending(true);
+    if (isSupabaseConfigured()) {
+      const supabase = createClient();
+      await supabase.from('recommendations').insert({
+        from_user_id: user.id,
+        to_user_id: toUserId,
+        book_title: book.title,
+        book_author: book.author || null,
+        book_cover_url: book.coverUrl || null,
+        message: shareMessage.trim(),
+      });
+      await supabase.from('notifications').insert({
+        user_id: toUserId,
+        type: 'new_recommendation',
+        from_user_id: user.id,
+        data: { book_title: book.title },
+      });
+    }
+    setShareSending(false);
+    setShareSent(toUserId);
+    setTimeout(() => { setShowShareModal(false); setShareMode('choose'); setShareMessage(''); setShareSearchQuery(''); setShareSent(null); }, 1500);
   };
 
   if (loading) {
@@ -407,16 +510,16 @@ export default function BookPage() {
               })}
             </div>
 
-            {/* Share / Recommend button for completed books */}
-            {form.status === 'completed' && (
-              <Link
-                href={`/recommendations`}
+            {/* Share button for completed books */}
+            {form.status === 'completed' && user && (
+              <button
+                onClick={() => { setShowShareModal(true); setShareMode('choose'); setShareMessage(''); setGoldNote(''); }}
                 className="flex items-center justify-center gap-2 mt-3 w-full min-h-[48px] rounded-xl text-sm font-semibold text-parchment shadow-lg transition-all hover:shadow-xl active:scale-[0.98] touch-manipulation"
                 style={{ background: 'linear-gradient(135deg, var(--th-forest), var(--th-teal))' }}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-                Recommend This Book
-              </Link>
+                Share
+              </button>
             )}
           </div>
 
@@ -472,7 +575,19 @@ export default function BookPage() {
                   if (!book || savingProgress) return;
                   setSavingProgress(true);
                   try {
-                    const updated = { ...book, currentPage: form.currentPage };
+                    let updated: Book = { ...book, currentPage: form.currentPage };
+                    // Auto-complete if reached total pages
+                    if (form.currentPage >= book.totalPages && book.totalPages > 0 && book.status !== 'completed') {
+                      updated.status = 'completed';
+                      updated.finishDate = new Date().toISOString();
+                      setForm(f => ({ ...f, status: 'completed' }));
+                    }
+                    // Sync status from form (in case user changed it via pills)
+                    if (form.status !== book.status) {
+                      updated.status = form.status;
+                      if (form.status === 'completed' && !book.finishDate) updated.finishDate = new Date().toISOString();
+                      if (form.status === 'reading' && !book.startDate) updated.startDate = new Date().toISOString();
+                    }
                     await updateBookInSupabase(updated);
                     setSaveSuccess('progress');
                     setTimeout(() => setSaveSuccess(null), 1500);
@@ -857,6 +972,259 @@ export default function BookPage() {
               </div>
             )}
           </div>
+
+          {/* Share Modal */}
+          <AnimatePresence>
+            {showShareModal && book && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+                onClick={() => { setShowShareModal(false); setShareMode('choose'); }}
+              >
+                <motion.div
+                  initial={{ scale: 0.95, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.95, opacity: 0 }}
+                  className="bg-parchment rounded-2xl shadow-2xl p-6 w-full max-w-md border border-gold-light/30 max-h-[90vh] overflow-y-auto"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Book header */}
+                  <div className="flex items-center gap-3 mb-5 pb-4 border-b border-gold-light/20">
+                    <div className="w-12 h-[4.5rem] rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-bark to-espresso shadow-md">
+                      {book.coverUrl ? (
+                        <img src={book.coverUrl} alt={book.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <span className="text-gold-light/40 text-lg font-bold">{book.title.charAt(0)}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-ink text-sm truncate">{book.title}</h3>
+                      <p className="text-xs text-ink-muted truncate">{book.author}</p>
+                      {book.goldRecommended && (
+                        <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ background: 'linear-gradient(135deg, #D4A855, #E8C878)', color: '#3A2C22' }}>
+                          ★ Gold Pick
+                        </span>
+                      )}
+                    </div>
+                    <button onClick={() => { setShowShareModal(false); setShareMode('choose'); }} className="p-1.5 rounded-lg text-ink-muted hover:text-ink hover:bg-cream/60 transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                  </div>
+
+                  {/* Mode chooser */}
+                  {shareMode === 'choose' && (
+                    <div className="space-y-2.5">
+                      {/* Gold Recommend */}
+                      <button
+                        onClick={() => setShareMode('gold')}
+                        disabled={goldRecommendedCount >= 3 && !book.goldRecommended}
+                        className="w-full flex items-center gap-3 p-3.5 rounded-xl border-2 border-gold/25 hover:border-gold/50 hover:bg-gold/5 transition-all text-left disabled:opacity-40 disabled:cursor-not-allowed group"
+                      >
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, #D4A855, #E8C878)' }}>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3A2C22" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-ink group-hover:text-gold-dark transition-colors">Gold Recommend</p>
+                          <p className="text-[11px] text-ink-muted">Your top picks with a gold badge ({goldRecommendedCount}/3 used)</p>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-ink-muted/50 group-hover:text-gold-dark transition-colors"><polyline points="9 18 15 12 9 6"/></svg>
+                      </button>
+
+                      {/* Post to Network */}
+                      <button
+                        onClick={() => setShareMode('post')}
+                        className="w-full flex items-center gap-3 p-3.5 rounded-xl border-2 border-forest/20 hover:border-forest/40 hover:bg-forest/5 transition-all text-left group"
+                      >
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-forest/15">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-forest"><path d="m3 11 18-5v12L3 13v-2z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-ink group-hover:text-forest transition-colors">Post to Network</p>
+                          <p className="text-[11px] text-ink-muted">Share your thoughts — visible to all followers</p>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-ink-muted/50 group-hover:text-forest transition-colors"><polyline points="9 18 15 12 9 6"/></svg>
+                      </button>
+
+                      {/* Send to a Friend */}
+                      <button
+                        onClick={() => setShareMode('friend')}
+                        className="w-full flex items-center gap-3 p-3.5 rounded-xl border-2 border-teal/20 hover:border-teal/40 hover:bg-teal/5 transition-all text-left group"
+                      >
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-teal/15">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-teal"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-ink group-hover:text-teal transition-colors">Send to a Friend</p>
+                          <p className="text-[11px] text-ink-muted">Privately recommend this book to someone</p>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-ink-muted/50 group-hover:text-teal transition-colors"><polyline points="9 18 15 12 9 6"/></svg>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Gold Recommend Mode */}
+                  {shareMode === 'gold' && (
+                    <div>
+                      {goldSaved ? (
+                        <div className="text-center py-6">
+                          <div className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #D4A855, #E8C878)' }}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3A2C22" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+                          </div>
+                          <p className="text-sm font-semibold text-ink">Gold badge added!</p>
+                        </div>
+                      ) : (
+                        <>
+                          <button onClick={() => setShareMode('choose')} className="flex items-center gap-1 text-xs text-ink-muted hover:text-ink mb-3 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Back
+                          </button>
+                          <p className="text-xs text-ink-muted mb-3">
+                            Give <strong className="text-ink">{book.title}</strong> your personal gold badge.
+                          </p>
+                          <textarea
+                            value={goldNote}
+                            onChange={(e) => setGoldNote(e.target.value)}
+                            placeholder="Why do you love this book?"
+                            className="w-full px-3 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm resize-none mb-3"
+                            rows={3}
+                          />
+                          <button
+                            onClick={handleGoldRecommend}
+                            disabled={shareSending}
+                            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-[#3A2C22] shadow-md disabled:opacity-50"
+                            style={{ background: 'linear-gradient(135deg, #D4A855, #E8C878)' }}
+                          >
+                            {shareSending ? 'Saving...' : '★ Award Gold Badge'}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Post to Network Mode */}
+                  {shareMode === 'post' && (
+                    <div>
+                      {networkPostSent ? (
+                        <div className="text-center py-6">
+                          <div className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center bg-forest/15">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-forest"><polyline points="20 6 9 17 4 12"/></svg>
+                          </div>
+                          <p className="text-sm font-semibold text-ink">Posted to your network!</p>
+                        </div>
+                      ) : (
+                        <>
+                          <button onClick={() => setShareMode('choose')} className="flex items-center gap-1 text-xs text-ink-muted hover:text-ink mb-3 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Back
+                          </button>
+                          <p className="text-xs text-ink-muted mb-3">
+                            Share your thoughts about <strong className="text-ink">{book.title}</strong> with your network.
+                          </p>
+                          <textarea
+                            value={shareMessage}
+                            onChange={(e) => setShareMessage(e.target.value)}
+                            placeholder="What did you think? Any favorite moments or quotes?"
+                            className="w-full px-3 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm resize-none mb-3"
+                            rows={3}
+                          />
+                          <button
+                            onClick={handleNetworkPost}
+                            disabled={shareSending || !shareMessage.trim()}
+                            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-parchment shadow-md disabled:opacity-50"
+                            style={{ background: 'linear-gradient(135deg, var(--th-forest), var(--th-sage))' }}
+                          >
+                            {shareSending ? 'Posting...' : 'Post to Network'}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Send to Friend Mode */}
+                  {shareMode === 'friend' && (
+                    <div>
+                      {shareSent ? (
+                        <div className="text-center py-6">
+                          <div className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center bg-teal/15">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-teal"><polyline points="20 6 9 17 4 12"/></svg>
+                          </div>
+                          <p className="text-sm font-semibold text-ink">Recommendation sent!</p>
+                        </div>
+                      ) : (
+                        <>
+                          <button onClick={() => setShareMode('choose')} className="flex items-center gap-1 text-xs text-ink-muted hover:text-ink mb-3 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Back
+                          </button>
+                          <div className="mb-3">
+                            <label className="block text-xs font-medium text-ink-muted mb-1.5 uppercase tracking-wider">
+                              Your message <span className="text-rose">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              value={shareMessage}
+                              onChange={(e) => setShareMessage(e.target.value)}
+                              placeholder="I think you'd love this because..."
+                              className="w-full px-3 py-2 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm placeholder:text-ink-muted/60"
+                            />
+                          </div>
+                          <div className="mb-3">
+                            <label className="block text-xs font-medium text-ink-muted mb-1.5 uppercase tracking-wider">
+                              Search for a reader
+                            </label>
+                            <input
+                              type="text"
+                              value={shareSearchQuery}
+                              onChange={(e) => setShareSearchQuery(e.target.value)}
+                              placeholder="Search by username..."
+                              className="w-full px-3 py-2 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm placeholder:text-ink-muted/60"
+                              autoFocus
+                            />
+                          </div>
+                          {!shareMessage.trim() && (
+                            <p className="text-[11px] text-rose/70 mb-2">Write a message before sending your recommendation.</p>
+                          )}
+                          {shareUsers.length > 0 && (
+                            <div className="space-y-1 max-h-40 overflow-y-auto">
+                              {shareUsers.map(u => (
+                                <button
+                                  key={u.id}
+                                  onClick={() => handleSendToFriend(u.id)}
+                                  disabled={shareSending || !shareMessage.trim()}
+                                  className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gold-light/10 transition-colors text-left disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                  {u.avatar_url ? (
+                                    <img src={u.avatar_url} alt={u.reader_name} className="w-8 h-8 rounded-full object-cover" />
+                                  ) : (
+                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gold to-amber flex items-center justify-center text-parchment text-xs font-bold">
+                                      {u.reader_name.charAt(0).toUpperCase()}
+                                    </div>
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-ink truncate">{u.reader_name}</p>
+                                    <p className="text-[10px] text-ink-muted">@{u.username || u.public_slug}</p>
+                                  </div>
+                                  {shareSent === u.id ? (
+                                    <span className="text-forest text-xs">✓ Sent!</span>
+                                  ) : (
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-teal"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                                  )}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                          {shareSearchQuery.trim() && shareUsers.length === 0 && !shareSending && (
+                            <p className="text-xs text-ink-muted text-center py-3">No users found.</p>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )}
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </>
       )}
     </div>

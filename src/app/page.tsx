@@ -1122,13 +1122,19 @@ export default function HomePage() {
                                   />
                                 </div>
                                 <div className="mb-3">
+                                  <label className="block text-xs font-medium text-ink-muted mb-1 uppercase tracking-wider">
+                                    Your message <span className="text-rose">*</span>
+                                  </label>
                                   <input
                                     type="text"
                                     value={recommendMessage}
                                     onChange={(e) => setRecommendMessage(e.target.value)}
-                                    placeholder="Add a message (optional)"
-                                    className="w-full px-3 py-2 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm placeholder:text-ink-muted/60"
+                                    placeholder="I think you'd love this because..."
+                                    className={`w-full px-3 py-2 rounded-xl bg-cream/50 border text-ink text-sm placeholder:text-ink-muted/60 ${!recommendMessage.trim() ? 'border-rose/30' : 'border-gold-light/30'}`}
                                   />
+                                  {!recommendMessage.trim() && (
+                                    <p className="text-[10px] text-rose/70 mt-1">A message is required before sending.</p>
+                                  )}
                                 </div>
                                 {recommendUsers.length > 0 && (
                                   <div className="space-y-1 max-h-40 overflow-y-auto">
@@ -1136,8 +1142,8 @@ export default function HomePage() {
                                       <button
                                         key={u.id}
                                         onClick={() => handleRecommendToUser(u.id, { title: book.title, author: book.author })}
-                                        disabled={recommendSending}
-                                        className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gold-light/10 transition-colors text-left"
+                                        disabled={recommendSending || !recommendMessage.trim()}
+                                        className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gold-light/10 transition-colors text-left disabled:opacity-40 disabled:cursor-not-allowed"
                                       >
                                         {u.avatar_url ? (
                                           <img src={u.avatar_url} alt={u.reader_name} className="w-8 h-8 rounded-full object-cover" />

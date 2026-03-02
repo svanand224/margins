@@ -976,19 +976,38 @@ export default function RecommendationsPage() {
                     )}
                   </div>
 
-                  {/* Step 2: Choose how to share */}
+                  {/* Step 2: Add a message (required) */}
+                  {selectedBook && (
+                    <div>
+                      <label className="block text-xs font-medium text-ink-muted mb-1.5 uppercase tracking-wider">
+                        2. Add a message <span className="text-rose">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={sendMessage}
+                        onChange={(e) => setSendMessage(e.target.value)}
+                        placeholder="I think you'd love this because..."
+                        className={`w-full px-3 py-2.5 rounded-xl bg-cream/50 border text-ink text-sm ${!sendMessage.trim() ? 'border-rose/30' : 'border-gold-light/30'}`}
+                      />
+                      {!sendMessage.trim() && (
+                        <p className="text-[10px] text-rose/70 mt-1">A message is required before sharing.</p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Step 3: Choose how to share */}
                   {selectedBook && (
                     <div>
                       <label className="block text-xs font-medium text-ink-muted mb-2 uppercase tracking-wider">
-                        2. How would you like to share?
+                        3. How would you like to share?
                       </label>
 
                       {/* Share with Network option */}
                       <motion.button
                         whileTap={{ scale: 0.98 }}
                         onClick={handleShareWithNetwork}
-                        disabled={sendingRec}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl mb-3 bg-gradient-to-r from-gold/10 to-amber/5 border border-gold/20 hover:from-gold/20 hover:to-amber/10 transition-all text-left"
+                        disabled={sendingRec || !sendMessage.trim()}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl mb-3 bg-gradient-to-r from-gold/10 to-amber/5 border border-gold/20 hover:from-gold/20 hover:to-amber/10 transition-all text-left disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         <div className="w-9 h-9 rounded-full bg-gold/20 flex items-center justify-center flex-shrink-0">
                           <Sparkles className="w-4 h-4 text-gold-dark" />
@@ -1020,8 +1039,8 @@ export default function RecommendationsPage() {
                               <button
                                 key={f.id}
                                 onClick={() => handleSendRec(f.id)}
-                                disabled={sendingRec}
-                                className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-cream/40 transition-colors"
+                                disabled={sendingRec || !sendMessage.trim()}
+                                className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-cream/40 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                               >
                                 {f.avatar_url ? (
                                   <img src={f.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" />
@@ -1064,8 +1083,8 @@ export default function RecommendationsPage() {
                             <button
                               key={u.id}
                               onClick={() => handleSendRec(u.id)}
-                              disabled={sendingRec}
-                              className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-cream/40 transition-colors"
+                              disabled={sendingRec || !sendMessage.trim()}
+                              className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-cream/40 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                               {u.avatar_url ? (
                                 <img src={u.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" />
@@ -1084,22 +1103,6 @@ export default function RecommendationsPage() {
                         </div>
                       )}
                       </div>
-                    </div>
-                  )}
-
-                  {/* Optional message */}
-                  {selectedBook && (
-                    <div>
-                      <label className="block text-xs font-medium text-ink-muted mb-1.5 uppercase tracking-wider">
-                        3. Add a note (optional)
-                      </label>
-                      <input
-                        type="text"
-                        value={sendMessage}
-                        onChange={(e) => setSendMessage(e.target.value)}
-                        placeholder="I think you'd love this because..."
-                        className="w-full px-3 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm"
-                      />
                     </div>
                   )}
 
