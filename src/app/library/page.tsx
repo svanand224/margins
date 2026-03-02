@@ -249,9 +249,21 @@ function LibraryContent() {
           My Library
         </h1>
         <p className="text-ink-muted mt-1">{books.length} books in your collection</p>
-        <Link href="/discover" className="mt-3 flex items-center gap-2.5 text-sm rounded-xl px-4 py-3 hover:opacity-90 transition-all shadow-md border" style={{ background: 'linear-gradient(135deg, color-mix(in srgb, var(--th-gold) 15%, var(--th-parchment)), color-mix(in srgb, var(--th-amber) 10%, var(--th-parchment)))', borderColor: 'color-mix(in srgb, var(--th-gold) 35%, transparent)' }}>
-          <Compass className="w-5 h-5 flex-shrink-0 text-gold" />
-          <span className="text-ink font-medium">This is your public profile — readers see this on the <span className="font-bold text-gold-dark underline underline-offset-2">Explore</span> page →</span>
+
+        {/* Public profile banner */}
+        <Link href="/discover" className="mt-4 block rounded-xl overflow-hidden shadow-lg border-2 border-gold/30 hover:border-gold/50 transition-all group">
+          <div className="px-4 py-3.5" style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-amber))' }}>
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-full bg-parchment/20 flex items-center justify-center flex-shrink-0">
+                <Compass className="w-5 h-5 text-parchment" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-parchment">This is your public profile</p>
+                <p className="text-xs text-parchment/80 mt-0.5">Your books, theme colors & reading activity are what others see when they find you on the <span className="font-bold underline underline-offset-2">Explore</span> page</p>
+              </div>
+              <ChevronDown className="w-4 h-4 text-parchment/60 flex-shrink-0 -rotate-90 group-hover:translate-x-0.5 transition-transform" />
+            </div>
+          </div>
         </Link>
         <div className="mt-2">
           <MehndiDivider className="h-4 opacity-50" />
