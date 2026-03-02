@@ -17,9 +17,53 @@ import {
   Layers,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useMemo, Suspense, useEffect } from 'react';
+import { useState, useMemo, Suspense, useEffect, ReactNode } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { MehndiDivider, LotusDivider, JaliPattern, LotusIcon, BlockPrintBorder, LotusProgressBar } from '@/components/IndianPatterns';
+
+const threadIconSvgs: Record<Thread['icon'], ReactNode> = {
+  default: (
+    <svg width="14" height="14" viewBox="0 0 18 18" className="text-current">
+      <path d="M1 9 C5 4, 13 4, 17 9" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      <path d="M1 9 C5 14, 13 14, 17 9" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" opacity="0.4" />
+    </svg>
+  ),
+  paisley: (
+    <svg width="14" height="14" viewBox="0 0 24 24" className="text-current">
+      <path d="M12 2C8 2 4 6 4 12C4 18 8 22 12 22C12 22 16 20 16 14C16 8 12 6 12 2Z" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      <path d="M10 10C10 10 12 12 12 16" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.5" />
+    </svg>
+  ),
+  lotus: (
+    <svg width="14" height="14" viewBox="0 0 24 24" className="text-current">
+      <path d="M12 4C10 8 9 12 12 18C15 12 14 8 12 4Z" stroke="currentColor" strokeWidth="1.3" fill="none" />
+      <path d="M12 18C8 14 4 10 5 7C6 10 8 14 12 18Z" stroke="currentColor" strokeWidth="1.2" fill="none" />
+      <path d="M12 18C16 14 20 10 19 7C18 10 16 14 12 18Z" stroke="currentColor" strokeWidth="1.2" fill="none" />
+    </svg>
+  ),
+  vine: (
+    <svg width="14" height="14" viewBox="0 0 24 24" className="text-current">
+      <path d="M4 20C8 16 10 10 12 4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      <path d="M8 14C10 12 14 12 16 10" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.5" strokeLinecap="round" />
+      <circle cx="16" cy="8" r="2" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.4" />
+    </svg>
+  ),
+  elephant: (
+    <svg width="14" height="14" viewBox="0 0 24 24" className="text-current">
+      <path d="M6 12C6 8 8 4 14 4C18 4 20 8 20 12V18H16V14H12V18H8V14H6V12Z" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinejoin="round" />
+      <path d="M6 12C4 12 2 14 2 16" stroke="currentColor" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+    </svg>
+  ),
+  mandala: (
+    <svg width="14" height="14" viewBox="0 0 24 24" className="text-current">
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.2" fill="none" />
+      <circle cx="12" cy="12" r="7" stroke="currentColor" strokeWidth="0.8" fill="none" opacity="0.4" />
+      {[0, 60, 120, 180, 240, 300].map((angle) => (
+        <line key={angle} x1="12" y1="5" x2="12" y2="2" stroke="currentColor" strokeWidth="1" transform={`rotate(${angle} 12 12)`} opacity="0.5" />
+      ))}
+    </svg>
+  ),
+};
 
 const statusLabels: Record<ReadingStatus | 'all', string> = {
   all: 'All Books',
@@ -328,10 +372,9 @@ function LibraryContent() {
                       : { borderColor: `color-mix(in srgb, ${t.color} 20%, transparent)` }
                     }
                   >
-                    <div
-                      className="w-3 h-3 rounded-full flex-shrink-0"
-                      style={{ background: t.color }}
-                    />
+                    <span className="flex-shrink-0" style={{ color: t.color }}>
+                      {threadIconSvgs[t.icon] || threadIconSvgs.default}
+                    </span>
                     <span className="max-w-[120px] truncate">{t.name}</span>
                     <span className="opacity-60">({count})</span>
                   </button>
