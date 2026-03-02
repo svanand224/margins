@@ -1,8 +1,7 @@
 "use client";
 import React from 'react';
 import { useBookStore } from '@/lib/store';
-import { Loader2 } from 'lucide-react';
-import { LotusProgressBar, MehndiDivider } from '@/components/IndianPatterns';
+import { LotusProgressBar } from '@/components/IndianPatterns';
 import Confetti from '@/components/Confetti';
 import type { Book, Thread, ReadingStatus } from '@/lib/types';
 import { useState, useEffect } from 'react';
@@ -173,7 +172,11 @@ export default function BookPage() {
   };
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-gold" /></div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-2 border-gold border-t-transparent animate-spin" />
+      </div>
+    );
   }
   if (error || !book) {
     return <div className="min-h-screen flex items-center justify-center text-rose-700">{error || 'Book not found.'}</div>;
@@ -196,221 +199,345 @@ export default function BookPage() {
       {showConfetti && <Confetti show={showConfetti} />}
       {book && (
         <>
-          <div className="flex items-start gap-6">
-            {book.coverUrl && (
-              <img src={book.coverUrl} alt={book.title} className="w-40 h-60 object-cover rounded-lg mb-4" />
-            )}
-            <div>
-              <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: "'Cormorant Garamond', serif" }}>{book.title}</h1>
-              <p className="text-lg text-ink-muted mb-2" style={{ fontFamily: "'Lora', serif" }}>{book.author || 'Unknown Author'}</p>
-              <div className="flex gap-2 mb-2">
-                <span className="px-3 py-1 rounded-full bg-gradient-to-r from-rose/10 to-copper/10 text-rose-dark border border-rose/20 text-xs font-semibold mr-2 shadow-sm" style={{ minWidth: 80 }}>{form.status.charAt(0).toUpperCase() + form.status.slice(1)}</span>
-                <span className="px-3 py-1 rounded-full bg-gradient-to-r from-teal/10 to-forest/10 text-teal-dark border border-teal/20 text-xs font-semibold mr-2 shadow-sm" style={{ minWidth: 80 }}>{book.genre}</span>
-                <span className="px-3 py-1 rounded-full bg-gradient-to-r from-gold/10 to-amber/10 text-gold-dark border border-gold/20 text-xs font-semibold mr-2 shadow-sm" style={{ minWidth: 80 }}>{book.totalPages} pages</span>
+          {/* Book Header Card */}
+          <div className="glass-card rounded-2xl p-6 mb-6" style={{ boxShadow: 'var(--th-card-shadow)' }}>
+            <div className="flex items-start gap-5">
+              {book.coverUrl ? (
+                <img src={book.coverUrl} alt={book.title} className="w-32 h-48 object-cover rounded-xl shadow-md flex-shrink-0" />
+              ) : (
+                <div className="w-32 h-48 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, var(--th-gold-light), var(--th-amber))' }}>
+                  <span className="text-parchment text-3xl font-bold">{book.title.charAt(0)}</span>
+                </div>
+              )}
+              <div className="flex-1 min-w-0 py-1">
+                <h1 className="text-2xl font-bold text-ink leading-tight mb-1" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{book.title}</h1>
+                <p className="text-sm text-ink-muted mb-3" style={{ fontFamily: "'Lora', Georgia, serif" }}>{book.author || 'Unknown Author'}</p>
+
+                {/* Status + Genre + Pages pills */}
+                <div className="flex flex-wrap gap-1.5 mb-3">
+                  <span className="px-2.5 py-1 rounded-full text-[11px] font-medium border"
+                    style={{
+                      background: `color-mix(in srgb, ${form.status === 'completed' ? 'var(--th-forest)' : form.status === 'reading' ? 'var(--th-gold)' : form.status === 'dnf' ? 'var(--th-rose)' : 'var(--th-teal)'} 12%, transparent)`,
+                      color: form.status === 'completed' ? 'var(--th-forest)' : form.status === 'reading' ? 'var(--th-gold-dark)' : form.status === 'dnf' ? 'var(--th-rose)' : 'var(--th-teal)',
+                      borderColor: `color-mix(in srgb, ${form.status === 'completed' ? 'var(--th-forest)' : form.status === 'reading' ? 'var(--th-gold)' : form.status === 'dnf' ? 'var(--th-rose)' : 'var(--th-teal)'} 25%, transparent)`,
+                    }}
+                  >
+                    {form.status === 'want-to-read' ? 'Want to Read' : form.status.charAt(0).toUpperCase() + form.status.slice(1)}
+                  </span>
+                  {book.genre && (
+                    <span className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-gold/8 text-gold-dark border border-gold/15">{book.genre}</span>
+                  )}
+                  <span className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-cream text-ink-muted border border-gold-light/20">{book.totalPages} pages</span>
+                </div>
+
+                {/* Star Rating */}
+                <div className="flex gap-0.5 mb-3">
+                  {[1,2,3,4,5].map(star => (
+                    <button
+                      key={star}
+                      className="transition-all hover:scale-110"
+                      onClick={async () => {
+                        setForm(f => ({ ...f, rating: star }));
+                        if (book) {
+                          const updated = { ...book, rating: star };
+                          await updateBookInSupabase(updated);
+                        }
+                      }}
+                      style={{ color: star <= (form.rating || 0) ? 'var(--th-gold)' : 'var(--th-gold-light)', fontSize: '1.3rem', background: 'none', border: 'none', cursor: 'pointer' }}
+                      aria-label={`Set rating to ${star}`}
+                    >★</button>
+                  ))}
+                  {form.rating > 0 && <span className="text-xs text-ink-muted ml-1 self-center">{form.rating}/5</span>}
+                </div>
+
+                {/* Dates */}
+                <div className="text-[11px] text-ink-muted flex flex-wrap gap-x-3 gap-y-0.5">
+                  {book.dateAdded && <span>Added {new Date(book.dateAdded).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>}
+                  {book.startDate && <span>Started {new Date(book.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>}
+                  {book.finishDate && <span>Finished {new Date(book.finishDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>}
+                </div>
               </div>
-              <div className="flex gap-1 mb-2">
-                {[1,2,3,4,5].map(star => (
-                  <button
-                    key={star}
-                    className={star <= (form.rating || 0) ? 'text-gold fill-gold' : 'text-gold-light/30'}
-                    onClick={() => setForm(f => ({ ...f, rating: star }))}
-                    style={{ fontSize: '1.2em', background: 'none', border: 'none', cursor: 'pointer' }}
-                    aria-label={`Set rating to ${star}`}
-                  >★</button>
-                ))}
-              </div>
-              <div className="flex gap-2 mb-2">
-                {['want-to-read', 'reading', 'completed', 'dnf'].map(status => (
+            </div>
+
+            {/* Status selector */}
+            <div className="flex gap-2 mt-4 pt-4 border-t border-gold-light/20">
+              {(['want-to-read', 'reading', 'completed', 'dnf'] as const).map(status => {
+                const isActive = form.status === status;
+                const colors: Record<string, { bg: string; text: string; border: string }> = {
+                  'want-to-read': { bg: 'var(--th-teal)', text: 'var(--th-parchment)', border: 'var(--th-teal)' },
+                  'reading': { bg: 'var(--th-gold)', text: 'var(--th-parchment)', border: 'var(--th-gold)' },
+                  'completed': { bg: 'var(--th-forest)', text: 'var(--th-parchment)', border: 'var(--th-forest)' },
+                  'dnf': { bg: 'var(--th-rose)', text: 'var(--th-parchment)', border: 'var(--th-rose)' },
+                };
+                return (
                   <button
                     key={status}
-                    className={`px-2 py-1 rounded border font-semibold text-xs transition-colors duration-150 shadow-sm ${statusColors[status]} ${form.status === status ? 'bg-rose-600 text-white border-rose-600 ring-2 ring-rose-400' : 'hover:bg-rose-100 hover:border-rose-200 dark:hover:bg-ink-muted dark:hover:border-rose-400'}`}
+                    className="flex-1 px-3 py-2 rounded-xl text-xs font-medium transition-all"
+                    style={isActive
+                      ? { background: colors[status].bg, color: colors[status].text, borderWidth: '1px', borderColor: colors[status].border }
+                      : { background: 'transparent', color: 'var(--th-ink-muted)', borderWidth: '1px', borderColor: 'var(--th-glass-border)' }
+                    }
                     onClick={async () => {
                       setForm(f => ({ ...f, status: status as ReadingStatus }));
                       if (!book) return;
                       let updatedBook = { ...book, status: status as ReadingStatus };
-                      if (status === 'reading' && !book.startDate) {
-                        updatedBook.startDate = new Date().toISOString();
-                      }
-                      if (status === 'completed' && !book.finishDate) {
-                        updatedBook.finishDate = new Date().toISOString();
-                      }
+                      if (status === 'reading' && !book.startDate) updatedBook.startDate = new Date().toISOString();
+                      if (status === 'completed' && !book.finishDate) updatedBook.finishDate = new Date().toISOString();
                       await updateBookInSupabase(updatedBook);
                       setBook(updatedBook);
                     }}
-                    style={{ fontFamily: 'inherit', minWidth: 48 }}
                   >
-                    {status === 'want-to-read' ? 'TBR' : status.charAt(0).toUpperCase() + status.slice(1)}
+                    {status === 'want-to-read' ? 'TBR' : status === 'dnf' ? 'DNF' : status.charAt(0).toUpperCase() + status.slice(1)}
                   </button>
-                ))}
-              </div>
-              <div className="mb-2 text-xs text-ink-muted flex flex-wrap gap-2 items-center">
-                <span>Added {book.dateAdded ? new Date(book.dateAdded).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}</span>
-                {book.startDate && <span>Started {new Date(book.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>}
-                {book.finishDate && <span>Completed {new Date(book.finishDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>}
-              </div>
+                );
+              })}
             </div>
           </div>
-          <div className="mt-6">
-            <MehndiDivider className="mb-4 opacity-40" />
-            <div className="mb-2 flex items-center justify-between">
-              <span className="text-sm text-ink-muted flex items-center gap-2">Page {form.currentPage} of {book.totalPages}
-                <button
-                  className="ml-2 px-2 py-0.5 rounded-full bg-gradient-to-r from-rose/10 to-copper/10 text-rose-dark text-xs font-semibold shadow hover:scale-105 transition-transform border border-rose/20"
-                  onClick={() => setShowEdit(true)}
-                  style={{ fontFamily: 'inherit' }}
-                >
-                  Set page
-                </button>
-                <button
-                  className="ml-2 px-2 py-0.5 rounded-full bg-cream text-ink-muted border border-gold/20 text-xs font-semibold shadow hover:bg-gold/10 transition-transform"
-                  onClick={() => setForm(f => ({ ...f, currentPage: Math.max(0, Math.min(book.totalPages, f.currentPage + 10)) }))}
-                >+10</button>
-                <button
-                  className="ml-1 px-2 py-0.5 rounded-full bg-cream text-ink-muted border border-gold/20 text-xs font-semibold shadow hover:bg-gold/10 transition-transform"
-                  onClick={() => setForm(f => ({ ...f, currentPage: Math.max(0, f.currentPage - 10) }))}
-                >-10</button>
-              </span>
-              <span className="text-sm text-ink font-bold">{progress}%</span>
+
+          {/* Reading Progress Card */}
+          <div className="glass-card rounded-2xl p-5 mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold text-ink uppercase tracking-wider">Reading Progress</h2>
+              <span className="text-lg font-bold text-ink" style={{ fontFamily: "'Cormorant Garamond', serif" }}>{progress}%</span>
             </div>
-            <div className="mb-1 text-xs text-ink font-semibold">Reading Progress</div>
-            <LotusProgressBar progress={progress} showPercentage />
-            <div className="mt-1 text-xs text-ink-muted">{pagesRemaining} pages remaining</div>
-          </div>
-          {showEdit && (
-            <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-                <h2 className="text-xl font-bold mb-4">Edit Book Details</h2>
-                <div className="mb-3">
-                  <label className="block text-sm mb-1">Status</label>
-                  <select name="status" value={form.status} onChange={handleEditChange} className="w-full p-2 border rounded">
-                    <option value="want-to-read">TBR</option>
-                    <option value="reading">Reading</option>
-                    <option value="completed">Completed</option>
-                    <option value="dnf">DNF</option>
-                  </select>
-                </div>
-                <div className="mb-3">
-                  <label className="block text-sm mb-1">Current Page</label>
-                  <input type="number" name="currentPage" value={form.currentPage} onChange={handleEditChange} className="w-full p-2 border rounded" min={0} max={book.totalPages} />
-                </div>
-                <div className="mb-3">
-                  <label className="block text-sm mb-1">Rating</label>
-                  <input type="number" name="rating" value={form.rating} onChange={handleEditChange} className="w-full p-2 border rounded" min={0} max={5} />
-                </div>
-                <div className="mb-3">
-                  <label className="block text-sm mb-1">Notes</label>
-                  <textarea name="notes" value={form.notes} onChange={handleEditChange} className="w-full p-2 border rounded" rows={3} />
-                </div>
-                <div className="flex gap-2 justify-end">
-                  <button className="px-3 py-1 rounded bg-gray-200 text-gray-700" onClick={() => setShowEdit(false)}>Cancel</button>
-                  <button className="px-3 py-1 rounded bg-rose-600 text-white font-semibold" onClick={handleEditSave}>Save</button>
-                </div>
-              </div>
+            <LotusProgressBar progress={progress} showPercentage={false} />
+            <div className="flex items-center justify-between mt-3">
+              <span className="text-xs text-ink-muted">Page {form.currentPage} of {book.totalPages}</span>
+              <span className="text-xs text-ink-muted">{pagesRemaining} remaining</span>
             </div>
-          )}
-          <div className="mb-6">
-            <div className="mb-2 text-xs text-ink font-semibold">Reading Sessions</div>
-            <div className="flex justify-end mb-3">
+
+            {/* Page controls */}
+            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gold-light/20">
               <button
-                className="px-4 py-1 rounded-full bg-gradient-to-r from-gold/10 to-amber/10 text-gold-dark border border-gold/20 text-xs font-semibold shadow hover:scale-105 transition-transform"
+                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-gold-light/30 text-ink-muted hover:bg-cream/60 transition-colors"
+                onClick={() => setForm(f => ({ ...f, currentPage: Math.max(0, f.currentPage - 10) }))}
+              >−10</button>
+              <button
+                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-gold-light/30 text-ink-muted hover:bg-cream/60 transition-colors"
+                onClick={() => setForm(f => ({ ...f, currentPage: Math.max(0, f.currentPage - 1) }))}
+              >−1</button>
+              <input
+                type="number"
+                value={form.currentPage}
+                onChange={(e) => {
+                  const val = Math.max(0, Math.min(book.totalPages, Number(e.target.value)));
+                  setForm(f => ({ ...f, currentPage: val }));
+                }}
+                className="flex-1 text-center px-2 py-1.5 rounded-lg bg-cream/50 border border-gold-light/30 text-ink text-sm"
+                min={0}
+                max={book.totalPages}
+              />
+              <button
+                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-gold-light/30 text-ink-muted hover:bg-cream/60 transition-colors"
+                onClick={() => setForm(f => ({ ...f, currentPage: Math.min(book.totalPages, f.currentPage + 1) }))}
+              >+1</button>
+              <button
+                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-gold-light/30 text-ink-muted hover:bg-cream/60 transition-colors"
+                onClick={() => setForm(f => ({ ...f, currentPage: Math.min(book.totalPages, f.currentPage + 10) }))}
+              >+10</button>
+              <button
+                className="px-3 py-1.5 rounded-lg text-xs font-medium text-parchment"
+                style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}
+                onClick={async () => {
+                  if (!book) return;
+                  const updated = { ...book, currentPage: form.currentPage };
+                  await updateBookInSupabase(updated);
+                }}
+              >Save</button>
+            </div>
+          </div>
+
+          {/* Reading Sessions Card */}
+          <div className="glass-card rounded-2xl p-5 mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold text-ink uppercase tracking-wider">Reading Sessions</h2>
+              <button
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-parchment"
+                style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}
                 onClick={() => setShowSessionModal(true)}
               >
                 + Log Session
               </button>
             </div>
-            {showSessionModal && (
-              <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-                <div className="bg-white dark:bg-ink rounded-lg shadow-lg p-6 w-full max-w-md">
-                  <h2 className="text-xl font-bold mb-4 text-rose-700 dark:text-rose-200">Log Reading Session</h2>
-                  <div className="mb-3">
-                    <label className="block text-sm mb-1">Pages read <span className="text-rose-600">*</span></label>
-                    <input type="number" min={1} max={book.totalPages} value={sessionForm.pagesRead} onChange={e => setSessionForm(f => ({ ...f, pagesRead: Number(e.target.value) }))} className="w-full p-2 border rounded dark:bg-ink-muted dark:text-ink" />
-                  </div>
-                  <div className="mb-3">
-                    <label className="block text-sm mb-1">Minutes spent</label>
-                    <input type="number" min={1} value={sessionForm.minutesSpent} onChange={e => setSessionForm(f => ({ ...f, minutesSpent: Number(e.target.value) }))} className="w-full p-2 border rounded dark:bg-ink-muted dark:text-ink" />
-                  </div>
-                  <div className="mb-3">
-                    <label className="block text-sm mb-1">Notes (optional)</label>
-                    <textarea value={sessionForm.notes} onChange={e => setSessionForm(f => ({ ...f, notes: e.target.value }))} className="w-full p-2 border rounded dark:bg-ink-muted dark:text-ink" rows={2} placeholder="Great chapter about..." />
-                  </div>
-                  <div className="flex gap-2 justify-end">
-                    <button className="px-3 py-1 rounded bg-gray-200 dark:bg-ink-muted text-gray-700 dark:text-ink" onClick={() => setShowSessionModal(false)}>Cancel</button>
-                    <button className="px-3 py-1 rounded bg-rose-600 text-white font-semibold" onClick={handleLogSession}>Save Session</button>
-                  </div>
-                </div>
-              </div>
-            )}
+
             {(book.sessions || []).length === 0 ? (
-              <div className="text-ink-muted mb-2">No reading sessions yet. Log your first one!</div>
+              <div className="text-center py-6">
+                <p className="text-sm text-ink-muted">No sessions yet. Log your first reading session!</p>
+              </div>
             ) : (
-              <ul className="mb-2">
+              <div className="space-y-2">
                 {(book.sessions || []).map(session => {
                   const getRelativeTime = (dateStr: string) => {
                     const now = new Date();
                     const date = new Date(dateStr);
                     const diffMs = now.getTime() - date.getTime();
                     const diffMin = Math.floor(diffMs / 60000);
-                    if (diffMin < 1) return 'less than a minute ago';
-                    if (diffMin < 60) return `${diffMin} min ago`;
+                    if (diffMin < 1) return 'just now';
+                    if (diffMin < 60) return `${diffMin}m ago`;
                     const diffHr = Math.floor(diffMin / 60);
-                    if (diffHr < 24) return `${diffHr}h ${diffMin % 60}min ago`;
+                    if (diffHr < 24) return `${diffHr}h ago`;
                     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                   };
                   return (
-                    <li key={session.id} className="text-sm mb-2 flex items-center gap-3">
-                      <span className="inline-flex items-center gap-2 px-3 py-2 rounded bg-cream/60 text-ink-muted text-xs font-medium shadow">
-                        <span className="font-bold text-forest">{session.pagesRead} pages</span>
-                        <span className="text-copper">·</span>
-                        <span className="font-bold text-copper">{session.minutesSpent}min</span>
-                        <span className="text-copper">·</span>
-                        <span className="text-ink-muted">{getRelativeTime(session.date)}</span>
-                        {session.notes && <span className="ml-2 italic text-ink-muted">{session.notes}</span>}
-                      </span>
-                    </li>
+                    <div key={session.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-cream/40 border border-gold-light/15">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--th-forest)', opacity: 0.15 }}>
+                        <span className="text-xs font-bold" style={{ color: 'var(--th-forest)' }}>{session.pagesRead}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 text-xs">
+                          <span className="font-medium text-ink">{session.pagesRead} pages</span>
+                          <span className="text-ink-muted">·</span>
+                          <span className="text-ink-muted">{session.minutesSpent} min</span>
+                        </div>
+                        {session.notes && <p className="text-[11px] text-ink-muted mt-0.5 truncate italic">{session.notes}</p>}
+                      </div>
+                      <span className="text-[10px] text-ink-muted flex-shrink-0">{getRelativeTime(session.date)}</span>
+                    </div>
                   );
                 })}
-              </ul>
+              </div>
             )}
           </div>
-          <div className="mb-6">
-            <div className="mb-2 text-xs text-ink font-semibold">Threads</div>
-            <div className="rounded-xl border border-ink-muted/10 bg-cream/40 p-4">
-              {book.threads && book.threads.length > 0 ? (
-                <ul className="mb-2">
-                  {book.threads.map((thread: Thread) => (
-                    <li key={thread.id} className="flex items-center gap-3 mb-3">
-                      {thread.coverUrl && (
-                        <img src={thread.coverUrl} alt={thread.name} className="w-12 h-12 object-cover rounded-lg border border-ink-muted/20" />
-                      )}
-                      <div>
-                        <div className="font-semibold text-ink text-base">{thread.name}</div>
-                        <div className="text-xs text-ink-muted">{thread.author}</div>
-                        <span className="inline-block mt-1 px-2 py-0.5 rounded bg-gradient-to-r from-gold/10 to-amber/10 text-gold-dark border border-gold/20 text-xs font-semibold shadow-sm">{thread.genre}</span>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div className="text-ink-muted mb-2">No threads for this book.</div>
-              )}
+
+          {/* Log Session Modal */}
+          {showSessionModal && (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowSessionModal(false)}>
+              <div className="bg-parchment rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-gold-light/30" onClick={e => e.stopPropagation()}>
+                <h2 className="text-lg font-bold text-ink mb-4" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>Log Reading Session</h2>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs text-ink-muted mb-1 uppercase tracking-wider">Pages read</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={book.totalPages}
+                      value={sessionForm.pagesRead || ''}
+                      onChange={e => setSessionForm(f => ({ ...f, pagesRead: Number(e.target.value) }))}
+                      className="w-full px-3 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm"
+                      placeholder="0"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-ink-muted mb-1 uppercase tracking-wider">Minutes spent</label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={sessionForm.minutesSpent || ''}
+                      onChange={e => setSessionForm(f => ({ ...f, minutesSpent: Number(e.target.value) }))}
+                      className="w-full px-3 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm"
+                      placeholder="0"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-ink-muted mb-1 uppercase tracking-wider">Notes (optional)</label>
+                    <textarea
+                      value={sessionForm.notes}
+                      onChange={e => setSessionForm(f => ({ ...f, notes: e.target.value }))}
+                      className="w-full px-3 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm resize-none"
+                      rows={2}
+                      placeholder="Great chapter about..."
+                    />
+                  </div>
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      onClick={() => setShowSessionModal(false)}
+                      className="flex-1 px-4 py-2.5 rounded-xl text-sm text-ink-muted border border-gold-light/30 hover:bg-cream/40 transition-colors"
+                    >Cancel</button>
+                    <button
+                      onClick={handleLogSession}
+                      disabled={!sessionForm.pagesRead}
+                      className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-parchment disabled:opacity-50"
+                      style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}
+                    >Save Session</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Edit Modal */}
+          {showEdit && (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowEdit(false)}>
+              <div className="bg-parchment rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-gold-light/30" onClick={e => e.stopPropagation()}>
+                <h2 className="text-lg font-bold text-ink mb-4" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>Edit Book Details</h2>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs text-ink-muted mb-1 uppercase tracking-wider">Status</label>
+                    <select name="status" value={form.status} onChange={handleEditChange} className="w-full px-3 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm">
+                      <option value="want-to-read">Want to Read</option>
+                      <option value="reading">Reading</option>
+                      <option value="completed">Completed</option>
+                      <option value="dnf">DNF</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-ink-muted mb-1 uppercase tracking-wider">Current Page</label>
+                    <input type="number" name="currentPage" value={form.currentPage} onChange={handleEditChange} className="w-full px-3 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm" min={0} max={book.totalPages} />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-ink-muted mb-1 uppercase tracking-wider">Rating</label>
+                    <div className="flex gap-1">
+                      {[1,2,3,4,5].map(star => (
+                        <button
+                          key={star}
+                          onClick={() => setForm(f => ({ ...f, rating: star }))}
+                          style={{ color: star <= form.rating ? 'var(--th-gold)' : 'var(--th-gold-light)', fontSize: '1.5rem', background: 'none', border: 'none', cursor: 'pointer' }}
+                        >★</button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-ink-muted mb-1 uppercase tracking-wider">Notes / Review</label>
+                    <textarea name="notes" value={form.notes} onChange={handleEditChange} className="w-full px-3 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm resize-none" rows={3} placeholder="Your thoughts..." />
+                  </div>
+                  <div className="flex gap-2 pt-1">
+                    <button onClick={() => setShowEdit(false)} className="flex-1 px-4 py-2.5 rounded-xl text-sm text-ink-muted border border-gold-light/30 hover:bg-cream/40 transition-colors">Cancel</button>
+                    <button onClick={handleEditSave} className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-parchment" style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}>Save</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Notes & Review */}
+          <div className="glass-card rounded-2xl p-5 mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold text-ink uppercase tracking-wider">Notes & Review</h2>
+              <button className="text-xs text-gold-dark hover:text-gold transition-colors flex items-center gap-1" onClick={() => setShowEdit(true)}>
+                Edit
+              </button>
+            </div>
+            <div className="rounded-xl bg-cream/40 border border-gold-light/15 p-4 min-h-[60px]">
+              <p className="text-sm text-ink italic" style={{ fontFamily: "'Lora', Georgia, serif" }}>
+                {form.notes || 'No notes yet. Tap edit to add your thoughts.'}
+              </p>
             </div>
           </div>
-          <div className="mb-6">
-            <div className="mb-2 text-xs text-ink font-semibold">Notes & Review</div>
-            <div className="rounded-xl border border-ink-muted/10 bg-cream/40 p-4 mb-2">
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-semibold text-ink">Review</span>
-                <button className="text-xs text-gold-dark underline flex items-center gap-1" onClick={() => setShowEdit(true)}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M12.146.854a.5.5 0 0 1 .708 0l2.292 2.292a.5.5 0 0 1 0 .708l-9.193 9.193a.5.5 0 0 1-.168.11l-4 1.5a.5.5 0 0 1-.65-.65l1.5-4a.5.5 0 0 1 .11-.168l9.193-9.193zm.708-.708A1.5 1.5 0 0 0 12.146.146l-9.193 9.193a1.5 1.5 0 0 0-.33.45l-1.5 4a1.5 1.5 0 0 0 1.95 1.95l4-1.5a1.5 1.5 0 0 0 .45-.33l9.193-9.193a1.5 1.5 0 0 0 0-2.121l-2.292-2.292z"/></svg>
-                  Edit review
-                </button>
-              </div>
-              <div className="bg-ink-muted/5 rounded p-3 min-h-[60px]" style={{ fontFamily: 'Homemade Apple, cursive', fontSize: '1.1rem' }}>
-                {form.notes || 'No notes for this book.'}
+
+          {/* Threads */}
+          {book.threads && book.threads.length > 0 && (
+            <div className="glass-card rounded-2xl p-5 mb-6">
+              <h2 className="text-sm font-semibold text-ink uppercase tracking-wider mb-3">Threads</h2>
+              <div className="space-y-2">
+                {book.threads.map((thread: Thread) => (
+                  <div key={thread.id} className="flex items-center gap-3 p-2 rounded-xl bg-cream/40 border border-gold-light/15">
+                    {thread.coverUrl && (
+                      <img src={thread.coverUrl} alt={thread.name} className="w-10 h-10 object-cover rounded-lg" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-ink truncate">{thread.name}</div>
+                      <div className="text-[11px] text-ink-muted">{thread.author}</div>
+                    </div>
+                    {thread.genre && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-gold/10 text-gold-dark border border-gold/15">{thread.genre}</span>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
+          )}
+
+          {/* Delete Book */}
           <div className="mb-6">
             <button
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-rose/10 text-rose border border-rose/20 text-xs font-semibold hover:bg-rose/20 transition-all"
@@ -420,7 +547,6 @@ export default function BookPage() {
               Delete Book
             </button>
 
-            {/* Delete confirmation modal */}
             {showDeleteConfirm && (
               <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                 <div className="bg-parchment rounded-2xl shadow-2xl p-6 w-full max-w-sm text-center border border-rose/20">
@@ -438,21 +564,16 @@ export default function BookPage() {
                     <button
                       className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-ink-muted border border-gold-light/30 hover:bg-cream/40 transition-colors"
                       onClick={() => setShowDeleteConfirm(false)}
-                    >
-                      Keep Book
-                    </button>
+                    >Keep Book</button>
                     <button
                       className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold bg-rose text-white hover:bg-rose/90 transition-colors"
                       onClick={handleDeleteBook}
-                    >
-                      Delete Forever
-                    </button>
+                    >Delete Forever</button>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Book deleted success card */}
             {showDeletedMsg && (
               <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                 <div className="bg-parchment rounded-2xl shadow-2xl p-8 w-full max-w-sm text-center border border-gold-light/30">

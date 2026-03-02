@@ -59,11 +59,21 @@ export default function ProfilePage() {
   const [formGenre, setFormGenre] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  // Tabs
+  const [activeTab, setActiveTab] = useState<'profile' | 'library'>('profile');
+
   // Public shelf
   const [shelfPublic, setShelfPublic] = useState(false);
   const [publicSlug, setPublicSlug] = useState('');
   const [slugSaving, setSlugSaving] = useState(false);
   const [slugCopied, setSlugCopied] = useState(false);
+
+  // Library customization
+  const [shelfAccent, setShelfAccent] = useState('gold');
+  const [shelfShowReading, setShelfShowReading] = useState(true);
+  const [shelfShowStats, setShelfShowStats] = useState(true);
+  const [shelfBioOverride, setShelfBioOverride] = useState('');
+  const [librarySaving, setLibrarySaving] = useState(false);
 
   // Avatar
   const [avatarUploading, setAvatarUploading] = useState(false);
@@ -75,6 +85,10 @@ export default function ProfilePage() {
       setFormGenre(profile.favorite_genre || '');
       setShelfPublic(profile.shelf_public || false);
       setPublicSlug(profile.public_slug || '');
+      setShelfAccent((profile as any).shelf_accent_color || 'gold');
+      setShelfShowReading((profile as any).shelf_show_currently_reading !== false);
+      setShelfShowStats((profile as any).shelf_show_stats !== false);
+      setShelfBioOverride((profile as any).shelf_bio_override || '');
     }
   }, [profile]);
 
@@ -164,6 +178,32 @@ export default function ProfilePage() {
     navigator.clipboard.writeText(url);
     setSlugCopied(true);
     setTimeout(() => setSlugCopied(false), 2000);
+  };
+
+  const handleSaveLibrary = async () => {
+    if (!user) return;
+    setLibrarySaving(true);
+    const supabase = createClient();
+    await supabase
+      .from('profiles')
+      .update({
+        shelf_accent_color: shelfAccent,
+        shelf_show_currently_reading: shelfShowReading,
+        shelf_show_stats: shelfShowStats,
+        shelf_bio_override: shelfBioOverride || null,
+      })
+      .eq('id', user.id);
+    await refreshProfile();
+    setLibrarySaving(false);
+  };
+
+  const accentThemes: Record<string, { label: string; accent: string; accentLight: string }> = {
+    gold: { label: 'Gold', accent: 'var(--th-gold)', accentLight: 'var(--th-gold-light)' },
+    teal: { label: 'Teal', accent: '#0d9488', accentLight: '#99f6e4' },
+    rose: { label: 'Rose', accent: '#e11d48', accentLight: '#fecdd3' },
+    forest: { label: 'Forest', accent: '#059669', accentLight: '#a7f3d0' },
+    purple: { label: 'Purple', accent: '#7c3aed', accentLight: '#ddd6fe' },
+    copper: { label: 'Copper', accent: '#c2410c', accentLight: '#fed7aa' },
   };
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -274,12 +314,14 @@ export default function ProfilePage() {
       const result = await res.json();
       if (result.success) {
         await signOut();
-        router.replace('/goodbye');
+        router.replace('/login');
       } else {
-        alert(result.error || 'Account deletion failed.');
+        alert(result.error || 'Account deletion failed. Please try again.');
       }
     } catch (err) {
-      alert('Error deleting account.');
+      // Network error — still try to sign out in case deletion partially succeeded
+      await signOut();
+      router.replace('/login');
     }
     setSaving(false);
   };
@@ -474,7 +516,29 @@ export default function ProfilePage() {
       </motion.div>
 
       {/* Decorative Divider */}
-      <LotusDivider className="h-6 mb-8 opacity-30" />
+      <LotusDivider className="h-6 mb-6 opacity-30" />
+
+      {/* Tab Navigation */}
+      <div className="flex gap-1 mb-8 glass-card rounded-xl p-1" style={{ boxShadow: 'var(--th-card-shadow)' }}>
+        {(['profile', 'library'] as const).map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all"
+            style={activeTab === tab
+              ? { background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))', color: 'var(--th-parchment)' }
+              : { color: 'var(--th-ink-muted)' }
+            }
+          >
+            {tab === 'profile' ? <User className="w-4 h-4" /> : <Globe className="w-4 h-4" />}
+            {tab === 'profile' ? 'Profile' : 'My Library'}
+          </button>
+        ))}
+      </div>
+
+      {/* Profile Tab */}
+      {activeTab === 'profile' && (
+        <>
 
       {/* Stats Grid */}
       <motion.div
@@ -513,6 +577,94 @@ export default function ProfilePage() {
 
       {/* Divider */}
       <MehndiDivider className="h-4 mb-8 opacity-20" />
+
+      {/* Account Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="space-y-3"
+      >
+        <h2
+          className="text-lg font-semibold text-ink mb-4"
+          style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+        >
+          Account
+        </h2>
+
+        {/* Security info */}
+        <div className="glass-card rounded-xl p-4 flex items-center gap-3">
+          <Shield className="w-5 h-5 text-gold" />
+          <div className="flex-1">
+            <div className="text-sm font-medium text-ink">Security</div>
+            <div className="text-xs text-ink-muted">Your data is encrypted and stored securely</div>
+          </div>
+        </div>
+
+        {/* Sign Out */}
+        <motion.button
+          whileTap={{ scale: 0.98 }}
+          onClick={handleSignOut}
+          className="w-full glass-card rounded-xl p-4 flex items-center gap-3 text-left hover:bg-cream/40 transition-colors group"
+        >
+          <LogOut className="w-5 h-5 text-ink-muted group-hover:text-amber transition-colors" />
+          <div className="flex-1">
+            <div className="text-sm font-medium text-ink">Sign Out</div>
+            <div className="text-xs text-ink-muted">Your reading data is saved to the cloud</div>
+          </div>
+        </motion.button>
+
+        {/* Delete Account */}
+        <div className="pt-6">
+          <AnimatePresence>
+            {!showDeleteConfirm ? (
+              <motion.button
+                key="delete-btn"
+                onClick={() => setShowDeleteConfirm(true)}
+                className="text-xs text-ink-muted/50 hover:text-rose transition-colors underline"
+              >
+                Delete Account
+              </motion.button>
+            ) : (
+              <motion.div
+                key="delete-confirm"
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="glass-card rounded-xl p-4 border border-rose/20"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <Trash2 className="w-4 h-4 text-rose" />
+                  <span className="text-sm font-medium text-rose">Delete your account?</span>
+                </div>
+                <p className="text-xs text-ink-muted mb-3">
+                  This will permanently delete your profile and all reading data. This cannot be undone.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="px-4 py-1.5 rounded-lg text-xs font-medium text-ink-muted border border-gold-light/30 hover:bg-cream/40 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDeleteAccount}
+                    className="px-4 py-1.5 rounded-lg text-xs font-medium bg-rose/10 text-rose border border-rose/20 hover:bg-rose/20 transition-colors"
+                  >
+                    Yes, Delete Everything
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </motion.div>
+        </>
+      )}
+
+      {/* Library Tab */}
+      {activeTab === 'library' && (
+        <>
 
       {/* Profile Privacy Section - Pinterest Style */}
       <motion.div
@@ -689,87 +841,122 @@ export default function ProfilePage() {
       {/* Divider */}
       <MehndiDivider className="h-4 mb-8 opacity-20" />
 
-      {/* Account Section */}
+      {/* Library Customization */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="space-y-3"
+        className="mb-8"
       >
         <h2
-          className="text-lg font-semibold text-ink mb-4"
+          className="text-lg font-semibold text-ink mb-4 flex items-center gap-2"
           style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
         >
-          Account
+          <Library className="w-5 h-5 text-gold" />
+          Customize Library
         </h2>
 
-        {/* Security info */}
-        <div className="glass-card rounded-xl p-4 flex items-center gap-3">
-          <Shield className="w-5 h-5 text-gold" />
-          <div className="flex-1">
-            <div className="text-sm font-medium text-ink">Security</div>
-            <div className="text-xs text-ink-muted">Your data is encrypted and stored securely</div>
+        <div className="space-y-4">
+          {/* Accent Color */}
+          <div className="glass-card rounded-xl p-4">
+            <label className="block text-xs font-medium text-ink-muted mb-3 uppercase tracking-wider">Accent Color</label>
+            <div className="flex gap-3 flex-wrap">
+              {Object.entries(accentThemes).map(([key, theme]) => (
+                <button
+                  key={key}
+                  onClick={() => setShelfAccent(key)}
+                  className="flex flex-col items-center gap-1.5 group"
+                >
+                  <div
+                    className="w-10 h-10 rounded-full transition-all"
+                    style={{
+                      background: `linear-gradient(135deg, ${theme.accent}, ${theme.accentLight})`,
+                      boxShadow: shelfAccent === key ? `0 0 0 3px var(--th-parchment), 0 0 0 5px ${theme.accent}` : 'none',
+                      transform: shelfAccent === key ? 'scale(1.1)' : 'scale(1)',
+                    }}
+                  />
+                  <span className="text-[10px] text-ink-muted">{theme.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* Sign Out */}
-        <motion.button
-          whileTap={{ scale: 0.98 }}
-          onClick={handleSignOut}
-          className="w-full glass-card rounded-xl p-4 flex items-center gap-3 text-left hover:bg-cream/40 transition-colors group"
-        >
-          <LogOut className="w-5 h-5 text-ink-muted group-hover:text-amber transition-colors" />
-          <div className="flex-1">
-            <div className="text-sm font-medium text-ink">Sign Out</div>
-            <div className="text-xs text-ink-muted">Your reading data is saved to the cloud</div>
-          </div>
-        </motion.button>
-
-        {/* Delete Account */}
-        <div className="pt-6">
-          <AnimatePresence>
-            {!showDeleteConfirm ? (
-              <motion.button
-                key="delete-btn"
-                onClick={() => setShowDeleteConfirm(true)}
-                className="text-xs text-ink-muted/50 hover:text-rose transition-colors underline"
-              >
-                Delete Account
-              </motion.button>
-            ) : (
+          {/* Toggle: Show Currently Reading */}
+          <div className="glass-card rounded-xl p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <BookOpen className="w-5 h-5 text-gold" />
+              <div>
+                <div className="text-sm font-medium text-ink">Show Currently Reading</div>
+                <div className="text-xs text-ink-muted">Display books you&apos;re currently reading</div>
+              </div>
+            </div>
+            <button
+              onClick={() => setShelfShowReading(!shelfShowReading)}
+              className={`relative w-12 h-7 rounded-full transition-colors duration-300 flex-shrink-0 ${
+                shelfShowReading ? 'bg-forest' : 'bg-gold-light/30'
+              }`}
+            >
               <motion.div
-                key="delete-confirm"
-                initial={{ opacity: 0, y: -5 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="glass-card rounded-xl p-4 border border-rose/20"
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <Trash2 className="w-4 h-4 text-rose" />
-                  <span className="text-sm font-medium text-rose">Delete your account?</span>
-                </div>
-                <p className="text-xs text-ink-muted mb-3">
-                  This will permanently delete your profile and all reading data. This cannot be undone.
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setShowDeleteConfirm(false)}
-                    className="px-4 py-1.5 rounded-lg text-xs font-medium text-ink-muted border border-gold-light/30 hover:bg-cream/40 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleDeleteAccount}
-                    className="px-4 py-1.5 rounded-lg text-xs font-medium bg-rose/10 text-rose border border-rose/20 hover:bg-rose/20 transition-colors"
-                  >
-                    Yes, Delete Everything
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                className="absolute top-0.5 w-6 h-6 rounded-full bg-parchment shadow-sm"
+                animate={{ left: shelfShowReading ? '1.375rem' : '0.125rem' }}
+                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+              />
+            </button>
+          </div>
+
+          {/* Toggle: Show Stats */}
+          <div className="glass-card rounded-xl p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Trophy className="w-5 h-5 text-gold" />
+              <div>
+                <div className="text-sm font-medium text-ink">Show Reading Stats</div>
+                <div className="text-xs text-ink-muted">Display your stats on your public library</div>
+              </div>
+            </div>
+            <button
+              onClick={() => setShelfShowStats(!shelfShowStats)}
+              className={`relative w-12 h-7 rounded-full transition-colors duration-300 flex-shrink-0 ${
+                shelfShowStats ? 'bg-forest' : 'bg-gold-light/30'
+              }`}
+            >
+              <motion.div
+                className="absolute top-0.5 w-6 h-6 rounded-full bg-parchment shadow-sm"
+                animate={{ left: shelfShowStats ? '1.375rem' : '0.125rem' }}
+                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+              />
+            </button>
+          </div>
+
+          {/* Shelf Bio Override */}
+          <div className="glass-card rounded-xl p-4">
+            <label className="block text-xs font-medium text-ink-muted mb-1.5 uppercase tracking-wider">Library Bio</label>
+            <p className="text-[11px] text-ink-muted mb-2">A custom bio for your public library page (leave blank to use your profile bio)</p>
+            <textarea
+              value={shelfBioOverride}
+              onChange={(e) => setShelfBioOverride(e.target.value)}
+              rows={2}
+              className="w-full px-4 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink resize-none text-sm"
+              style={{ fontFamily: "'Lora', Georgia, serif" }}
+              placeholder="Welcome to my reading collection..."
+            />
+          </div>
+
+          {/* Save button */}
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={handleSaveLibrary}
+            disabled={librarySaving}
+            className="w-full px-5 py-3 rounded-xl text-sm font-medium flex items-center justify-center gap-2 text-parchment"
+            style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}
+          >
+            {librarySaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+            Save Library Settings
+          </motion.button>
         </div>
       </motion.div>
+
+        </>
+      )}
 
       {/* Bottom spacing */}
       <div className="h-12" />

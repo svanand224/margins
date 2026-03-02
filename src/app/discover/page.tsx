@@ -35,8 +35,8 @@ interface PublicUser {
 interface RecentActivity {
   id: string;
   user_id: string;
-  activity_type: string;
-  activity_data: Record<string, unknown>;
+  type: string;
+  data: Record<string, unknown>;
   created_at: string;
   user?: { reader_name: string; avatar_url: string | null; public_slug: string };
 }
@@ -131,12 +131,16 @@ export default function DiscoverPage() {
   };
 
   const getActivityText = (activity: RecentActivity) => {
-    const data = activity.activity_data as Record<string, string>;
-    switch (activity.activity_type) {
-      case 'book_added': return `added "${data.book_title || 'a book'}" to their library`;
-      case 'book_completed': return `finished reading "${data.book_title || 'a book'}"`;
-      case 'review_added': return `reviewed "${data.book_title || 'a book'}"`;
-      case 'follow': return `followed ${data.followed_name || 'someone'}`;
+    const d = activity.data as Record<string, string>;
+    switch (activity.type) {
+      case 'book_added':
+      case 'started_reading': return `added "${d.book_title || 'a book'}" to their library`;
+      case 'book_completed':
+      case 'finished_book': return `finished reading "${d.book_title || 'a book'}"`;
+      case 'review_added':
+      case 'rated_book': return `reviewed "${d.book_title || 'a book'}"`;
+      case 'follow':
+      case 'followed': return `followed ${d.following_name || d.followed_name || 'someone'}`;
       default: return 'was active';
     }
   };

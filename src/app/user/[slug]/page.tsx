@@ -114,27 +114,33 @@ export default function PublicProfilePage() {
       const supabase = createClient();
       if (isFollowing) {
         // Unfollow
-        await supabase
+        const { error } = await supabase
           .from('follows')
           .delete()
           .eq('follower_id', user.id)
           .eq('following_id', profile.id);
-        setIsFollowing(false);
-        setFollowerCount(c => Math.max(0, c - 1));
+        if (!error) {
+          setIsFollowing(false);
+          setFollowerCount(c => Math.max(0, c - 1));
+        }
       } else {
         // Follow
-        await supabase.from('follows').insert({
+        const { error } = await supabase.from('follows').insert({
           follower_id: user.id,
           following_id: profile.id,
         });
-        setIsFollowing(true);
-        setFollowerCount(c => c + 1);
-        // Log activity
-        await supabase.from('activities').insert({
-          user_id: user.id,
-          type: 'followed',
-          data: { following_name: profile.reader_name, following_slug: profile.public_slug },
-        });
+        if (!error) {
+          setIsFollowing(true);
+          setFollowerCount(c => c + 1);
+          // Log activity (non-blocking)
+          supabase.from('activities').insert({
+            user_id: user.id,
+            type: 'followed',
+            data: { following_name: profile.reader_name, following_slug: profile.public_slug },
+          }).then(() => {});
+        } else {
+          console.error('Follow error:', error.message);
+        }
       }
     } catch (err) {
       console.error('Follow error:', err);
