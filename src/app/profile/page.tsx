@@ -55,6 +55,7 @@ export default function ProfilePage() {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formName, setFormName] = useState('');
+  const [formUsername, setFormUsername] = useState('');
   const [formBio, setFormBio] = useState('');
   const [formGenre, setFormGenre] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -75,8 +76,8 @@ export default function ProfilePage() {
   const [shelfBioOverride, setShelfBioOverride] = useState('');
 
   // Social: followers, following, mutuals
-  const [followers, setFollowers] = useState<{ id: string; reader_name: string; avatar_url: string | null; public_slug: string | null }[]>([]);
-  const [following, setFollowing] = useState<{ id: string; reader_name: string; avatar_url: string | null; public_slug: string | null }[]>([]);
+  const [followers, setFollowers] = useState<{ id: string; username: string; reader_name: string; avatar_url: string | null; public_slug: string | null }[]>([]);
+  const [following, setFollowing] = useState<{ id: string; username: string; reader_name: string; avatar_url: string | null; public_slug: string | null }[]>([]);
   const [socialTab, setSocialTab] = useState<'followers' | 'following' | 'mutuals'>('mutuals');
   const [socialLoading, setSocialLoading] = useState(false);  const [librarySaving, setLibrarySaving] = useState(false);
 
@@ -86,6 +87,7 @@ export default function ProfilePage() {
   useEffect(() => {
     if (profile) {
       setFormName(profile.reader_name || '');
+      setFormUsername(profile.username || '');
       setFormBio(profile.bio || '');
       setFormGenre(profile.favorite_genre || '');
       setShelfPublic(profile.shelf_public || false);
@@ -106,11 +108,12 @@ export default function ProfilePage() {
       // Fetch followers
       const { data: followerData } = await supabase
         .from('follows')
-        .select('follower_id, profiles:follower_id(reader_name, avatar_url, public_slug)')
+        .select('follower_id, profiles:follower_id(username, reader_name, avatar_url, public_slug)')
         .eq('following_id', user.id);
       if (followerData) {
         setFollowers(followerData.map((f: any) => ({
           id: f.follower_id,
+          username: (f.profiles as any)?.username || '',
           reader_name: (f.profiles as any)?.reader_name || 'Unknown',
           avatar_url: (f.profiles as any)?.avatar_url || null,
           public_slug: (f.profiles as any)?.public_slug || null,
@@ -119,11 +122,12 @@ export default function ProfilePage() {
       // Fetch following
       const { data: followingData } = await supabase
         .from('follows')
-        .select('following_id, profiles:following_id(reader_name, avatar_url, public_slug)')
+        .select('following_id, profiles:following_id(username, reader_name, avatar_url, public_slug)')
         .eq('follower_id', user.id);
       if (followingData) {
         setFollowing(followingData.map((f: any) => ({
           id: f.following_id,
+          username: (f.profiles as any)?.username || '',
           reader_name: (f.profiles as any)?.reader_name || 'Unknown',
           avatar_url: (f.profiles as any)?.avatar_url || null,
           public_slug: (f.profiles as any)?.public_slug || null,
@@ -140,11 +144,18 @@ export default function ProfilePage() {
     if (!user) return;
     setSaving(true);
 
+    const cleanUsername = formUsername.toLowerCase().replace(/[^a-z0-9_]/g, '');
+    if (!cleanUsername || cleanUsername.length < 3) {
+      setSaving(false);
+      return;
+    }
+
     const supabase = createClient();
     const { error } = await supabase
       .from('profiles')
       .update({
         reader_name: formName,
+        username: cleanUsername,
         bio: formBio,
         favorite_genre: formGenre,
       })
@@ -484,6 +495,23 @@ export default function ProfilePage() {
                     />
                   </div>
                   <div>
+                    <label className="block text-xs font-medium text-ink-muted mb-1 uppercase tracking-wider">Username</label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-muted text-sm">@</span>
+                      <input
+                        type="text"
+                        value={formUsername}
+                        onChange={(e) => setFormUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                        className="w-full pl-8 pr-4 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink"
+                        style={{ fontFamily: "'Lora', Georgia, serif", fontSize: '0.9rem' }}
+                        placeholder="your_username"
+                        minLength={3}
+                        maxLength={30}
+                      />
+                    </div>
+                    <p className="text-[10px] text-ink-muted mt-0.5">Letters, numbers, underscores. Used for login &amp; discovery.</p>
+                  </div>
+                  <div>
                     <label className="block text-xs font-medium text-ink-muted mb-1 uppercase tracking-wider">Bio</label>
                     <textarea
                       value={formBio}
@@ -523,6 +551,7 @@ export default function ProfilePage() {
                       onClick={() => {
                         setEditing(false);
                         setFormName(profile?.reader_name || '');
+                        setFormUsername(profile?.username || '');
                         setFormBio(profile?.bio || '');
                         setFormGenre(profile?.favorite_genre || '');
                       }}
@@ -553,6 +582,10 @@ export default function ProfilePage() {
                       <Edit3 className="w-4 h-4" />
                     </button>
                   </div>
+
+                  {profile?.username && (
+                    <p className="text-sm text-gold-dark mb-1">@{profile.username}</p>
+                  )}
 
                   {profile?.bio && (
                     <p className="text-ink-muted text-sm mb-2 italic">{profile.bio}</p>
@@ -812,7 +845,7 @@ export default function ProfilePage() {
                         )}
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-ink">{person.reader_name}</p>
-                          {person.public_slug && <p className="text-xs text-ink-muted">@{person.public_slug}</p>}
+                          {person.username && <p className="text-xs text-ink-muted">@{person.username}</p>}
                         </div>
                         {socialTab === 'mutuals' && (
                           <span className="text-[10px] text-gold-dark bg-gold-light/10 px-2 py-0.5 rounded-full">Mutual</span>

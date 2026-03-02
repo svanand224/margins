@@ -22,6 +22,7 @@ import type { Book } from '@/lib/types';
 
 interface PublicUser {
   id: string;
+  username: string;
   reader_name: string;
   avatar_url: string | null;
   bio: string;
@@ -61,7 +62,7 @@ export default function DiscoverPage() {
     // Fetch all public profiles
     const { data: profiles } = await supabase
       .from('profiles')
-      .select('id, reader_name, avatar_url, bio, favorite_genre, public_slug, reading_data')
+      .select('id, username, reader_name, avatar_url, bio, favorite_genre, public_slug, reading_data')
       .eq('shelf_public', true)
       .not('public_slug', 'is', null)
       .order('updated_at', { ascending: false })
@@ -124,10 +125,10 @@ export default function DiscoverPage() {
       const supabase = createClient();
       const { data } = await supabase
         .from('profiles')
-        .select('id, reader_name, avatar_url, bio, favorite_genre, public_slug, reading_data')
+        .select('id, username, reader_name, avatar_url, bio, favorite_genre, public_slug, reading_data')
         .eq('shelf_public', true)
         .not('public_slug', 'is', null)
-        .or(`reader_name.ilike.%${query}%,public_slug.ilike.%${query}%,bio.ilike.%${query}%`)
+        .or(`reader_name.ilike.%${query}%,public_slug.ilike.%${query}%,username.ilike.%${query}%,bio.ilike.%${query}%`)
         .order('updated_at', { ascending: false })
         .limit(20);
       setUsers(data as PublicUser[] || []);
@@ -208,7 +209,7 @@ export default function DiscoverPage() {
                 if (e.target.value.trim()) setTab('search');
                 else setTab('explore');
               }}
-              placeholder="Search readers by name, handle, or bio..."
+              placeholder="Search readers by name or username..."
               className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gold-light/30 bg-cream/50 text-ink text-sm placeholder:text-ink-muted/60 focus:outline-none focus:border-gold transition-colors"
             />
             {searching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-gold" />}
@@ -250,7 +251,7 @@ export default function DiscoverPage() {
                         )}
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold text-sm text-ink group-hover:text-gold-dark transition-colors">{u.reader_name}</h3>
-                          <p className="text-xs text-ink-muted">@{u.public_slug}</p>
+                          <p className="text-xs text-ink-muted">@{u.username || u.public_slug}</p>
                           {u.bio && <p className="text-xs text-ink-muted mt-0.5 line-clamp-1">{u.bio}</p>}
                         </div>
                         <div className="text-right text-xs text-ink-muted flex-shrink-0">
@@ -379,7 +380,7 @@ export default function DiscoverPage() {
                         )}
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold text-sm text-ink group-hover:text-gold-dark transition-colors">{u.reader_name}</h3>
-                          <p className="text-xs text-ink-muted">@{u.public_slug}</p>
+                          <p className="text-xs text-ink-muted">@{u.username || u.public_slug}</p>
                         </div>
                         <div className="text-right text-xs text-ink-muted flex-shrink-0">
                           <p className="flex items-center gap-1"><BookOpen className="w-3 h-3" /> {stats.total}</p>

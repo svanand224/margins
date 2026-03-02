@@ -25,6 +25,7 @@ interface Activity {
   user: {
     reader_name: string;
     avatar_url: string | null;
+    username: string | null;
     public_slug: string | null;
   };
 }
@@ -75,6 +76,7 @@ export default function FeedPage() {
           user:user_id (
             reader_name,
             avatar_url,
+            username,
             public_slug
           )
         `)

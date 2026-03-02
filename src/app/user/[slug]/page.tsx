@@ -25,6 +25,7 @@ import { useParams } from 'next/navigation';
 
 interface PublicProfile {
   id: string;
+  username: string;
   reader_name: string;
   avatar_url: string | null;
   bio: string;
@@ -70,7 +71,7 @@ export default function PublicProfilePage() {
       const supabase = createClient();
       const { data: profileData, error } = await supabase
         .from('profiles')
-        .select('id, reader_name, avatar_url, bio, favorite_genre, public_slug, shelf_public, shelf_accent_color, shelf_show_currently_reading, shelf_show_stats, shelf_bio_override, reading_data, created_at')
+        .select('id, username, reader_name, avatar_url, bio, favorite_genre, public_slug, shelf_public, shelf_accent_color, shelf_show_currently_reading, shelf_show_stats, shelf_bio_override, reading_data, created_at')
         .eq('public_slug', slug)
         .single();
 
@@ -285,7 +286,7 @@ export default function PublicProfilePage() {
             >
               {profile.reader_name}
             </h1>
-            <p className="text-xs text-ink-muted mb-2">@{profile.public_slug}</p>
+            <p className="text-xs text-ink-muted mb-2">@{profile.username || profile.public_slug}</p>
             {displayBio && (
               <p className="text-sm text-ink-muted italic mb-3 line-clamp-2">{displayBio}</p>
             )}

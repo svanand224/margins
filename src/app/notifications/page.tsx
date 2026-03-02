@@ -25,7 +25,7 @@ interface Notification {
   data: Record<string, any>;
   read: boolean;
   created_at: string;
-  from_user?: { reader_name: string; avatar_url: string | null; public_slug: string | null };
+  from_user?: { reader_name: string; avatar_url: string | null; username: string | null; public_slug: string | null };
 }
 
 export default function NotificationsPage() {
@@ -42,7 +42,7 @@ export default function NotificationsPage() {
     const supabase = createClient();
     const { data } = await supabase
       .from('notifications')
-      .select('*, from_user:from_user_id(reader_name, avatar_url, public_slug)')
+      .select('*, from_user:from_user_id(reader_name, avatar_url, username, public_slug)')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(50);

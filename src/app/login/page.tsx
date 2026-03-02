@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, User, Eye, EyeOff, BookOpen, Loader2, ArrowRight, Sparkles, Sun, Moon } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, BookOpen, Loader2, ArrowRight, Sparkles, Sun, Moon, AtSign } from 'lucide-react';
 import LotusLogo from '@/components/LotusLogo';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -17,6 +17,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -38,11 +39,25 @@ export default function LoginPage() {
     try {
       const supabase = getSupabase();
       if (mode === 'signup') {
+        // Validate username
+        const cleanUsername = username.toLowerCase().replace(/[^a-z0-9_]/g, '');
+        if (!cleanUsername || cleanUsername.length < 3) {
+          throw new Error('Username must be at least 3 characters (letters, numbers, underscores only).');
+        }
+        // Check if username is already taken
+        const { data: existing } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('username', cleanUsername)
+          .maybeSingle();
+        if (existing) {
+          throw new Error('That username is already taken. Please choose another.');
+        }
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            data: { name: name || email.split('@')[0] },
+            data: { name: name || email.split('@')[0], username: cleanUsername },
           },
         });
         if (error) throw error;
@@ -55,7 +70,21 @@ export default function LoginPage() {
           return;
         }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        // Sign in — determine if input is username or email
+        let signInEmail = email;
+        if (!email.includes('@')) {
+          // Treat as username — look up email
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('email')
+            .eq('username', email.toLowerCase())
+            .maybeSingle();
+          if (!profile?.email) {
+            throw new Error('No account found with that username.');
+          }
+          signInEmail = profile.email;
+        }
+        const { error } = await supabase.auth.signInWithPassword({ email: signInEmail, password });
         if (error) throw error;
         router.push('/');
         router.refresh();
@@ -199,25 +228,48 @@ export default function LoginPage() {
             <AnimatePresence mode="wait">
               {mode === 'signup' && (
                 <motion.div
-                  key="name-field"
+                  key="signup-fields"
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
                   transition={{ duration: 0.2 }}
+                  className="space-y-4"
                 >
-                  <label className="block text-xs font-medium text-ink-muted mb-1.5 uppercase tracking-wider">
-                    Reader Name
-                  </label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" />
-                    <input
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="What shall we call you?"
-                      className="w-full pl-10 pr-4 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink placeholder:text-ink-muted/50 transition-all duration-200"
-                      style={{ fontFamily: "'Lora', Georgia, serif", fontSize: '0.9rem' }}
-                    />
+                  <div>
+                    <label className="block text-xs font-medium text-ink-muted mb-1.5 uppercase tracking-wider">
+                      Reader Name
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" />
+                      <input
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="What shall we call you?"
+                        className="w-full pl-10 pr-4 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink placeholder:text-ink-muted/50 transition-all duration-200"
+                        style={{ fontFamily: "'Lora', Georgia, serif", fontSize: '0.9rem' }}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-ink-muted mb-1.5 uppercase tracking-wider">
+                      Username
+                    </label>
+                    <div className="relative">
+                      <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" />
+                      <input
+                        type="text"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                        placeholder="choose_a_username"
+                        required
+                        minLength={3}
+                        maxLength={30}
+                        className="w-full pl-10 pr-4 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink placeholder:text-ink-muted/50 transition-all duration-200"
+                        style={{ fontFamily: "'Lora', Georgia, serif", fontSize: '0.9rem' }}
+                      />
+                    </div>
+                    <p className="text-[10px] text-ink-muted mt-1">Letters, numbers, and underscores only. This is how others will find you.</p>
                   </div>
                 </motion.div>
               )}
@@ -225,15 +277,19 @@ export default function LoginPage() {
 
             <div>
               <label className="block text-xs font-medium text-ink-muted mb-1.5 uppercase tracking-wider">
-                Email
+                {mode === 'signin' ? 'Email or Username' : 'Email'}
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" />
+                {mode === 'signin' ? (
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" />
+                ) : (
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" />
+                )}
                 <input
-                  type="email"
+                  type={mode === 'signup' ? 'email' : 'text'}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your@email.com"
+                  placeholder={mode === 'signin' ? 'your@email.com or username' : 'your@email.com'}
                   required
                   className="w-full pl-10 pr-4 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink placeholder:text-ink-muted/50 transition-all duration-200"
                   style={{ fontFamily: "'Lora', Georgia, serif", fontSize: '0.9rem' }}

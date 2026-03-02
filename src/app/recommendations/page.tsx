@@ -38,8 +38,8 @@ interface Recommendation {
   message: string | null;
   status: string;
   created_at: string;
-  from_user?: { reader_name: string; avatar_url: string | null; public_slug: string | null };
-  to_user?: { reader_name: string; avatar_url: string | null; public_slug: string | null };
+  from_user?: { reader_name: string; avatar_url: string | null; username: string | null; public_slug: string | null };
+  to_user?: { reader_name: string; avatar_url: string | null; username: string | null; public_slug: string | null };
 }
 
 interface AutoRec {
@@ -74,7 +74,7 @@ export default function RecommendationsPage() {
   const [sendBookSearching, setSendBookSearching] = useState(false);
   const [selectedBook, setSelectedBook] = useState<Partial<Book> | null>(null);
   const [sendUserQuery, setSendUserQuery] = useState('');
-  const [sendUsers, setSendUsers] = useState<Array<{ id: string; reader_name: string; avatar_url: string | null; public_slug: string }>>([]);
+  const [sendUsers, setSendUsers] = useState<Array<{ id: string; username: string; reader_name: string; avatar_url: string | null; public_slug: string }>>([]);
   const [sendMessage, setSendMessage] = useState('');
   const [sendingRec, setSendingRec] = useState(false);
   const [sendSuccess, setSendSuccess] = useState(false);
@@ -94,12 +94,12 @@ export default function RecommendationsPage() {
     const [{ data: inboxData }, { data: sentData }] = await Promise.all([
       supabase
         .from('recommendations')
-        .select('*, from_user:from_user_id(reader_name, avatar_url, public_slug)')
+        .select('*, from_user:from_user_id(reader_name, avatar_url, username, public_slug)')
         .eq('to_user_id', user.id)
         .order('created_at', { ascending: false }),
       supabase
         .from('recommendations')
-        .select('*, to_user:to_user_id(reader_name, avatar_url, public_slug)')
+        .select('*, to_user:to_user_id(reader_name, avatar_url, username, public_slug)')
         .eq('from_user_id', user.id)
         .order('created_at', { ascending: false }),
     ]);
@@ -330,10 +330,10 @@ export default function RecommendationsPage() {
       const safeQuery = sendUserQuery.replace(/[%_(),.]/g, '');
       const { data } = await supabase
         .from('profiles')
-        .select('id, reader_name, avatar_url, public_slug')
+        .select('id, username, reader_name, avatar_url, public_slug')
         .eq('shelf_public', true)
         .not('public_slug', 'is', null)
-        .or(`reader_name.ilike.%${safeQuery}%,public_slug.ilike.%${safeQuery}%`)
+        .or(`reader_name.ilike.%${safeQuery}%,public_slug.ilike.%${safeQuery}%,username.ilike.%${safeQuery}%`)
         .neq('id', user?.id || '')
         .limit(5);
       setSendUsers(data || []);
@@ -1000,7 +1000,7 @@ export default function RecommendationsPage() {
                               )}
                               <div className="flex-1 min-w-0">
                                 <p className="text-xs font-medium text-ink">{u.reader_name}</p>
-                                <p className="text-[10px] text-ink-muted">@{u.public_slug}</p>
+                                <p className="text-[10px] text-ink-muted">@{u.username || u.public_slug}</p>
                               </div>
                               <Send className="w-4 h-4 text-gold" />
                             </button>

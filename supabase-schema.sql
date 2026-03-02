@@ -6,6 +6,7 @@
 -- 1. Profiles table (extends Supabase auth.users)
 create table if not exists public.profiles (
   id uuid references auth.users on delete cascade primary key,
+  username text unique not null,
   reader_name text not null default '',
   email text,
   avatar_url text,
@@ -46,14 +47,21 @@ create policy "Users can delete own profile"
 create or replace function public.handle_new_user()
 returns trigger as $$
 begin
-  insert into public.profiles (id, reader_name, email)
+  insert into public.profiles (id, reader_name, email, username)
   values (
     new.id,
     coalesce(
       new.raw_user_meta_data->>'name',
       split_part(new.email, '@', 1)
     ),
-    new.email
+    new.email,
+    coalesce(
+      nullif(new.raw_user_meta_data->>'username', ''),
+      lower(regexp_replace(
+        coalesce(new.raw_user_meta_data->>'username', split_part(new.email, '@', 1)),
+        '[^a-z0-9_]', '_', 'gi'
+      )) || '_' || substr(gen_random_uuid()::text, 1, 4)
+    )
   );
   return new;
 end;
@@ -81,6 +89,7 @@ create trigger on_profile_updated
 
 -- 6. Create index for faster lookups
 create index if not exists profiles_email_idx on public.profiles (email);
+create index if not exists profiles_username_idx on public.profiles (username);
 
 -- 7. Public bookshelves
 -- Add public_slug column for shareable profile URLs
