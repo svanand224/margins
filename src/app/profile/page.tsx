@@ -606,7 +606,7 @@ export default function ProfilePage() {
                         maxLength={30}
                       />
                     </div>
-                    <p className="text-[10px] text-ink-muted mt-0.5">Letters, numbers, underscores. Used for login &amp; discovery.</p>
+                    <p className="text-[10px] md:text-xs text-ink-muted mt-0.5">Letters, numbers, underscores. Used for login &amp; discovery.</p>
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-ink-muted mb-1 uppercase tracking-wider">Bio</label>
@@ -995,7 +995,7 @@ export default function ProfilePage() {
                           {person.username && <p className="text-xs text-ink-muted">@{person.username}</p>}
                         </div>
                         {socialTab === 'mutuals' && (
-                          <span className="text-[10px] text-gold-dark bg-gold-light/10 px-2 py-0.5 rounded-full">Mutual</span>
+                          <span className="text-[10px] md:text-xs text-gold-dark bg-gold-light/10 px-2 py-0.5 rounded-full">Mutual</span>
                         )}
                       </Link>
                     </motion.div>
@@ -1098,7 +1098,7 @@ export default function ProfilePage() {
                           <Sparkles className="w-3.5 h-3.5" />
                           You&apos;re getting the full Margins experience!
                         </p>
-                        <p className="text-[11px] text-forest/70 mt-1">Friends can find you, send recommendations, and keep up with your reading journey.</p>
+                        <p className="text-[11px] md:text-xs text-forest/70 mt-1">Friends can find you, send recommendations, and keep up with your reading journey.</p>
                       </div>
                     </div>
                   </motion.div>
@@ -1115,13 +1115,13 @@ export default function ProfilePage() {
                           <Lock className="w-3.5 h-3.5" />
                           You&apos;re missing out on the best of Margins
                         </p>
-                        <ul className="text-[11px] text-ink-muted space-y-1.5 pl-5">
+                        <ul className="text-[11px] md:text-xs text-ink-muted space-y-1.5 pl-5">
                           <li className="list-disc">Friends can&apos;t see your library or reading progress</li>
                           <li className="list-disc">You won&apos;t appear in featured readers or activity feeds</li>
                           <li className="list-disc">Followers need approval before they can follow you</li>
                           <li className="list-disc">Recommendations from friends won&apos;t show your reading context</li>
                         </ul>
-                        <p className="text-[11px] text-ink-muted italic">Public profiles get the most from Margins — sharing is what makes reading social!</p>
+                        <p className="text-[11px] md:text-xs text-ink-muted italic">Public profiles get the most from Margins — sharing is what makes reading social!</p>
                       </div>
                     </div>
                   </motion.div>
@@ -1203,11 +1203,11 @@ export default function ProfilePage() {
                       Preview
                     </motion.a>
                   </div>
-                  <p className="text-[10px] text-ink-muted mt-2 text-center">
+                  <p className="text-[10px] md:text-xs text-ink-muted mt-2 text-center">
                     {typeof window !== 'undefined' ? window.location.origin : ''}/user/{publicSlug}
                   </p>
                   {!shelfPublic && (
-                    <p className="text-[10px] text-gold mt-2 text-center">
+                    <p className="text-[10px] md:text-xs text-gold mt-2 text-center">
                       Your profile is private — visitors can follow you but will only see your name and bio.
                     </p>
                   )}
@@ -1256,7 +1256,7 @@ export default function ProfilePage() {
                       transform: shelfAccent === key ? 'scale(1.1)' : 'scale(1)',
                     }}
                   />
-                  <span className="text-[10px] text-ink-muted">{theme.label}</span>
+                  <span className="text-[10px] md:text-xs text-ink-muted">{theme.label}</span>
                 </button>
               ))}
             </div>
@@ -1311,7 +1311,7 @@ export default function ProfilePage() {
           {/* Shelf Bio Override */}
           <div className="glass-card rounded-xl p-4">
             <label className="block text-xs font-medium text-ink-muted mb-1.5 uppercase tracking-wider">Library Bio</label>
-            <p className="text-[11px] text-ink-muted mb-2">A custom bio for your public library page (leave blank to use your profile bio)</p>
+            <p className="text-[11px] md:text-xs text-ink-muted mb-2">A custom bio for your public library page (leave blank to use your profile bio)</p>
             <textarea
               value={shelfBioOverride}
               onChange={(e) => setShelfBioOverride(e.target.value)}

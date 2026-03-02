@@ -174,7 +174,7 @@ export default function PublicShelfPage() {
                       <h3 className="text-sm font-semibold text-ink truncate">{book.title}</h3>
                       <p className="text-xs text-ink-muted truncate">{book.author}</p>
                       <div className="mt-2">
-                        <div className="flex justify-between text-[10px] text-ink-muted mb-1"><span>Page {book.currentPage}/{book.totalPages}</span><span>{progress}%</span></div>
+                        <div className="flex justify-between text-[10px] md:text-xs text-ink-muted mb-1"><span>Page {book.currentPage}/{book.totalPages}</span><span>{progress}%</span></div>
                         <div className="h-1.5 bg-cream/80 rounded-full overflow-hidden">
                           <div className="h-full rounded-full" style={{ width: `${progress}%`, background: `linear-gradient(90deg, ${theme.accent}, ${theme.accentLight})` }} />
                         </div>
@@ -199,11 +199,11 @@ export default function PublicShelfPage() {
                   className="glass-card rounded-xl overflow-hidden" style={{ borderWidth: 1, borderStyle: 'solid', borderColor: `${theme.accent}33` }}>
                   <div className="aspect-[2/3] bg-cream/50 relative">
                     {book.coverUrl ? <img src={book.coverUrl} alt={book.title} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><BookOpen className="w-8 h-8 text-gold-light/30" /></div>}
-                    <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold" style={{ background: theme.accent, color: 'white' }}>★ Featured</div>
+                    <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full text-[9px] md:text-[11px] font-bold" style={{ background: theme.accent, color: 'white' }}>★ Featured</div>
                   </div>
                   <div className="p-2.5">
                     <p className="text-xs font-medium text-ink line-clamp-1">{book.title}</p>
-                    <p className="text-[10px] text-ink-muted">{book.author}</p>
+                    <p className="text-[10px] md:text-xs text-ink-muted">{book.author}</p>
                     {book.rating && <div className="flex gap-0.5 mt-1">{[...Array(5)].map((_, i) => <Star key={i} className="w-2.5 h-2.5" style={{ color: i < book.rating! ? theme.accent : `${theme.accent}33`, fill: i < book.rating! ? theme.accent : 'none' }} />)}</div>}
                   </div>
                 </motion.div>
@@ -234,7 +234,7 @@ export default function PublicShelfPage() {
             {filteredBooks.map((book, i) => (
               <motion.div key={book.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }} className="glass-card rounded-xl overflow-hidden group">
                 <div className="aspect-[2/3] relative bg-cream/50">
-                  {book.coverUrl ? <img src={book.coverUrl} alt={book.title} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center p-2"><p className="text-[10px] text-ink-muted text-center line-clamp-3">{book.title}</p></div>}
+                  {book.coverUrl ? <img src={book.coverUrl} alt={book.title} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center p-2"><p className="text-[10px] md:text-xs text-ink-muted text-center line-clamp-3">{book.title}</p></div>}
                   {book.status === 'reading' && book.totalPages > 0 && (
                     <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-cream/50">
                       <div className="h-full rounded-r-full" style={{ width: `${Math.min(100, (book.currentPage / book.totalPages) * 100)}%`, background: `linear-gradient(90deg, ${theme.accent}, ${theme.accentLight})` }} />
@@ -243,8 +243,8 @@ export default function PublicShelfPage() {
                   {book.status === 'completed' && <div className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: theme.accent }}><Check className="w-3 h-3 text-white" /></div>}
                 </div>
                 <div className="p-2">
-                  <p className="text-[11px] font-medium text-ink line-clamp-1">{book.title}</p>
-                  <p className="text-[10px] text-ink-muted line-clamp-1">{book.author}</p>
+                  <p className="text-[11px] md:text-xs font-medium text-ink line-clamp-1">{book.title}</p>
+                  <p className="text-[10px] md:text-xs text-ink-muted line-clamp-1">{book.author}</p>
                   {book.rating && <div className="flex gap-0.5 mt-0.5">{[...Array(5)].map((_, i) => <Star key={i} className="w-2 h-2" style={{ color: i < book.rating! ? theme.accent : `${theme.accent}33`, fill: i < book.rating! ? theme.accent : 'none' }} />)}</div>}
                 </div>
               </motion.div>

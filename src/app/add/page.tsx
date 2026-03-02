@@ -171,7 +171,7 @@ export default function AddBookPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen p-4 pb-24 md:p-8 md:pb-8 max-w-2xl mx-auto">
+      <div className="min-h-screen p-4 pb-24 md:p-8 md:pb-8 max-w-2xl lg:max-w-3xl mx-auto">
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -208,7 +208,7 @@ export default function AddBookPage() {
   }
 
   return (
-    <div className="min-h-screen p-4 pb-24 md:p-8 md:pb-8 max-w-2xl mx-auto">
+    <div className="min-h-screen p-4 pb-24 md:p-8 md:pb-8 max-w-2xl lg:max-w-3xl mx-auto">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
@@ -257,7 +257,7 @@ export default function AddBookPage() {
           >
             <m.icon className={`w-5 h-5 mb-1 ${mode === m.key ? 'text-gold-dark' : 'text-ink-muted'}`} />
             <p className={`text-sm font-medium ${mode === m.key ? 'text-ink' : 'text-ink-muted'}`}>{m.label}</p>
-            <p className="text-[10px] text-ink-muted">{m.desc}</p>
+            <p className="text-[10px] md:text-xs text-ink-muted">{m.desc}</p>
           </motion.button>
         ))}
       </motion.div>
@@ -326,7 +326,7 @@ export default function AddBookPage() {
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-ink truncate">{book.title}</p>
                       <p className="text-xs text-ink-muted truncate">{book.author}</p>
-                      <p className="text-[10px] text-ink-muted/60">{book.totalPages ? `${book.totalPages} pages` : ''} {book.genre ? `· ${book.genre}` : ''}</p>
+                      <p className="text-[10px] md:text-xs text-ink-muted/60">{book.totalPages ? `${book.totalPages} pages` : ''} {book.genre ? `· ${book.genre}` : ''}</p>
                     </div>
                   </motion.button>
                 ))}

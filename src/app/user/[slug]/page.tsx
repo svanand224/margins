@@ -325,7 +325,7 @@ export default function PublicProfilePage() {
 
   return (
     <div className="min-h-screen pb-24 md:pb-8">
-      <motion.section initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="glass-card mx-4 mt-4 rounded-2xl p-6 md:mx-auto md:max-w-2xl" style={{ borderTop: `3px solid ${accent.accent}` }}>
+      <motion.section initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="glass-card mx-4 mt-4 rounded-2xl p-6 md:mx-auto md:max-w-2xl lg:max-w-4xl" style={{ borderTop: `3px solid ${accent.accent}` }}>
         <div className="flex items-start gap-4">
           {profile.avatar_url ? (
             <img
@@ -413,7 +413,7 @@ export default function PublicProfilePage() {
                     Sign up to follow {profile.reader_name}
                   </motion.button>
                 </Link>
-                <p className="text-[10px] text-ink-muted mt-1.5">
+                <p className="text-[10px] md:text-xs text-ink-muted mt-1.5">
                   Join Margins to follow readers, share your library, and get book recommendations.
                 </p>
               </div>
@@ -432,22 +432,22 @@ export default function PublicProfilePage() {
           <div className="text-center">
             <Library className="w-4 h-4 mx-auto mb-1" style={{ color: accent.accent }} />
             <div className="text-lg font-bold text-ink">{books.length}</div>
-            <div className="text-[10px] text-ink-muted">Books</div>
+            <div className="text-[10px] md:text-xs text-ink-muted">Books</div>
           </div>
           <div className="text-center">
             <Trophy className="w-4 h-4 mx-auto mb-1" style={{ color: accent.accent }} />
             <div className="text-lg font-bold text-ink">{completedBooks.length}</div>
-            <div className="text-[10px] text-ink-muted">Read</div>
+            <div className="text-[10px] md:text-xs text-ink-muted">Read</div>
           </div>
           <div className="text-center">
             <BookOpen className="w-4 h-4 mx-auto mb-1" style={{ color: accent.accent }} />
             <div className="text-lg font-bold text-ink">{totalPages.toLocaleString()}</div>
-            <div className="text-[10px] text-ink-muted">Pages</div>
+            <div className="text-[10px] md:text-xs text-ink-muted">Pages</div>
           </div>
           <div className="text-center">
             <Star className="w-4 h-4 mx-auto mb-1" style={{ color: accent.accent }} />
             <div className="text-lg font-bold text-ink">{avgRating.toFixed(1)}</div>
-            <div className="text-[10px] text-ink-muted">Avg</div>
+            <div className="text-[10px] md:text-xs text-ink-muted">Avg</div>
           </div>
         </div>
         )}
@@ -459,7 +459,7 @@ export default function PublicProfilePage() {
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-parchment rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-gold-light/30"
+            className="bg-parchment rounded-2xl shadow-2xl p-6 w-full max-w-sm sm:max-w-md border border-gold-light/30"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-lg font-bold text-ink mb-4" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
@@ -515,7 +515,7 @@ export default function PublicProfilePage() {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="glass-card mx-4 mt-4 rounded-2xl p-5 md:mx-auto md:max-w-2xl border border-gold-light/20 text-center"
+          className="glass-card mx-4 mt-4 rounded-2xl p-5 md:mx-auto md:max-w-2xl lg:max-w-4xl border border-gold-light/20 text-center"
         >
           <Lucide.Lock className="w-8 h-8 mx-auto mb-2 text-gold/60" />
           <h3
@@ -537,7 +537,7 @@ export default function PublicProfilePage() {
 
       {/* Currently Reading */}
       {showCurrentlyReading && (
-      <motion.section initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="glass-card mx-4 mt-4 rounded-2xl p-6 md:mx-auto md:max-w-2xl">
+      <motion.section initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="glass-card mx-4 mt-4 rounded-2xl p-6 md:mx-auto md:max-w-2xl lg:max-w-4xl">
         <h2
           className="text-lg font-semibold text-ink mb-3 flex items-center gap-2"
           style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
@@ -565,7 +565,7 @@ export default function PublicProfilePage() {
                         style={{ width: `${(book.currentPage / book.totalPages) * 100}%`, background: `linear-gradient(90deg, ${accent.accent}, ${accent.accentLight})` }}
                       />
                     </div>
-                    <p className="text-[10px] text-ink-muted mt-0.5">
+                    <p className="text-[10px] md:text-xs text-ink-muted mt-0.5">
                       {Math.round((book.currentPage / book.totalPages) * 100)}%
                     </p>
                   </div>
@@ -580,7 +580,7 @@ export default function PublicProfilePage() {
       )}
 
       {/* Completed Books */}
-      <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mx-4 mt-6 md:mx-auto md:max-w-2xl">
+      <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mx-4 mt-6 md:mx-auto md:max-w-2xl lg:max-w-4xl">
         <h2
           className="text-lg font-semibold text-ink mb-3 flex items-center gap-2"
           style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
@@ -601,7 +601,7 @@ export default function PublicProfilePage() {
                     </div>
                   )}
                   <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center p-1">
-                    <p className="text-white text-[10px] text-center line-clamp-3">{book.title}</p>
+                    <p className="text-white text-[10px] md:text-xs text-center line-clamp-3">{book.title}</p>
                   </div>
                 </div>
               ))}
@@ -618,7 +618,7 @@ export default function PublicProfilePage() {
       </motion.section>
 
       {/* Want to Read */}
-      <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="mx-4 mt-6 md:mx-auto md:max-w-2xl">
+      <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="mx-4 mt-6 md:mx-auto md:max-w-2xl lg:max-w-4xl">
         <h2
           className="text-lg font-semibold text-ink mb-3 flex items-center gap-2"
           style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
@@ -637,7 +637,7 @@ export default function PublicProfilePage() {
                 </div>
               )}
               <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center p-1">
-                <p className="text-white text-[10px] text-center line-clamp-3">{book.title}</p>
+                <p className="text-white text-[10px] md:text-xs text-center line-clamp-3">{book.title}</p>
               </div>
             </div>
           ))}
@@ -650,7 +650,7 @@ export default function PublicProfilePage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1 }}
-          className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-cream/95 backdrop-blur-md border-t border-gold/20 md:max-w-2xl md:mx-auto md:rounded-t-2xl md:bottom-0"
+          className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-cream/95 backdrop-blur-md border-t border-gold/20 md:max-w-2xl lg:max-w-4xl md:mx-auto md:rounded-t-2xl md:bottom-0"
         >
           <div className="flex items-center gap-3">
             <div className="flex-1">

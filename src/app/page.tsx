@@ -218,6 +218,25 @@ export default function HomePage() {
   const [threadBookSearch, setThreadBookSearch] = useState('');
   const [managingThreadId, setManagingThreadId] = useState<string | null>(null);
   const { user } = useAuth();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Fetch unread notification count
+  useEffect(() => {
+    if (!user || !isSupabaseConfigured()) return;
+    const fetchUnread = async () => {
+      const supabase = createClient();
+      const { count } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('read', false);
+      setUnreadCount(count || 0);
+    };
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 30000);
+    return () => clearInterval(interval);
+  }, [user]);
+
   // Recommendation state for completed books section
   const [recommendBookId, setRecommendBookId] = useState<string | null>(null);
   const [recommendSearchQuery, setRecommendSearchQuery] = useState('');
@@ -450,24 +469,36 @@ export default function HomePage() {
             <ElephantWatermark />
           </div>
 
-          <div className="flex items-center gap-3 mb-3 flex-wrap">
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.15 }}
-              className="text-ink-muted text-xs tracking-wide"
-            >
-              {format(new Date(), 'EEEE, MMMM d')}
-            </motion.p>
-            <span className="text-ink-muted/30 text-xs hidden sm:inline">·</span>
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="text-[10px] uppercase tracking-[0.2em] text-gold-dark/70 font-medium"
-            >
-              Margins
-            </motion.p>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3 flex-wrap">
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.15 }}
+                className="text-ink-muted text-xs tracking-wide"
+              >
+                {format(new Date(), 'EEEE, MMMM d')}
+              </motion.p>
+              <span className="text-ink-muted/30 text-xs hidden sm:inline">·</span>
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="text-[10px] md:text-xs uppercase tracking-[0.2em] text-gold-dark/70 font-medium"
+              >
+                Margins
+              </motion.p>
+            </div>
+            {user && (
+              <Link href="/notifications" className="relative p-2 rounded-xl hover:bg-gold-light/10 transition-colors group">
+                <Lucide.Bell className="w-5 h-5 text-ink-muted group-hover:text-gold-dark transition-colors" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[10px] md:text-xs font-bold text-parchment px-1" style={{ background: 'linear-gradient(135deg, var(--th-rose), #e85d75)' }}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
+              </Link>
+            )}
           </div>
 
           {/* Greeting with editable name */}
@@ -583,7 +614,7 @@ export default function HomePage() {
             </div>
             <p className="text-xs text-ink-muted mt-0.5">{stat.label}</p>
             {'subtitle' in stat && stat.subtitle && (
-              <p className="text-[10px] text-ink-muted/70 mt-0.5">{stat.subtitle}</p>
+              <p className="text-[10px] md:text-xs text-ink-muted/70 mt-0.5">{stat.subtitle}</p>
             )}
           </motion.div>
         ))}
@@ -607,19 +638,19 @@ export default function HomePage() {
                 <div className="text-xl font-bold text-ink" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
                   {stats.todayPages}
                 </div>
-                <p className="text-[11px] text-ink-muted">pages read</p>
+                <p className="text-[11px] md:text-xs text-ink-muted">pages read</p>
               </div>
               <div className="text-center border-x border-gold-light/20">
                 <div className="text-xl font-bold text-ink" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
                   {stats.todayMinutes < 60 ? `${stats.todayMinutes}m` : `${Math.floor(stats.todayMinutes / 60)}h ${stats.todayMinutes % 60}m`}
                 </div>
-                <p className="text-[11px] text-ink-muted">time spent</p>
+                <p className="text-[11px] md:text-xs text-ink-muted">time spent</p>
               </div>
               <div className="text-center">
                 <div className="text-xl font-bold text-ink" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
                   {stats.todayBooks}
                 </div>
-                <p className="text-[11px] text-ink-muted">{stats.todayBooks === 1 ? 'book' : 'books'} worked on</p>
+                <p className="text-[11px] md:text-xs text-ink-muted">{stats.todayBooks === 1 ? 'book' : 'books'} worked on</p>
               </div>
             </div>
             {stats.todayPages === 0 && stats.todayMinutes === 0 && (
@@ -754,7 +785,7 @@ export default function HomePage() {
                           <h3 className="font-medium text-ink text-sm truncate group-hover:text-gold-dark transition-colors">{book.title}</h3>
                           <p className="text-xs text-ink-muted truncate">{book.author}</p>
                           {book.genre && (
-                            <span className="inline-block mt-1 px-2 py-0.5 rounded-full bg-teal/5 text-teal text-[10px] font-medium border border-teal/10">
+                            <span className="inline-block mt-1 px-2 py-0.5 rounded-full bg-teal/5 text-teal text-[10px] md:text-xs font-medium border border-teal/10">
                               {book.genre}
                             </span>
                           )}
@@ -880,7 +911,7 @@ export default function HomePage() {
                         {book.goldRecommended && (
                           <div className="absolute top-2 left-2 flex items-center gap-1 px-1.5 py-0.5 rounded-full shadow-md" style={{ background: 'linear-gradient(135deg, #D4A855, #E8C878)', color: '#3A2C22' }}>
                             <Lucide.Award className="w-3 h-3" />
-                            <span className="text-[9px] font-bold">GOLD</span>
+                            <span className="text-[9px] md:text-[11px] font-bold">GOLD</span>
                           </div>
                         )}
                       </div>
@@ -888,7 +919,7 @@ export default function HomePage() {
                     <div className="p-2.5">
                       <Link href={`/book/${book.id}`}>
                         <p className="text-xs font-medium text-ink truncate group-hover:text-gold-dark transition-colors">{book.title}</p>
-                        <p className="text-[10px] text-ink-muted truncate">{book.author}</p>
+                        <p className="text-[10px] md:text-xs text-ink-muted truncate">{book.author}</p>
                       </Link>
                       {book.rating && (
                         <div className="flex gap-0.5 mt-1">
@@ -901,7 +932,7 @@ export default function HomePage() {
                       {user && (
                         <button
                           onClick={() => { setRecommendBookId(book.id); setRecommendSearchQuery(''); setRecommendMessage(''); setRecommendMode('choose'); setGoldNote(''); }}
-                          className={`mt-2 w-full flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-medium border transition-colors ${
+                          className={`mt-2 w-full flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-[10px] md:text-xs font-medium border transition-colors ${
                             book.goldRecommended
                               ? 'bg-gold/10 text-gold-dark border-gold/20 hover:bg-gold/15'
                               : 'bg-forest/5 text-forest border-forest/10 hover:bg-forest/10'
@@ -957,7 +988,7 @@ export default function HomePage() {
                             <h3 className="font-semibold text-ink text-sm truncate">{book.title}</h3>
                             <p className="text-xs text-ink-muted truncate">{book.author}</p>
                             {book.goldRecommended && (
-                              <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ background: 'linear-gradient(135deg, #D4A855, #E8C878)', color: '#3A2C22' }}>
+                              <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bold" style={{ background: 'linear-gradient(135deg, #D4A855, #E8C878)', color: '#3A2C22' }}>
                                 <Lucide.Award className="w-2.5 h-2.5" /> Gold Pick
                               </span>
                             )}
@@ -981,7 +1012,7 @@ export default function HomePage() {
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-semibold text-ink group-hover:text-gold-dark transition-colors">Gold Recommend</p>
-                                <p className="text-[11px] text-ink-muted">Your top picks with a gold badge ({goldRecommendedCount}/3 used)</p>
+                                <p className="text-[11px] md:text-xs text-ink-muted">Your top picks with a gold badge ({goldRecommendedCount}/3 used)</p>
                               </div>
                               <Lucide.ChevronRight className="w-4 h-4 text-ink-muted/50 group-hover:text-gold-dark transition-colors" />
                             </button>
@@ -996,7 +1027,7 @@ export default function HomePage() {
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-semibold text-ink group-hover:text-forest transition-colors">Post to Network</p>
-                                <p className="text-[11px] text-ink-muted">Share your thoughts like a post — visible to all followers</p>
+                                <p className="text-[11px] md:text-xs text-ink-muted">Share your thoughts like a post — visible to all followers</p>
                               </div>
                               <Lucide.ChevronRight className="w-4 h-4 text-ink-muted/50 group-hover:text-forest transition-colors" />
                             </button>
@@ -1011,7 +1042,7 @@ export default function HomePage() {
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-semibold text-ink group-hover:text-teal transition-colors">Send to a Friend</p>
-                                <p className="text-[11px] text-ink-muted">Privately recommend this book to someone specific</p>
+                                <p className="text-[11px] md:text-xs text-ink-muted">Privately recommend this book to someone specific</p>
                               </div>
                               <Lucide.ChevronRight className="w-4 h-4 text-ink-muted/50 group-hover:text-teal transition-colors" />
                             </button>
@@ -1133,7 +1164,7 @@ export default function HomePage() {
                                     className={`w-full px-3 py-2 rounded-xl bg-cream/50 border text-ink text-sm placeholder:text-ink-muted/60 ${!recommendMessage.trim() ? 'border-rose/30' : 'border-gold-light/30'}`}
                                   />
                                   {!recommendMessage.trim() && (
-                                    <p className="text-[10px] text-rose/70 mt-1">A message is required before sending.</p>
+                                    <p className="text-[10px] md:text-xs text-rose/70 mt-1">A message is required before sending.</p>
                                   )}
                                 </div>
                                 {recommendUsers.length > 0 && (
@@ -1154,7 +1185,7 @@ export default function HomePage() {
                                         )}
                                         <div className="flex-1 min-w-0">
                                           <p className="text-sm font-medium text-ink truncate">{u.reader_name}</p>
-                                          <p className="text-[10px] text-ink-muted">@{u.public_slug}</p>
+                                          <p className="text-[10px] md:text-xs text-ink-muted">@{u.public_slug}</p>
                                         </div>
                                         {recommendSent === u.id ? (
                                           <div className="flex items-center gap-1 text-forest text-xs">
@@ -1345,7 +1376,7 @@ export default function HomePage() {
                     <div className="flex items-center gap-2">
                       <span className={color.text}>{threadIconSvgs[thread.icon]}</span>
                       <p className={`text-xs font-medium ${color.text} uppercase tracking-wider`}>{thread.name}</p>
-                      <span className="text-[10px] text-ink-muted">({threadBooks.length})</span>
+                      <span className="text-[10px] md:text-xs text-ink-muted">({threadBooks.length})</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <button
@@ -1362,7 +1393,7 @@ export default function HomePage() {
                       </button>
                     </div>
                   </div>
-                  {thread.description && <p className="text-[10px] text-ink-muted mb-2 italic">{thread.description}</p>}
+                  {thread.description && <p className="text-[10px] md:text-xs text-ink-muted mb-2 italic">{thread.description}</p>}
 
                   {/* Manage books in thread */}
                   <AnimatePresence>
@@ -1394,7 +1425,7 @@ export default function HomePage() {
                                 >
                                   <Lucide.Plus className="w-3 h-3 text-gold-dark" />
                                   <span className="text-xs text-ink truncate">{b.title}</span>
-                                  <span className="text-[10px] text-ink-muted ml-auto">{b.author}</span>
+                                  <span className="text-[10px] md:text-xs text-ink-muted ml-auto">{b.author}</span>
                                 </button>
                               ))}
                           </div>
@@ -1416,7 +1447,7 @@ export default function HomePage() {
                               </div>
                             )}
                           </div>
-                          <p className="text-[10px] text-ink-muted truncate w-12 mt-1 group-hover:text-gold-dark transition-colors">{b!.title}</p>
+                          <p className="text-[10px] md:text-xs text-ink-muted truncate w-12 mt-1 group-hover:text-gold-dark transition-colors">{b!.title}</p>
                         </Link>
                         {isManaging && (
                           <button
@@ -1428,7 +1459,7 @@ export default function HomePage() {
                         )}
                       </div>
                     )) : (
-                      <p className="text-[10px] text-ink-muted italic py-2">Click <Lucide.Settings className="w-3 h-3 inline" /> to add books to this thread.</p>
+                      <p className="text-[10px] md:text-xs text-ink-muted italic py-2">Click <Lucide.Settings className="w-3 h-3 inline" /> to add books to this thread.</p>
                     )}
                   </div>
                 </div>

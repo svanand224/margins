@@ -531,7 +531,7 @@ export default function GoalsPage() {
                 </div>
 
                 <p className="text-sm font-semibold text-ink">{ach.label}</p>
-                <p className="text-[10px] text-ink-muted mt-0.5 mb-2">{ach.description}</p>
+                <p className="text-[10px] md:text-xs text-ink-muted mt-0.5 mb-2">{ach.description}</p>
 
                 {/* Progress bar */}
                 <div className="w-full h-1.5 bg-gold-light/20 rounded-full overflow-hidden">
@@ -542,7 +542,7 @@ export default function GoalsPage() {
                     className={`h-full rounded-full ${ach.unlocked ? 'bg-gradient-to-r from-gold to-amber' : 'bg-ink-muted/30'}`}
                   />
                 </div>
-                <p className="text-[9px] text-ink-muted mt-1">
+                <p className="text-[9px] md:text-[11px] text-ink-muted mt-1">
                   {ach.progress.toLocaleString()} / {ach.requirement.toLocaleString()}
                 </p>
 

@@ -286,7 +286,7 @@ function LibraryContent() {
         {/* Filter bar */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Status pills */}
-          <div className="flex gap-1.5 overflow-x-auto pb-1 flex-1 min-w-0">
+          <div className="flex gap-1.5 overflow-x-auto md:overflow-visible md:flex-wrap pb-1 flex-1 min-w-0">
             {(Object.keys(statusLabels) as (ReadingStatus | 'all')[]).map((status) => (
               <button
                 key={status}
@@ -508,7 +508,7 @@ function GridBookCard({ book, index, onToggleFavorite, relatedCount }: { book: B
               </div>
             )}
             {relatedCount > 0 && (
-              <div className="flex items-center gap-1 mt-1.5 text-[10px] text-ink-muted/60">
+              <div className="flex items-center gap-1 mt-1.5 text-[10px] md:text-xs text-ink-muted/60">
                 <svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 5 C3 2, 7 2, 10 5" stroke="currentColor" strokeWidth="1" fill="none" /></svg>
                 {relatedCount} thread{relatedCount > 1 ? 's' : ''}
               </div>
@@ -561,7 +561,7 @@ function ListBookCard({ book, index, onToggleFavorite, relatedCount }: { book: B
                 <div className="flex items-center gap-1.5">
                   <h3 className="text-sm font-semibold text-ink truncate">{book.title}</h3>
                   {book.isRecommended && (
-                    <span className="flex-shrink-0 px-1.5 py-0.5 rounded-md bg-forest/10 text-forest text-[9px] font-medium border border-forest/20">
+                    <span className="flex-shrink-0 px-1.5 py-0.5 rounded-md bg-forest/10 text-forest text-[9px] md:text-[11px] font-medium border border-forest/20">
                       Recommended
                     </span>
                   )}
@@ -569,7 +569,7 @@ function ListBookCard({ book, index, onToggleFavorite, relatedCount }: { book: B
                 <p className="text-xs text-ink-muted truncate">{book.author} · {book.genre}</p>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
-                <div className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${statusColors[book.status]}`}>
+                <div className={`px-2 py-0.5 rounded-full text-[10px] md:text-xs font-medium border ${statusColors[book.status]}`}>
                   {statusLabels[book.status].replace('Currently ', '')}
                 </div>
                 <button
@@ -586,7 +586,7 @@ function ListBookCard({ book, index, onToggleFavorite, relatedCount }: { book: B
             </div>
             {book.status === 'reading' && (
               <div className="mt-2">
-                <div className="text-[10px] text-ink-muted mb-0.5">
+                <div className="text-[10px] md:text-xs text-ink-muted mb-0.5">
                   <span>Page {book.currentPage}/{book.totalPages}</span>
                 </div>
                 <LotusProgressBar progress={progress} size="sm" showPercentage />

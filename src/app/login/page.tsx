@@ -293,7 +293,7 @@ export default function LoginPage() {
                         style={{ fontFamily: "'Lora', Georgia, serif", fontSize: '0.9rem' }}
                       />
                     </div>
-                    <p className="text-[10px] text-ink-muted mt-1">Letters, numbers, and underscores only. This is how others will find you.</p>
+                    <p className="text-[10px] md:text-xs text-ink-muted mt-1">Letters, numbers, and underscores only. This is how others will find you.</p>
                   </div>
                 </motion.div>
               )}

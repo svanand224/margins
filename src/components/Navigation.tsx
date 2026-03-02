@@ -38,10 +38,10 @@ const navItems = [
   { href: '/discover', icon: Compass, label: 'Explore' },
   { href: '/notifications', icon: Bell, label: 'Alerts' },
   { href: '/discussions', icon: MessageSquare, label: 'Marginalia' },
-  { href: '/recommendations', icon: Gift, label: 'For You' },
+  { href: '/profile', icon: UserCircle, label: 'Profile' },
   { href: '/goals', icon: Target, label: 'Goals' },
   { href: '/analytics', icon: BarChart3, label: 'Analytics' },
-  { href: '/profile', icon: UserCircle, label: 'Profile' },
+  { href: '/recommendations', icon: Gift, label: 'For You' },
 ];
 
 export default function Navigation() {

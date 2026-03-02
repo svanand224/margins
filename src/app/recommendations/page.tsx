@@ -127,21 +127,25 @@ export default function RecommendationsPage() {
     if (!user || !isSupabaseConfigured()) { setLoading(false); return; }
     const supabase = createClient();
 
-    const [{ data: inboxData }, { data: sentData }] = await Promise.all([
-      supabase
-        .from('recommendations')
-        .select('*, from_user:from_user_id(reader_name, avatar_url, username, public_slug)')
-        .eq('to_user_id', user.id)
-        .order('created_at', { ascending: false }),
-      supabase
-        .from('recommendations')
-        .select('*, to_user:to_user_id(reader_name, avatar_url, username, public_slug)')
-        .eq('from_user_id', user.id)
-        .order('created_at', { ascending: false }),
-    ]);
+    try {
+      const [{ data: inboxData }, { data: sentData }] = await Promise.all([
+        supabase
+          .from('recommendations')
+          .select('*, from_user:from_user_id(reader_name, avatar_url, username, public_slug)')
+          .eq('to_user_id', user.id)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('recommendations')
+          .select('*, to_user:to_user_id(reader_name, avatar_url, username, public_slug)')
+          .eq('from_user_id', user.id)
+          .order('created_at', { ascending: false }),
+      ]);
 
-    setInbox((inboxData as unknown as Recommendation[]) || []);
-    setSent((sentData as unknown as Recommendation[]) || []);
+      setInbox((inboxData as unknown as Recommendation[]) || []);
+      setSent((sentData as unknown as Recommendation[]) || []);
+    } catch (err) {
+      console.error('Recommendations fetch error:', err);
+    }
     setLoading(false);
   };
 
@@ -491,7 +495,7 @@ export default function RecommendationsPage() {
         animate={{ opacity: 1, y: 0 }}
         className="sticky top-0 z-10 bg-parchment/80 backdrop-blur-md px-4 py-4 border-b border-gold-light/20"
       >
-        <div className="md:max-w-2xl md:mx-auto flex items-center justify-between">
+        <div className="md:max-w-2xl lg:max-w-4xl md:mx-auto flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-ink flex items-center gap-2" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
               <Gift className="w-6 h-6 text-gold" />
@@ -511,7 +515,7 @@ export default function RecommendationsPage() {
       </motion.div>
 
       {/* Tabs */}
-      <div className="px-4 pt-4 md:max-w-2xl md:mx-auto">
+      <div className="px-4 pt-4 md:max-w-2xl lg:max-w-4xl md:mx-auto">
         <div className="flex gap-1 glass-card rounded-xl p-1 mb-6" style={{ boxShadow: 'var(--th-card-shadow)' }}>
           {([
             { key: 'inbox' as TabType, icon: Inbox, label: 'Inbox', badge: pendingInbox.length },
@@ -530,7 +534,7 @@ export default function RecommendationsPage() {
               <tab.icon className="w-4 h-4" />
               {tab.label}
               {tab.badge > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center text-parchment" style={{ background: 'var(--th-rose)' }}>
+                <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full text-[10px] md:text-xs font-bold flex items-center justify-center text-parchment" style={{ background: 'var(--th-rose)' }}>
                   {tab.badge}
                 </span>
               )}
@@ -539,7 +543,7 @@ export default function RecommendationsPage() {
         </div>
       </div>
 
-      <div className="px-4 md:max-w-2xl md:mx-auto">
+      <div className="px-4 md:max-w-2xl lg:max-w-4xl md:mx-auto">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-gold" />
@@ -581,7 +585,7 @@ export default function RecommendationsPage() {
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2 mb-1">
                                     <span className="text-sm font-medium text-ink">{(rec.from_user as any)?.reader_name || 'Someone'}</span>
-                                    <span className="text-[10px] text-ink-muted">{formatTime(rec.created_at)}</span>
+                                    <span className="text-[10px] md:text-xs text-ink-muted">{formatTime(rec.created_at)}</span>
                                   </div>
                                   <div className="flex items-center gap-2 mb-1">
                                     <BookOpen className="w-4 h-4 text-forest flex-shrink-0" />
@@ -641,9 +645,9 @@ export default function RecommendationsPage() {
                               )}
                               <div className="flex-1 min-w-0">
                                 <span className="text-xs text-ink">{rec.book_title}</span>
-                                <span className="text-[10px] text-ink-muted ml-1">from {(rec.from_user as any)?.reader_name}</span>
+                                <span className="text-[10px] md:text-xs text-ink-muted ml-1">from {(rec.from_user as any)?.reader_name}</span>
                               </div>
-                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] md:text-xs font-medium ${
                                 rec.status === 'accepted'
                                   ? 'bg-forest/10 text-forest border border-forest/20'
                                   : 'bg-cream text-ink-muted border border-gold-light/20'
@@ -702,10 +706,10 @@ export default function RecommendationsPage() {
                             to {(rec.to_user as any)?.reader_name || 'someone'} · {formatTime(rec.created_at)}
                           </div>
                           {rec.message && (
-                            <p className="text-[11px] text-ink-muted italic mt-1 truncate">&ldquo;{rec.message}&rdquo;</p>
+                            <p className="text-[11px] md:text-xs text-ink-muted italic mt-1 truncate">&ldquo;{rec.message}&rdquo;</p>
                           )}
                         </div>
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0 ${
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] md:text-xs font-medium flex-shrink-0 ${
                           rec.status === 'accepted' ? 'bg-forest/10 text-forest border border-forest/20'
                           : rec.status === 'dismissed' ? 'bg-rose/10 text-rose border border-rose/20'
                           : 'bg-amber/10 text-amber border border-amber/20'
@@ -758,10 +762,10 @@ export default function RecommendationsPage() {
                         <h3 className="text-xs font-semibold text-ink-muted uppercase tracking-wider mb-2">Your taste so far</h3>
                         <div className="flex flex-wrap gap-1.5">
                           {tasteProfile.topGenres.map(g => (
-                            <span key={g} className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-gold/10 text-gold-dark border border-gold/15">{g}</span>
+                            <span key={g} className="px-2 py-0.5 rounded-full text-[10px] md:text-xs font-medium bg-gold/10 text-gold-dark border border-gold/15">{g}</span>
                           ))}
                           {tasteProfile.topAuthors.slice(0, 2).map(a => (
-                            <span key={a} className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-forest/10 text-forest border border-forest/15">{a}</span>
+                            <span key={a} className="px-2 py-0.5 rounded-full text-[10px] md:text-xs font-medium bg-forest/10 text-forest border border-forest/15">{a}</span>
                           ))}
                         </div>
                       </div>
@@ -775,14 +779,14 @@ export default function RecommendationsPage() {
                         <h3 className="text-sm font-semibold text-ink flex items-center gap-1.5">
                           <Star className="w-4 h-4 text-gold" /> Your Taste Profile
                         </h3>
-                        <span className="text-[10px] text-ink-muted">{completedBooks.length} books read</span>
+                        <span className="text-[10px] md:text-xs text-ink-muted">{completedBooks.length} books read</span>
                       </div>
                       <div className="flex flex-wrap gap-1.5">
                         {tasteProfile.topGenres.map(g => (
-                          <span key={g} className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-gold/10 text-gold-dark border border-gold/15">{g}</span>
+                          <span key={g} className="px-2.5 py-1 rounded-full text-[11px] md:text-xs font-medium bg-gold/10 text-gold-dark border border-gold/15">{g}</span>
                         ))}
                         {tasteProfile.topAuthors.slice(0, 3).map(a => (
-                          <span key={a} className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-forest/10 text-forest border border-forest/15">{a}</span>
+                          <span key={a} className="px-2.5 py-1 rounded-full text-[11px] md:text-xs font-medium bg-forest/10 text-forest border border-forest/15">{a}</span>
                         ))}
                       </div>
                     </div>
@@ -864,10 +868,10 @@ export default function RecommendationsPage() {
                                     <p className="text-xs text-ink-muted">{rec.author}</p>
                                     <div className="flex items-center gap-1 mt-1">
                                       <Sparkles className="w-3 h-3 text-gold" />
-                                      <span className="text-[11px] text-gold-dark italic">{rec.reason}</span>
+                                      <span className="text-[11px] md:text-xs text-gold-dark italic">{rec.reason}</span>
                                     </div>
                                     {rec.genre && (
-                                      <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] bg-cream text-ink-muted border border-gold-light/20">{rec.genre}</span>
+                                      <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] md:text-xs bg-cream text-ink-muted border border-gold-light/20">{rec.genre}</span>
                                     )}
                                     <motion.button
                                       whileTap={{ scale: 0.95 }}
@@ -966,7 +970,7 @@ export default function RecommendationsPage() {
                                 )}
                                 <div className="flex-1 min-w-0">
                                   <p className="text-xs font-medium text-ink line-clamp-1">{b.title}</p>
-                                  <p className="text-[10px] text-ink-muted">{b.author}</p>
+                                  <p className="text-[10px] md:text-xs text-ink-muted">{b.author}</p>
                                 </div>
                               </button>
                             ))}
@@ -990,7 +994,7 @@ export default function RecommendationsPage() {
                         className={`w-full px-3 py-2.5 rounded-xl bg-cream/50 border text-ink text-sm ${!sendMessage.trim() ? 'border-rose/30' : 'border-gold-light/30'}`}
                       />
                       {!sendMessage.trim() && (
-                        <p className="text-[10px] text-rose/70 mt-1">A message is required before sharing.</p>
+                        <p className="text-[10px] md:text-xs text-rose/70 mt-1">A message is required before sharing.</p>
                       )}
                     </div>
                   )}
@@ -1014,14 +1018,14 @@ export default function RecommendationsPage() {
                         </div>
                         <div className="flex-1">
                           <p className="text-sm font-medium text-ink">Share with Network</p>
-                          <p className="text-[10px] text-ink-muted">Post to your activity feed for followers to see</p>
+                          <p className="text-[10px] md:text-xs text-ink-muted">Post to your activity feed for followers to see</p>
                         </div>
                         {sendingRec && <Loader2 className="w-4 h-4 animate-spin text-gold" />}
                       </motion.button>
 
                       <div className="flex items-center gap-3 mb-3">
                         <div className="flex-1 h-px bg-gold-light/20" />
-                        <span className="text-[10px] text-ink-muted uppercase">or send to a friend</span>
+                        <span className="text-[10px] md:text-xs text-ink-muted uppercase">or send to a friend</span>
                         <div className="flex-1 h-px bg-gold-light/20" />
                       </div>
 
@@ -1033,7 +1037,7 @@ export default function RecommendationsPage() {
                         </div>
                       ) : friends.length > 0 ? (
                         <div className="mb-3">
-                          <p className="text-[10px] font-medium text-ink-muted uppercase tracking-wider mb-2">Friends</p>
+                          <p className="text-[10px] md:text-xs font-medium text-ink-muted uppercase tracking-wider mb-2">Friends</p>
                           <div className="space-y-1 max-h-36 overflow-y-auto">
                             {friends.map((f) => (
                               <button
@@ -1051,7 +1055,7 @@ export default function RecommendationsPage() {
                                 )}
                                 <div className="flex-1 min-w-0">
                                   <p className="text-xs font-medium text-ink">{f.reader_name}</p>
-                                  <p className="text-[10px] text-ink-muted">@{f.username || f.public_slug}</p>
+                                  <p className="text-[10px] md:text-xs text-ink-muted">@{f.username || f.public_slug}</p>
                                 </div>
                                 <Send className="w-4 h-4 text-gold" />
                               </button>
@@ -1059,7 +1063,7 @@ export default function RecommendationsPage() {
                           </div>
                           <div className="flex items-center gap-3 mt-3 mb-2">
                             <div className="flex-1 h-px bg-gold-light/20" />
-                            <span className="text-[10px] text-ink-muted uppercase">or search anyone</span>
+                            <span className="text-[10px] md:text-xs text-ink-muted uppercase">or search anyone</span>
                             <div className="flex-1 h-px bg-gold-light/20" />
                           </div>
                         </div>
@@ -1095,7 +1099,7 @@ export default function RecommendationsPage() {
                               )}
                               <div className="flex-1 min-w-0">
                                 <p className="text-xs font-medium text-ink">{u.reader_name}</p>
-                                <p className="text-[10px] text-ink-muted">@{u.username || u.public_slug}</p>
+                                <p className="text-[10px] md:text-xs text-ink-muted">@{u.username || u.public_slug}</p>
                               </div>
                               <Send className="w-4 h-4 text-gold" />
                             </button>

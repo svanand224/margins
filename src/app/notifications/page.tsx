@@ -154,7 +154,7 @@ export default function NotificationsPage() {
         animate={{ opacity: 1, y: 0 }}
         className="sticky top-0 z-10 bg-parchment/80 backdrop-blur-md px-4 py-4 border-b border-gold-light/20"
       >
-        <div className="md:max-w-2xl md:mx-auto flex items-center justify-between">
+        <div className="md:max-w-2xl lg:max-w-4xl md:mx-auto flex items-center justify-between">
           <div>
             <h1
               className="text-2xl font-bold text-ink flex items-center gap-2"
@@ -179,7 +179,7 @@ export default function NotificationsPage() {
         </div>
       </motion.div>
 
-      <div className="px-4 py-6 md:max-w-2xl md:mx-auto">
+      <div className="px-4 py-6 md:max-w-2xl lg:max-w-4xl md:mx-auto">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-gold" />
@@ -224,7 +224,7 @@ export default function NotificationsPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
                         {getIcon(n.type)}
-                        <span className="text-[10px] text-ink-muted">{formatTime(n.created_at)}</span>
+                        <span className="text-[10px] md:text-xs text-ink-muted">{formatTime(n.created_at)}</span>
                         {!n.read && <span className="w-2 h-2 rounded-full bg-gold flex-shrink-0" />}
                       </div>
                       <p className="text-sm text-ink">{getMessage(n)}</p>

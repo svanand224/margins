@@ -11,7 +11,6 @@ import {
   UserPlus,
   Gift,
   Loader2,
-  Clock,
   Sparkles,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -51,41 +50,46 @@ export default function FeedPage() {
 
       const supabase = createClient();
 
-      // Get users I follow
-      const { data: followingData } = await supabase
-        .from('follows')
-        .select('following_id')
-        .eq('follower_id', user.id);
+      try {
+        // Get users I follow
+        const { data: followingData } = await supabase
+          .from('follows')
+          .select('following_id')
+          .eq('follower_id', user.id);
 
-      const followingIds = followingData?.map((f) => f.following_id) || [];
+        const followingIds = followingData?.map((f) => f.following_id) || [];
 
-      if (followingIds.length === 0) {
-        setLoading(false);
-        return;
-      }
+        if (followingIds.length === 0) {
+          setLoading(false);
+          return;
+        }
 
-      // Get activities from followed users
-      const { data: activitiesData } = await supabase
-        .from('activities')
-        .select(`
-          id,
-          user_id,
-          type,
-          data,
-          created_at,
-          user:user_id (
-            reader_name,
-            avatar_url,
-            username,
-            public_slug
-          )
-        `)
-        .in('user_id', followingIds)
-        .order('created_at', { ascending: false })
-        .limit(50);
+        // Get activities from followed users
+        const { data: activitiesData } = await supabase
+          .from('activities')
+          .select(`
+            id,
+            user_id,
+            type,
+            data,
+            created_at,
+            user:user_id (
+              reader_name,
+              avatar_url,
+              username,
+              public_slug
+            )
+          `)
+          .in('user_id', followingIds)
+          .order('created_at', { ascending: false })
+          .limit(50);
 
-      if (activitiesData) {
-        setActivities(activitiesData as unknown as Activity[]);
+        if (activitiesData) {
+          setActivities(activitiesData as unknown as Activity[]);
+        }
+      } catch (err) {
+        console.error('Feed fetch error:', err);
+        setError('Failed to load feed. Please try again.');
       }
 
       setLoading(false);
@@ -201,18 +205,20 @@ export default function FeedPage() {
         animate={{ opacity: 1, y: 0 }}
         className="sticky top-0 z-10 bg-parchment/80 backdrop-blur-md px-4 py-4 border-b border-gold-light/20"
       >
-        <h1
-          className="text-2xl font-bold text-ink flex items-center gap-2"
-          style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
-        >
-          <Sparkles className="w-6 h-6 text-gold" />
-          Activity Feed
-        </h1>
-        <p className="text-sm text-ink-muted mt-1">See what readers you follow are up to</p>
+        <div className="md:max-w-2xl lg:max-w-4xl md:mx-auto">
+          <h1
+            className="text-2xl font-bold text-ink flex items-center gap-2"
+            style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+          >
+            <Sparkles className="w-6 h-6 text-gold" />
+            Activity Feed
+          </h1>
+          <p className="text-sm text-ink-muted mt-1">See what readers you follow are up to</p>
+        </div>
       </motion.div>
 
       {/* Feed */}
-      <div className="px-4 py-6 md:max-w-2xl md:mx-auto">
+      <div className="px-4 py-6 md:max-w-2xl lg:max-w-4xl md:mx-auto">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-gold" />

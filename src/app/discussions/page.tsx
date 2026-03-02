@@ -697,6 +697,8 @@ export default function DiscussionsPage() {
 
     if (reply && !error) {
       setReplies(prev => [...prev, reply as unknown as DiscussionPost]);
+      // Also add to posts state so reply count badge updates immediately
+      setPosts(prev => [...prev, reply as unknown as DiscussionPost]);
       setReplyText('');
     }
     setSendingReply(false);
@@ -729,7 +731,7 @@ export default function DiscussionsPage() {
     return (
       <div className="min-h-screen pb-24 md:pb-8 flex flex-col">
         <div className="px-4 pt-4 pb-4 border-b border-gold-light/20 bg-cream/50">
-          <div className="md:max-w-2xl md:mx-auto">
+          <div className="md:max-w-2xl lg:max-w-4xl md:mx-auto">
             <button
               onClick={() => {
                 // Clean up realtime subscription and polling when leaving
@@ -959,7 +961,7 @@ export default function DiscussionsPage() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 py-4 md:max-w-2xl md:mx-auto md:w-full">
+        <div className="flex-1 overflow-y-auto px-4 py-4 md:max-w-2xl lg:max-w-4xl md:mx-auto md:w-full">
           {postsLoading ? (
             <div className="flex items-center justify-center py-20">
               <Loader2 className="w-8 h-8 animate-spin text-gold" />
@@ -978,7 +980,7 @@ export default function DiscussionsPage() {
                 const isCreator = user?.id === selectedDiscussion.creator_id;
                 return (
                   <div className="mb-4 space-y-2 p-3 rounded-xl bg-gold/5 border border-gold/15">
-                    <p className="text-[10px] font-semibold text-gold-dark uppercase tracking-wider flex items-center gap-1.5">
+                    <p className="text-[10px] md:text-xs font-semibold text-gold-dark uppercase tracking-wider flex items-center gap-1.5">
                       <Pin className="w-3.5 h-3.5" /> Pinned Messages ({pinnedPosts.length}/3)
                     </p>
                     {pinnedPosts.sort((a, b) => (a.pinned_at || '').localeCompare(b.pinned_at || '')).map(post => (
@@ -995,7 +997,7 @@ export default function DiscussionsPage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-baseline gap-2">
                             <span className="text-xs font-medium text-ink">{(post.user as any)?.reader_name || 'Unknown'}</span>
-                            <span className="text-[10px] text-ink-muted">{formatTime(post.created_at)}</span>
+                            <span className="text-[10px] md:text-xs text-ink-muted">{formatTime(post.created_at)}</span>
                           </div>
                           <p className="text-xs text-ink-muted mt-0.5 line-clamp-2">{post.content}</p>
                         </div>
@@ -1031,7 +1033,7 @@ export default function DiscussionsPage() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.03 }}
-                    className={`rounded-xl transition-all ${post.is_pinned ? 'bg-gold/[0.03]' : ''} ${isExpanded ? 'ring-1 ring-gold-light/30 bg-cream/30' : ''}`}
+                    className={`group rounded-xl transition-all ${post.is_pinned ? 'bg-gold/[0.03]' : ''} ${isExpanded ? 'ring-1 ring-gold-light/30 bg-cream/30' : 'hover:bg-cream/20'}`}
                   >
                     <div className="flex gap-3 p-1">
                       {(post.user as any)?.avatar_url ? (
@@ -1047,9 +1049,9 @@ export default function DiscussionsPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium text-ink">{(post.user as any)?.reader_name || 'Unknown'}</span>
-                          <span className="text-[10px] text-ink-muted">{formatTime(post.created_at)}</span>
+                          <span className="text-[10px] md:text-xs text-ink-muted">{formatTime(post.created_at)}</span>
                           {post.is_pinned && (
-                            <span className="flex items-center gap-0.5 text-[9px] font-medium text-gold bg-gold/10 px-1.5 py-0.5 rounded-full border border-gold/20">
+                            <span className="flex items-center gap-0.5 text-[9px] md:text-[11px] font-medium text-gold bg-gold/10 px-1.5 py-0.5 rounded-full border border-gold/20">
                               <Pin className="w-2.5 h-2.5" /> Pinned
                             </span>
                           )}
@@ -1078,7 +1080,7 @@ export default function DiscussionsPage() {
                           {/* Heart */}
                           <button
                             onClick={(e) => { e.stopPropagation(); handleReaction(post.id, 'heart'); }}
-                            className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] transition-all touch-manipulation ${
+                            className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] md:text-xs transition-all touch-manipulation ${
                               reactions.heart.includes(user?.id || '') 
                                 ? 'bg-rose/15 text-rose border border-rose/20' 
                                 : 'text-ink-muted hover:bg-rose/10 hover:text-rose border border-transparent'
@@ -1090,7 +1092,7 @@ export default function DiscussionsPage() {
                           {/* Upvote */}
                           <button
                             onClick={(e) => { e.stopPropagation(); handleReaction(post.id, 'upvote'); }}
-                            className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] transition-all touch-manipulation ${
+                            className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] md:text-xs transition-all touch-manipulation ${
                               reactions.upvote.includes(user?.id || '') 
                                 ? 'bg-forest/15 text-forest border border-forest/20' 
                                 : 'text-ink-muted hover:bg-forest/10 hover:text-forest border border-transparent'
@@ -1102,7 +1104,7 @@ export default function DiscussionsPage() {
                           {/* Downvote */}
                           <button
                             onClick={(e) => { e.stopPropagation(); handleReaction(post.id, 'downvote'); }}
-                            className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] transition-all touch-manipulation ${
+                            className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] md:text-xs transition-all touch-manipulation ${
                               reactions.downvote.includes(user?.id || '') 
                                 ? 'bg-copper/15 text-copper border border-copper/20' 
                                 : 'text-ink-muted hover:bg-copper/10 hover:text-copper border border-transparent'
@@ -1114,7 +1116,7 @@ export default function DiscussionsPage() {
                           {/* Reply hint */}
                           <button
                             onClick={() => handleExpandPost(post.id)}
-                            className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] transition-all touch-manipulation ml-auto ${
+                            className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] md:text-xs transition-all touch-manipulation ml-auto ${
                               replyCount > 0 
                                 ? 'text-gold-dark font-medium bg-gold/8 border border-gold/15' 
                                 : 'text-ink-muted hover:bg-gold-light/10'
@@ -1141,7 +1143,7 @@ export default function DiscussionsPage() {
                                 {/* Who reacted section */}
                                 {totalReactions > 0 && (
                                   <div className="space-y-1.5">
-                                    <p className="text-[10px] font-medium text-ink-muted uppercase tracking-wider">Reactions</p>
+                                    <p className="text-[10px] md:text-xs font-medium text-ink-muted uppercase tracking-wider">Reactions</p>
                                     {repliesLoading ? (
                                       <Loader2 className="w-3.5 h-3.5 animate-spin text-gold" />
                                     ) : (
@@ -1150,7 +1152,7 @@ export default function DiscussionsPage() {
                                           <div className="flex items-center gap-1.5 flex-wrap">
                                             <Heart className="w-3 h-3 text-rose fill-rose" />
                                             {reactions.heart.map(uid => (
-                                              <span key={uid} className="text-[11px] text-ink bg-rose/8 px-1.5 py-0.5 rounded-full">
+                                              <span key={uid} className="text-[11px] md:text-xs text-ink bg-rose/8 px-1.5 py-0.5 rounded-full">
                                                 {reactionMembers[uid]?.reader_name || 'Someone'}
                                               </span>
                                             ))}
@@ -1160,7 +1162,7 @@ export default function DiscussionsPage() {
                                           <div className="flex items-center gap-1.5 flex-wrap">
                                             <ThumbsUp className="w-3 h-3 text-forest fill-forest" />
                                             {reactions.upvote.map(uid => (
-                                              <span key={uid} className="text-[11px] text-ink bg-forest/8 px-1.5 py-0.5 rounded-full">
+                                              <span key={uid} className="text-[11px] md:text-xs text-ink bg-forest/8 px-1.5 py-0.5 rounded-full">
                                                 {reactionMembers[uid]?.reader_name || 'Someone'}
                                               </span>
                                             ))}
@@ -1170,7 +1172,7 @@ export default function DiscussionsPage() {
                                           <div className="flex items-center gap-1.5 flex-wrap">
                                             <ThumbsDown className="w-3 h-3 text-copper fill-copper" />
                                             {reactions.downvote.map(uid => (
-                                              <span key={uid} className="text-[11px] text-ink bg-copper/8 px-1.5 py-0.5 rounded-full">
+                                              <span key={uid} className="text-[11px] md:text-xs text-ink bg-copper/8 px-1.5 py-0.5 rounded-full">
                                                 {reactionMembers[uid]?.reader_name || 'Someone'}
                                               </span>
                                             ))}
@@ -1184,13 +1186,13 @@ export default function DiscussionsPage() {
                                 {/* Thread replies */}
                                 <div className="rounded-xl bg-cream/20 border border-gold-light/15 p-3">
                                   <div className="flex items-center justify-between mb-2">
-                                    <p className="text-[10px] font-semibold text-gold-dark uppercase tracking-wider flex items-center gap-1.5">
+                                    <p className="text-[10px] md:text-xs font-semibold text-gold-dark uppercase tracking-wider flex items-center gap-1.5">
                                       <CornerDownRight className="w-3 h-3" />
                                       Thread {replies.length > 0 && `· ${replies.length} ${replies.length === 1 ? 'reply' : 'replies'}`}
                                     </p>
                                     <button
                                       onClick={() => handleExpandPost(post.id)}
-                                      className="text-[10px] text-ink-muted hover:text-ink transition-colors flex items-center gap-0.5"
+                                      className="text-[10px] md:text-xs text-ink-muted hover:text-ink transition-colors flex items-center gap-0.5"
                                     >
                                       Collapse <ChevronDown className="w-3 h-3 rotate-180" />
                                     </button>
@@ -1198,8 +1200,8 @@ export default function DiscussionsPage() {
 
                                   {/* Parent message quote — context for what thread is replying to */}
                                   <div className="mb-3 pl-3 border-l-2 border-gold/30 bg-gold/[0.04] rounded-r-lg py-1.5 pr-2">
-                                    <p className="text-[10px] text-ink-muted font-medium">{(post.user as any)?.reader_name || 'Unknown'} wrote:</p>
-                                    <p className="text-[11px] text-ink/70 line-clamp-2 italic">{post.content}</p>
+                                    <p className="text-[10px] md:text-xs text-ink-muted font-medium">{(post.user as any)?.reader_name || 'Unknown'} wrote:</p>
+                                    <p className="text-[11px] md:text-xs text-ink/70 line-clamp-2 italic">{post.content}</p>
                                   </div>
 
                                   {repliesLoading ? (
@@ -1215,7 +1217,7 @@ export default function DiscussionsPage() {
                                             <img src={(reply.user as any).avatar_url} alt="" className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
                                           ) : (
                                             <div
-                                              className="w-6 h-6 rounded-full flex items-center justify-center text-parchment text-[10px] font-bold flex-shrink-0"
+                                              className="w-6 h-6 rounded-full flex items-center justify-center text-parchment text-[10px] md:text-xs font-bold flex-shrink-0"
                                               style={{ background: `linear-gradient(135deg, ${theme.color}, ${theme.light})` }}
                                             >
                                               {((reply.user as any)?.reader_name || '?').charAt(0).toUpperCase()}
@@ -1224,7 +1226,7 @@ export default function DiscussionsPage() {
                                           <div className="flex-1 min-w-0">
                                             <div className="flex items-baseline gap-1.5">
                                               <span className="text-xs font-medium text-ink">{(reply.user as any)?.reader_name || 'Unknown'}</span>
-                                              <span className="text-[10px] text-ink-muted">{formatTime(reply.created_at)}</span>
+                                              <span className="text-[10px] md:text-xs text-ink-muted">{formatTime(reply.created_at)}</span>
                                             </div>
                                             <p className="text-xs text-ink mt-0.5 whitespace-pre-wrap break-words">{reply.content}</p>
                                           </div>
@@ -1238,7 +1240,7 @@ export default function DiscussionsPage() {
                                   {/* Reply input */}
                                   {user && isMember && (
                                     <div className="space-y-1.5">
-                                      <p className="text-[10px] text-ink-muted flex items-center gap-1">
+                                      <p className="text-[10px] md:text-xs text-ink-muted flex items-center gap-1">
                                         <CornerDownRight className="w-2.5 h-2.5" />
                                         Replying to {(post.user as any)?.reader_name || 'this message'}
                                       </p>
@@ -1280,7 +1282,7 @@ export default function DiscussionsPage() {
 
         {user && isMember ? (
           <div className="border-t border-gold-light/20 px-4 py-3 bg-parchment/80 backdrop-blur-sm">
-            <div className="md:max-w-2xl md:mx-auto flex gap-2 items-end">
+            <div className="md:max-w-2xl lg:max-w-4xl md:mx-auto flex gap-2 items-end">
               <textarea
                 ref={textareaRef}
                 value={newPost}
@@ -1331,7 +1333,7 @@ export default function DiscussionsPage() {
         animate={{ opacity: 1, y: 0 }}
         className="sticky top-0 z-10 bg-parchment/80 backdrop-blur-md px-4 py-4 border-b border-gold-light/20"
       >
-        <div className="md:max-w-2xl md:mx-auto flex items-center justify-between">
+        <div className="md:max-w-2xl lg:max-w-4xl md:mx-auto flex items-center justify-between">
           <div>
             <h1
               className="text-2xl font-bold text-ink flex items-center gap-2"
@@ -1355,7 +1357,7 @@ export default function DiscussionsPage() {
         </div>
       </motion.div>
 
-      <div className="px-4 py-6 md:max-w-2xl md:mx-auto">
+      <div className="px-4 py-6 md:max-w-2xl lg:max-w-4xl md:mx-auto">
         <AnimatePresence>
           {showCreate && (
             <motion.div
@@ -1428,7 +1430,7 @@ export default function DiscussionsPage() {
                     <p className="text-xs font-medium text-ink">
                       {formIsPublic ? 'Public Discussion' : 'Private Discussion'}
                     </p>
-                    <p className="text-[10px] text-ink-muted">
+                    <p className="text-[10px] md:text-xs text-ink-muted">
                       {formIsPublic ? 'Anyone can find and join' : 'Only invited members can see and join'}
                     </p>
                   </div>
@@ -1526,7 +1528,7 @@ export default function DiscussionsPage() {
                             <BookOpen className="w-3 h-3" /> {disc.book_title}
                           </p>
                         )}
-                        <div className="flex items-center gap-3 mt-2 text-[10px] text-ink-muted">
+                        <div className="flex items-center gap-3 mt-2 text-[10px] md:text-xs text-ink-muted">
                           <span>{(disc.creator as any)?.reader_name}</span>
                           <span className="flex items-center gap-0.5"><Users className="w-3 h-3" /> {disc.member_count}</span>
                           <span className="flex items-center gap-0.5"><MessageSquare className="w-3 h-3" /> {disc.post_count}</span>

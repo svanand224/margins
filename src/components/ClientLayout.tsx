@@ -126,7 +126,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       {user && <OnboardingTutorial />}
       {user && <LocalClock />}
       {user && <NotificationSummary />}
-      <main className="md:ml-20 lg:ml-64 pb-24 md:pb-8 relative z-10 min-h-screen">
+      <main className="md:ml-20 lg:ml-64 relative z-10 min-h-screen">
         {user && <PageTutorial pathname={pathname} />}
         <AnimatePresence mode="wait">
           <motion.div

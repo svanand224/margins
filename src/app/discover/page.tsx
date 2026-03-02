@@ -8,11 +8,9 @@ import {
   Users,
   BookOpen,
   Trophy,
-  Star,
   Loader2,
   User,
   Compass,
-  MessageSquare,
   TrendingUp,
   ChevronRight,
   Sparkles,
@@ -54,6 +52,7 @@ export default function DiscoverPage() {
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchExploreData();
@@ -63,8 +62,9 @@ export default function DiscoverPage() {
     if (!isSupabaseConfigured()) { setLoading(false); return; }
     const supabase = createClient();
 
-    // Fetch all profiles (public + private) so users can find friends
-    const { data: profiles } = await supabase
+    try {
+      // Fetch all profiles (public + private) so users can find friends
+      const { data: profiles } = await supabase
       .from('profiles')
       .select('id, username, reader_name, first_name, last_name, avatar_url, bio, favorite_genre, public_slug, shelf_public, reading_data')
       .not('public_slug', 'is', null)
@@ -116,6 +116,10 @@ export default function DiscoverPage() {
       .order('created_at', { ascending: false })
       .limit(10);
     if (activities) setRecentActivity(activities as unknown as RecentActivity[]);
+    } catch (err) {
+      console.error('Discover fetch error:', err);
+      setError('Failed to load explore data. Please try again.');
+    }
 
     setLoading(false);
   };
@@ -227,7 +231,7 @@ export default function DiscoverPage() {
                 <h2 className="text-sm font-semibold text-ink uppercase tracking-wider flex items-center gap-2 mb-3">
                   <Sparkles className="w-4 h-4 text-gold" /> Most Active This Week
                 </h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                   {featuredUsers.map((u, i) => {
                     const stats = getStats(u);
                     const currentlyReading = u.reading_data?.books?.find(b => b.status === 'reading');
@@ -250,9 +254,9 @@ export default function DiscoverPage() {
                             </div>
                           )}
                           <h3 className="text-sm font-semibold text-ink mt-2 truncate group-hover:text-gold-dark transition-colors">{u.reader_name}</h3>
-                          <p className="text-[10px] text-ink-muted">{stats.total} books · {stats.completed} read</p>
+                          <p className="text-[10px] md:text-xs text-ink-muted">{stats.total} books · {stats.completed} read</p>
                           {currentlyReading && (
-                            <p className="text-[10px] text-gold-dark mt-1 truncate flex items-center justify-center gap-1">
+                            <p className="text-[10px] md:text-xs text-gold-dark mt-1 truncate flex items-center justify-center gap-1">
                               <BookOpen className="w-3 h-3" /> {currentlyReading.title}
                             </p>
                           )}
@@ -297,7 +301,7 @@ export default function DiscoverPage() {
                           <span className="text-ink-muted">{getActivityText(activity)}</span>
                         </p>
                       </div>
-                      <span className="text-[10px] text-ink-muted flex-shrink-0">{formatTime(activity.created_at)}</span>
+                      <span className="text-[10px] md:text-xs text-ink-muted flex-shrink-0">{formatTime(activity.created_at)}</span>
                     </motion.div>
                   ))}
                 </div>
@@ -345,7 +349,7 @@ export default function DiscoverPage() {
                           <p className="text-xs text-ink-muted">@{u.username || u.public_slug}</p>
                         </div>
                         {isPrivate ? (
-                          <span className="text-[10px] text-ink-muted/60 bg-cream/60 border border-gold-light/20 px-2 py-1 rounded-full flex items-center gap-1">
+                          <span className="text-[10px] md:text-xs text-ink-muted/60 bg-cream/60 border border-gold-light/20 px-2 py-1 rounded-full flex items-center gap-1">
                             <Lock className="w-2.5 h-2.5" /> Private
                           </span>
                         ) : (

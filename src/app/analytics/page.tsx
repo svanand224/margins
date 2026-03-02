@@ -289,7 +289,7 @@ export default function AnalyticsPage() {
                 transition={{ delay: 0.3 + i * 0.01 }}
               >
                 {d.pages > 0 && (
-                  <div className="absolute -top-5 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-[9px] font-medium text-gold-dark bg-cream/90 px-1.5 py-0.5 rounded whitespace-nowrap z-10">
+                  <div className="absolute -top-5 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-[9px] md:text-[11px] font-medium text-gold-dark bg-cream/90 px-1.5 py-0.5 rounded whitespace-nowrap z-10">
                     {d.pages}p
                   </div>
                 )}
@@ -410,7 +410,7 @@ export default function AnalyticsPage() {
             />
           ))}
         </div>
-        <div className="flex items-center gap-2 mt-3 text-[10px] text-ink-muted">
+        <div className="flex items-center gap-2 mt-3 text-[10px] md:text-xs text-ink-muted">
           <span>Less</span>
           <div className="w-3 h-3 rounded-sm bg-cream" />
           <div className="w-3 h-3 rounded-sm bg-rose-light/40" />
@@ -489,7 +489,7 @@ export default function AnalyticsPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-ink truncate">{book.title}</p>
-                    <p className="text-[10px] text-ink-muted truncate">{book.author}</p>
+                    <p className="text-[10px] md:text-xs text-ink-muted truncate">{book.author}</p>
                   </div>
                   <div className="flex gap-0.5">
                     {Array.from({ length: 5 }).map((_, s) => (
@@ -526,7 +526,7 @@ export default function AnalyticsPage() {
                 className="px-4 py-2 glass-card rounded-xl bg-gradient-to-br from-lavender/10 to-plum/5"
               >
                 <p className="text-sm font-medium text-ink">{author}</p>
-                <p className="text-[10px] text-ink-muted">{count} book{count !== 1 ? 's' : ''}</p>
+                <p className="text-[10px] md:text-xs text-ink-muted">{count} book{count !== 1 ? 's' : ''}</p>
               </motion.div>
             ))}
           </div>

@@ -397,7 +397,7 @@ export default function BookPage() {
   };
 
   return (
-    <div className="min-h-screen max-w-2xl mx-auto px-4 py-8 pb-24 md:pb-8">
+    <div className="min-h-screen max-w-2xl lg:max-w-4xl mx-auto px-4 py-8 pb-24 md:pb-8">
       {showConfetti && <Confetti show={showConfetti} />}
       {book && (
         <>
@@ -429,7 +429,7 @@ export default function BookPage() {
 
                 {/* Status + Genre + Pages pills */}
                 <div className="flex flex-wrap gap-1.5 mb-3">
-                  <span className="px-2.5 py-1 rounded-full text-[11px] font-medium border"
+                  <span className="px-2.5 py-1 rounded-full text-[11px] md:text-xs font-medium border"
                     style={{
                       background: `color-mix(in srgb, ${form.status === 'completed' ? 'var(--th-forest)' : form.status === 'reading' ? 'var(--th-gold)' : form.status === 'dnf' ? 'var(--th-rose)' : 'var(--th-teal)'} 12%, transparent)`,
                       color: form.status === 'completed' ? 'var(--th-forest)' : form.status === 'reading' ? 'var(--th-gold-dark)' : form.status === 'dnf' ? 'var(--th-rose)' : 'var(--th-teal)',
@@ -439,9 +439,9 @@ export default function BookPage() {
                     {form.status === 'want-to-read' ? 'Want to Read' : form.status.charAt(0).toUpperCase() + form.status.slice(1)}
                   </span>
                   {book.genre && (
-                    <span className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-gold/8 text-gold-dark border border-gold/15">{book.genre}</span>
+                    <span className="px-2.5 py-1 rounded-full text-[11px] md:text-xs font-medium bg-gold/8 text-gold-dark border border-gold/15">{book.genre}</span>
                   )}
-                  <span className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-cream text-ink-muted border border-gold-light/20">{book.totalPages} pages</span>
+                  <span className="px-2.5 py-1 rounded-full text-[11px] md:text-xs font-medium bg-cream text-ink-muted border border-gold-light/20">{book.totalPages} pages</span>
                 </div>
 
                 {/* Star Rating */}
@@ -465,7 +465,7 @@ export default function BookPage() {
                 </div>
 
                 {/* Dates */}
-                <div className="text-[11px] text-ink-muted flex flex-wrap gap-x-3 gap-y-0.5">
+                <div className="text-[11px] md:text-xs text-ink-muted flex flex-wrap gap-x-3 gap-y-0.5">
                   {book.dateAdded && <span>Added {new Date(book.dateAdded).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>}
                   {book.startDate && <span>Started {new Date(book.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>}
                   {book.finishDate && <span>Finished {new Date(book.finishDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>}
@@ -622,19 +622,19 @@ export default function BookPage() {
                   <div className="text-lg font-bold text-ink" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
                     {(book.sessions || []).length}
                   </div>
-                  <p className="text-[10px] text-ink-muted">sessions</p>
+                  <p className="text-[10px] md:text-xs text-ink-muted">sessions</p>
                 </div>
                 <div className="text-center border-x border-gold-light/15">
                   <div className="text-lg font-bold text-ink" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
                     {(book.sessions || []).reduce((s, sess) => s + sess.pagesRead, 0)}
                   </div>
-                  <p className="text-[10px] text-ink-muted">pages logged</p>
+                  <p className="text-[10px] md:text-xs text-ink-muted">pages logged</p>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-bold text-ink" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
                     {(() => { const m = (book.sessions || []).reduce((s, sess) => s + sess.minutesSpent, 0); return m < 60 ? `${m}m` : `${Math.floor(m/60)}h ${m%60}m`; })()}
                   </div>
-                  <p className="text-[10px] text-ink-muted">time spent</p>
+                  <p className="text-[10px] md:text-xs text-ink-muted">time spent</p>
                 </div>
               </div>
             )}
@@ -681,9 +681,9 @@ export default function BookPage() {
                           <span className="text-ink-muted">·</span>
                           <span className="text-ink-muted">{session.minutesSpent} min</span>
                         </div>
-                        {session.notes && <p className="text-[11px] text-ink-muted mt-0.5 truncate italic">{session.notes}</p>}
+                        {session.notes && <p className="text-[11px] md:text-xs text-ink-muted mt-0.5 truncate italic">{session.notes}</p>}
                       </div>
-                      <span className="text-[10px] text-ink-muted flex-shrink-0">{getRelativeTime(session.date)}</span>
+                      <span className="text-[10px] md:text-xs text-ink-muted flex-shrink-0">{getRelativeTime(session.date)}</span>
                     </div>
                   );
                 })}
@@ -826,10 +826,10 @@ export default function BookPage() {
                     )}
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium text-ink truncate">{thread.name}</div>
-                      <div className="text-[11px] text-ink-muted">{thread.author}</div>
+                      <div className="text-[11px] md:text-xs text-ink-muted">{thread.author}</div>
                     </div>
                     {thread.genre && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-gold/10 text-gold-dark border border-gold/15">{thread.genre}</span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] md:text-xs font-medium bg-gold/10 text-gold-dark border border-gold/15">{thread.genre}</span>
                     )}
                   </div>
                 ))}
@@ -890,7 +890,7 @@ export default function BookPage() {
                       {detailsForm.coverUrl && (
                         <div className="mt-2 flex items-center gap-2">
                           <img src={detailsForm.coverUrl} alt="Preview" className="w-10 h-14 object-cover rounded-md border border-gold-light/20" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                          <span className="text-[10px] text-ink-muted">Preview</span>
+                          <span className="text-[10px] md:text-xs text-ink-muted">Preview</span>
                         </div>
                       )}
                     </div>
@@ -1005,7 +1005,7 @@ export default function BookPage() {
                       <h3 className="font-semibold text-ink text-sm truncate">{book.title}</h3>
                       <p className="text-xs text-ink-muted truncate">{book.author}</p>
                       {book.goldRecommended && (
-                        <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ background: 'linear-gradient(135deg, #D4A855, #E8C878)', color: '#3A2C22' }}>
+                        <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bold" style={{ background: 'linear-gradient(135deg, #D4A855, #E8C878)', color: '#3A2C22' }}>
                           ★ Gold Pick
                         </span>
                       )}
@@ -1029,7 +1029,7 @@ export default function BookPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-ink group-hover:text-gold-dark transition-colors">Gold Recommend</p>
-                          <p className="text-[11px] text-ink-muted">Your top picks with a gold badge ({goldRecommendedCount}/3 used)</p>
+                          <p className="text-[11px] md:text-xs text-ink-muted">Your top picks with a gold badge ({goldRecommendedCount}/3 used)</p>
                         </div>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-ink-muted/50 group-hover:text-gold-dark transition-colors"><polyline points="9 18 15 12 9 6"/></svg>
                       </button>
@@ -1044,7 +1044,7 @@ export default function BookPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-ink group-hover:text-forest transition-colors">Post to Network</p>
-                          <p className="text-[11px] text-ink-muted">Share your thoughts — visible to all followers</p>
+                          <p className="text-[11px] md:text-xs text-ink-muted">Share your thoughts — visible to all followers</p>
                         </div>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-ink-muted/50 group-hover:text-forest transition-colors"><polyline points="9 18 15 12 9 6"/></svg>
                       </button>
@@ -1059,7 +1059,7 @@ export default function BookPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-ink group-hover:text-teal transition-colors">Send to a Friend</p>
-                          <p className="text-[11px] text-ink-muted">Privately recommend this book to someone</p>
+                          <p className="text-[11px] md:text-xs text-ink-muted">Privately recommend this book to someone</p>
                         </div>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-ink-muted/50 group-hover:text-teal transition-colors"><polyline points="9 18 15 12 9 6"/></svg>
                       </button>
@@ -1183,7 +1183,7 @@ export default function BookPage() {
                             />
                           </div>
                           {!shareMessage.trim() && (
-                            <p className="text-[11px] text-rose/70 mb-2">Write a message before sending your recommendation.</p>
+                            <p className="text-[11px] md:text-xs text-rose/70 mb-2">Write a message before sending your recommendation.</p>
                           )}
                           {shareUsers.length > 0 && (
                             <div className="space-y-1 max-h-40 overflow-y-auto">
@@ -1203,7 +1203,7 @@ export default function BookPage() {
                                   )}
                                   <div className="flex-1 min-w-0">
                                     <p className="text-sm font-medium text-ink truncate">{u.reader_name}</p>
-                                    <p className="text-[10px] text-ink-muted">@{u.username || u.public_slug}</p>
+                                    <p className="text-[10px] md:text-xs text-ink-muted">@{u.username || u.public_slug}</p>
                                   </div>
                                   {shareSent === u.id ? (
                                     <span className="text-forest text-xs">✓ Sent!</span>
