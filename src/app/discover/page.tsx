@@ -151,6 +151,22 @@ export default function DiscoverPage() {
     return { total: books.length, completed };
   };
 
+  // Pick the "reading" book with the most recent session (or most recent dateAdded as fallback)
+  const getMostRecentReading = (user: PublicUser): Book | undefined => {
+    const reading = (user.reading_data?.books || []).filter(b => b.status === 'reading');
+    if (reading.length === 0) return undefined;
+    if (reading.length === 1) return reading[0];
+    return reading.sort((a, b) => {
+      const aLatest = (a.sessions || []).length > 0
+        ? Math.max(...a.sessions.map(s => new Date(s.date).getTime()))
+        : new Date(a.dateAdded || 0).getTime();
+      const bLatest = (b.sessions || []).length > 0
+        ? Math.max(...b.sessions.map(s => new Date(s.date).getTime()))
+        : new Date(b.dateAdded || 0).getTime();
+      return bLatest - aLatest;
+    })[0];
+  };
+
   const formatTime = (date: string) => {
     const now = new Date();
     const then = new Date(date);
@@ -240,7 +256,7 @@ export default function DiscoverPage() {
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                   {featuredUsers.map((u, i) => {
                     const stats = getStats(u);
-                    const currentlyReading = u.reading_data?.books?.find(b => b.status === 'reading');
+                    const currentlyReading = getMostRecentReading(u);
                     const rank = i + 1;
                     const rankColors = [
                       'from-yellow-400 to-amber-500', // #1 gold
@@ -372,7 +388,7 @@ export default function DiscoverPage() {
                           </h3>
                           <p className="text-xs text-ink-muted">@{u.username || u.public_slug}</p>
                           {!isPrivate && (() => {
-                            const reading = u.reading_data?.books?.find(b => b.status === 'reading');
+                            const reading = getMostRecentReading(u);
                             return reading ? (
                               <p className="text-[10px] md:text-xs text-gold-dark mt-0.5 truncate flex items-center gap-1">
                                 <BookOpen className="w-3 h-3 flex-shrink-0" /> Currently reading: {reading.title}
