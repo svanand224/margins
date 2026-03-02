@@ -3,9 +3,9 @@
 /* ─── Day Mode: Pistachio, Laurel, Berry Porridge, Dark Plum ─── */
 :root,
 [data-theme="day"] {
-  --th-parchment: #dfe0cc;
-  --th-cream: #d2d4be;
-  --th-warm-white: #eaebda;
+  --th-parchment: #e4dfd0;
+  --th-cream: #d8d2c4;
+  --th-warm-white: #ece7dc;
   --th-gold: #8B7233;
   --th-gold-light: #B8A56A;
   --th-gold-dark: #6A5528;
@@ -13,8 +13,8 @@
   --th-copper: #A67050;
   --th-forest: #631b40;
   --th-forest-light: #8A3A5B;
-  --th-sage: #aeb080;
-  --th-sage-light: #c9cbaa;
+  --th-sage: #b5aa88;
+  --th-sage-light: #cec7ae;
   --th-bark: #3D1828;
   --th-bark-light: #5D3448;
   --th-espresso: #2A1018;
@@ -29,7 +29,7 @@
   --th-lavender: #d292a8;
 
   /* Effect colors */
-  --th-glass-bg: rgba(223, 224, 204, 0.8);
+  --th-glass-bg: rgba(228, 223, 208, 0.8);
   --th-glass-border: rgba(139, 114, 51, 0.15);
   --th-card-shadow: 0 20px 40px rgba(53, 30, 40, 0.08), 0 0 30px rgba(139, 114, 51, 0.06);
   --th-selection: rgba(139, 114, 51, 0.2);
@@ -54,9 +54,9 @@
   --th-amber: #B08050;
   --th-copper: #C07858;
   --th-forest: #B7E1DA;
-  --th-forest-light: #90C5BE;
-  --th-sage: #7AADA5;
-  --th-sage-light: #3D5E5A;
+  --th-forest-light: #9BD4CC;
+  --th-sage: #90C8C0;
+  --th-sage-light: #4A706C;
   --th-bark: #502838;
   --th-bark-light: #6A3850;
   --th-espresso: #1E0E15;
@@ -65,20 +65,20 @@
   --th-ink-muted: #9A908A;
   --th-rose: #E090A8;
   --th-rose-light: #502838;
-  --th-teal: #B7E1DA;
-  --th-teal-light: #3D6860;
+  --th-teal: #C2E8E2;
+  --th-teal-light: #4A7A72;
   --th-plum: #E090A8;
   --th-lavender: #5B1E32;
 
   /* Effect colors */
   --th-glass-bg: rgba(53, 30, 40, 0.85);
-  --th-glass-border: rgba(212, 168, 85, 0.15);
-  --th-card-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(212, 168, 85, 0.06);
+  --th-glass-border: rgba(183, 225, 218, 0.12);
+  --th-card-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(183, 225, 218, 0.08);
   --th-selection: rgba(212, 168, 85, 0.25);
   --th-focus-ring: rgba(212, 168, 85, 0.2);
   --th-particle-inner: rgba(212, 168, 85, 0.3);
-  --th-particle-outer: rgba(183, 225, 218, 0.15);
-  --th-shimmer: rgba(212, 168, 85, 0.1);
+  --th-particle-outer: rgba(183, 225, 218, 0.25);
+  --th-shimmer: rgba(183, 225, 218, 0.08);
   --th-status-reading: #B7E1DA;
   --th-status-want: #D4A855;
   --th-status-completed: #E8C878;
