@@ -73,6 +73,35 @@ export default function PublicProfilePage() {
       }
 
       const supabase = createClient();
+
+      // If not logged in, only fetch minimal profile info (no reading data)
+      if (!user) {
+        const { data: minimalProfile, error: minimalError } = await supabase
+          .from('profiles')
+          .select('id, reader_name, avatar_url, public_slug')
+          .eq('public_slug', slug)
+          .single();
+
+        if (minimalError || !minimalProfile) {
+          setNotFound(true);
+        } else {
+          setProfile({
+            ...minimalProfile,
+            username: '',
+            bio: '',
+            favorite_genre: '',
+            shelf_public: false,
+            shelf_accent_color: 'gold',
+            shelf_show_currently_reading: false,
+            shelf_show_stats: false,
+            shelf_bio_override: null,
+            reading_data: { books: [], goals: {}, dailyLogs: {} },
+          } as PublicProfile);
+        }
+        setLoading(false);
+        return;
+      }
+
       const { data: profileData, error } = await supabase
         .from('profiles')
         .select('id, username, reader_name, avatar_url, bio, favorite_genre, public_slug, shelf_public, shelf_accent_color, shelf_show_currently_reading, shelf_show_stats, shelf_bio_override, reading_data, created_at')
@@ -88,7 +117,7 @@ export default function PublicProfilePage() {
       // Check follow status, follow requests, and determine visibility
       let canSeeContent = profileData.shelf_public;
 
-      if (user) {
+      {
         // Check if already following
         const { data: followData } = await supabase
           .from('follows')
@@ -307,6 +336,52 @@ export default function PublicProfilePage() {
     );
   }
 
+  // Gate: unauthenticated visitors must sign up to view any profile
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center max-w-sm"
+        >
+          <div
+            className="w-20 h-20 rounded-full mx-auto mb-5 flex items-center justify-center text-2xl font-bold"
+            style={{
+              background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))',
+              color: 'var(--th-parchment)',
+            }}
+          >
+            {(profile.reader_name || 'U').charAt(0).toUpperCase()}
+          </div>
+          <h1
+            className="text-2xl font-bold text-ink mb-2"
+            style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+          >
+            {profile.reader_name} is on Margins
+          </h1>
+          <p className="text-sm text-ink-muted mb-6">
+            Create an account to view their profile, see what they&#39;re reading, and connect with readers.
+          </p>
+          <Link href="/login">
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.02 }}
+              className="w-full px-6 py-3 rounded-xl text-base font-semibold text-parchment shadow-lg flex items-center justify-center gap-2"
+              style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}
+            >
+              <UserPlus className="w-5 h-5" />
+              Sign up to view profile
+            </motion.button>
+          </Link>
+          <Link href="/login" className="block mt-3 text-sm text-gold hover:text-gold-dark transition-colors">
+            Already have an account? Log in
+          </Link>
+        </motion.div>
+      </div>
+    );
+  }
+
   const isOwnProfile = user?.id === profile.id;
 
   // Resolve accent color to CSS values
@@ -399,25 +474,7 @@ export default function PublicProfilePage() {
                 </motion.button>
               </div>
             )}
-            {/* Sign up prompt for non-logged-in visitors */}
-            {!user && (
-              <div className="mt-1">
-                <Link href="/login">
-                  <motion.button
-                    whileTap={{ scale: 0.95 }}
-                    whileHover={{ scale: 1.02 }}
-                    className="px-5 py-2.5 rounded-xl text-sm font-medium text-parchment shadow-lg flex items-center gap-2"
-                    style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}
-                  >
-                    <UserPlus className="w-4 h-4" />
-                    Sign up to follow {profile.reader_name}
-                  </motion.button>
-                </Link>
-                <p className="text-[10px] md:text-xs text-ink-muted mt-1.5">
-                  Join Margins to follow readers, share your library, and get book recommendations.
-                </p>
-              </div>
-            )}
+
             {isOwnProfile && (
               <Link href="/profile" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-cream border border-gold-light/30 text-ink-muted hover:text-ink transition-colors">
                 <Lucide.Edit3 className="w-4 h-4" /> Edit Profile
@@ -644,35 +701,7 @@ export default function PublicProfilePage() {
         </div>
       </motion.section>
 
-      {/* Floating sign-up banner for non-logged-in visitors */}
-      {!user && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1 }}
-          className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-cream/95 backdrop-blur-md border-t border-gold/20 md:max-w-2xl lg:max-w-4xl md:mx-auto md:rounded-t-2xl md:bottom-0"
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-ink" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-                Join Margins
-              </p>
-              <p className="text-xs text-ink-muted">
-                Track your reading, share your library, and discover books with friends.
-              </p>
-            </div>
-            <Link href="/login">
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                className="px-5 py-2.5 rounded-xl text-sm font-medium text-parchment shadow-md whitespace-nowrap"
-                style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-gold-dark))' }}
-              >
-                Sign Up Free
-              </motion.button>
-            </Link>
-          </div>
-        </motion.div>
-      )}
+
     </div>
   );
 }

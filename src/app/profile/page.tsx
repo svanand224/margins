@@ -972,7 +972,7 @@ export default function ProfilePage() {
                     <Users className="w-12 h-12 text-gold/20 mx-auto mb-3" />
                     <p className="text-sm text-ink-muted">
                       {socialTab === 'mutuals' ? 'No mutuals yet — follow other readers to build connections!' :
-                       socialTab === 'followers' ? 'No followers yet — share your library link to grow your audience!' :
+                       socialTab === 'followers' ? 'No followers yet — share your referral link with friends to invite them!' :
                        'Not following anyone yet — explore to find readers!'}
                     </p>
                     <Link href="/discover" className="inline-block mt-3 px-4 py-2 rounded-xl text-sm font-medium text-gold-dark hover:bg-gold-light/10 transition-colors">
@@ -1177,8 +1177,11 @@ export default function ProfilePage() {
                       Share Your Profile
                     </h3>
                   </div>
-                  <p className="text-xs text-ink-muted mb-4">
-                    Share this link with friends to let them see your reading library and follow you.
+                  <p className="text-xs text-ink-muted mb-2">
+                    Share this link with friends who aren&apos;t on Margins yet — it&apos;s a referral link that invites them to join.
+                  </p>
+                  <p className="text-[10px] md:text-xs text-ink-muted/70 mb-4">
+                    Friends already on Margins can find and follow you directly in the app, no link needed.
                   </p>
                   <div className="flex gap-2">
                     <motion.button
