@@ -178,7 +178,7 @@ function ForgotPasswordInner() {
                       placeholder="your@email.com"
                       required
                       className="w-full pl-10 pr-4 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink placeholder:text-ink-muted/50 transition-all duration-200"
-                      style={{ fontFamily: "'Lora', Georgia, serif", fontSize: '0.9rem' }}
+                      style={{ fontFamily: "'Lora', Georgia, serif",  }}
                     />
                   </div>
                 </div>
@@ -271,7 +271,7 @@ function ForgotPasswordInner() {
                       required
                       minLength={6}
                       className="w-full pl-10 pr-12 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink placeholder:text-ink-muted/50 transition-all duration-200"
-                      style={{ fontFamily: "'Lora', Georgia, serif", fontSize: '0.9rem' }}
+                      style={{ fontFamily: "'Lora', Georgia, serif",  }}
                     />
                     <button
                       type="button"
@@ -297,7 +297,7 @@ function ForgotPasswordInner() {
                       required
                       minLength={6}
                       className="w-full pl-10 pr-4 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink placeholder:text-ink-muted/50 transition-all duration-200"
-                      style={{ fontFamily: "'Lora', Georgia, serif", fontSize: '0.9rem' }}
+                      style={{ fontFamily: "'Lora', Georgia, serif",  }}
                     />
                   </div>
                 </div>

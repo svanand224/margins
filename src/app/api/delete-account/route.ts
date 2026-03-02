@@ -40,6 +40,9 @@ export async function POST(req: Request) {
   await adminClient.from('follows').delete().eq('follower_id', userId);
   await adminClient.from('follows').delete().eq('following_id', userId);
 
+  // Clean up avatar from storage bucket
+  await adminClient.storage.from('avatars').remove([`${userId}/avatar.jpg`]);
+
   // Delete auth user — this cascades to profiles table
   const { error: authError } = await adminClient.auth.admin.deleteUser(userId);
 

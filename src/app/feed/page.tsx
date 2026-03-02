@@ -12,6 +12,8 @@ import {
   Gift,
   Loader2,
   Sparkles,
+  Award,
+  MessageSquare,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -110,6 +112,10 @@ export default function FeedPage() {
         return <UserPlus className="w-4 h-4 text-blue-500" />;
       case 'recommended':
         return <Gift className="w-4 h-4 text-forest" />;
+      case 'gold_recommend':
+        return <Award className="w-4 h-4 text-gold fill-gold" />;
+      case 'book_post':
+        return <MessageSquare className="w-4 h-4 text-teal" />;
       default:
         return <Sparkles className="w-4 h-4 text-gold" />;
     }
@@ -153,6 +159,18 @@ export default function FeedPage() {
         return (
           <>
             recommended <strong>{data.book_title}</strong> to someone
+          </>
+        );
+      case 'gold_recommend':
+        return (
+          <>
+            awarded a gold badge to <strong>{data.book_title}</strong>{data.note ? ` — "${data.note}"` : ''}
+          </>
+        );
+      case 'book_post':
+        return (
+          <>
+            shared thoughts on <strong>{data.book_title}</strong>{data.message ? ` — "${data.message}"` : ''}
           </>
         );
       default:

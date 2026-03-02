@@ -2,7 +2,7 @@
 
 import { useBookStore } from '@/lib/store';
 import { motion, AnimatePresence } from 'framer-motion';
-import * as Lucide from 'lucide-react';
+import { ArrowLeft, Award, Bell, BookMarked, BookOpen, Bookmark, CalendarDays, Check, ChevronRight, Clock, Edit3, Flame, Library as LibraryIcon, Loader2, Megaphone, Plus, Send, Settings, Share2, Star, Target, Trash2, TrendingUp, Trophy, X } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { format, differenceInDays, startOfYear, isThisYear, subDays } from 'date-fns';
@@ -233,8 +233,7 @@ export default function HomePage() {
       setUnreadCount(count || 0);
     };
     fetchUnread();
-    const interval = setInterval(fetchUnread, 30000);
-    return () => clearInterval(interval);
+    // Navigation component already polls every 30s — just do a single fetch here
   }, [user]);
 
   // Recommendation state for completed books section
@@ -387,9 +386,9 @@ export default function HomePage() {
     const completed = books.filter(b => b.status === 'completed');
     const completedThisYear = completed.filter(b => b.finishDate && isThisYear(new Date(b.finishDate)));
     const totalPages = books.reduce((sum, b) => sum + b.currentPage, 0);
-    const totalSessions = books.reduce((sum, b) => sum + b.sessions.length, 0);
+    const totalSessions = books.reduce((sum, b) => sum + (b.sessions || []).length, 0);
     const totalMinutes = books.reduce(
-      (sum, b) => sum + b.sessions.reduce((s, sess) => s + sess.minutesSpent, 0),
+      (sum, b) => sum + (b.sessions || []).reduce((s, sess) => s + sess.minutesSpent, 0),
       0
     );
 
@@ -491,7 +490,7 @@ export default function HomePage() {
             </div>
             {user && (
               <Link href="/notifications" className="relative p-2 rounded-xl hover:bg-gold-light/10 transition-colors group">
-                <Lucide.Bell className="w-5 h-5 text-ink-muted group-hover:text-gold-dark transition-colors" />
+                <Bell className="w-5 h-5 text-ink-muted group-hover:text-gold-dark transition-colors" />
                 {unreadCount > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[10px] md:text-xs font-bold text-parchment px-1" style={{ background: 'linear-gradient(135deg, var(--th-rose), #e85d75)' }}>
                     {unreadCount > 99 ? '99+' : unreadCount}
@@ -532,7 +531,7 @@ export default function HomePage() {
                 className="p-1 rounded-full hover:bg-gold-light/15 transition-colors text-ink-muted/50 hover:text-gold-dark"
                 title="Edit name"
               >
-                <Lucide.Edit3 className="w-3 h-3" />
+                <Edit3 className="w-3 h-3" />
               </button>
             )}
           </motion.div>
@@ -574,28 +573,28 @@ export default function HomePage() {
       >
         {[
           {
-            icon: Lucide.BookOpen,
+            icon: BookOpen,
             label: 'Currently Reading',
             value: stats.reading.length,
             color: 'text-forest',
             bg: 'from-forest/10 to-sage-light/10',
           },
           {
-            icon: Lucide.Trophy,
+            icon: Trophy,
             label: 'Books This Year',
             value: stats.completedThisYear.length,
             color: 'text-gold-dark',
             bg: 'from-gold/10 to-amber/10',
           },
           {
-            icon: Lucide.Flame,
+            icon: Flame,
             label: 'Day Streak',
             value: stats.streak,
             color: 'text-copper',
             bg: 'from-copper/10 to-rose-light/10',
           },
           {
-            icon: Lucide.Clock,
+            icon: Clock,
             label: 'Total Hours',
             value: Math.round(stats.totalMinutes / 60),
             subtitle: `${stats.totalPages.toLocaleString()} pages`,
@@ -630,7 +629,7 @@ export default function HomePage() {
         >
           <div className="glass-card rounded-2xl p-5 bg-gradient-to-r from-gold/5 via-amber/5 to-copper/5 border border-gold-light/15 relative overflow-hidden">
             <div className="flex items-center gap-2 mb-3">
-              <Lucide.CalendarDays className="w-4 h-4 text-gold-dark" />
+              <CalendarDays className="w-4 h-4 text-gold-dark" />
               <h3 className="text-sm font-semibold text-ink uppercase tracking-wider">Today&apos;s Reading</h3>
             </div>
             <div className="grid grid-cols-3 gap-4">
@@ -670,11 +669,11 @@ export default function HomePage() {
         >
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-ink flex items-center gap-2" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-              <Lucide.BookMarked className="w-5 h-5 text-copper" />
+              <BookMarked className="w-5 h-5 text-copper" />
               Currently Reading
             </h2>
             <Link href="/library?status=reading" className="text-sm text-gold-dark hover:text-gold flex items-center gap-1 transition-colors">
-              View all <Lucide.ChevronRight className="w-4 h-4" />
+              View all <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -701,7 +700,7 @@ export default function HomePage() {
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
-                              <Lucide.BookOpen className="w-6 h-6 text-gold-light/50" />
+                              <BookOpen className="w-6 h-6 text-gold-light/50" />
                             </div>
                           )}
                         </div>
@@ -716,7 +715,7 @@ export default function HomePage() {
                               {book.rating && (
                                 <div className="flex gap-0.5 mt-1">
                                   {Array.from({ length: 5 }).map((_, s) => (
-                                    <Lucide.Star
+                                    <Star
                                       key={s}
                                       className={`w-3 h-3 ${s < book.rating! ? 'text-gold fill-gold' : 'text-gold-light/30'}`}
                                     />
@@ -749,11 +748,11 @@ export default function HomePage() {
             >
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold text-ink flex items-center gap-2" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-                  <Lucide.Bookmark className="w-5 h-5 text-teal" />
+                  <Bookmark className="w-5 h-5 text-teal" />
                   Want to Read
                 </h2>
                 <Link href="/library?status=want-to-read" className="text-sm text-gold-dark hover:text-gold flex items-center gap-1 transition-colors">
-                  View all ({tbrBooks.length}) <Lucide.ChevronRight className="w-4 h-4" />
+                  View all ({tbrBooks.length}) <ChevronRight className="w-4 h-4" />
                 </Link>
               </div>
               <div className="glass-card rounded-2xl divide-y divide-gold-light/15 overflow-hidden">
@@ -768,7 +767,7 @@ export default function HomePage() {
                       <div className="flex items-center gap-3 px-4 py-3 hover:bg-gold-light/5 transition-colors group cursor-pointer">
                         {/* Bookmark icon */}
                         <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-teal/10 to-sage-light/10 flex items-center justify-center">
-                          <Lucide.Bookmark className="w-4 h-4 text-teal" />
+                          <Bookmark className="w-4 h-4 text-teal" />
                         </div>
                         {/* Cover thumbnail */}
                         <div className="flex-shrink-0 w-10 h-14 rounded-md bg-gradient-to-br from-bark to-espresso overflow-hidden shadow-sm">
@@ -776,7 +775,7 @@ export default function HomePage() {
                             <img src={book.coverUrl} alt={book.title} className="w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
-                              <Lucide.BookOpen className="w-4 h-4 text-gold-light/40" />
+                              <BookOpen className="w-4 h-4 text-gold-light/40" />
                             </div>
                           )}
                         </div>
@@ -795,7 +794,7 @@ export default function HomePage() {
                           {book.totalPages > 0 && (
                             <span className="text-xs text-ink-muted">{book.totalPages}p</span>
                           )}
-                          <Lucide.ChevronRight className="w-4 h-4 text-ink-muted/40 group-hover:text-gold-dark transition-colors mt-0.5 ml-auto" />
+                          <ChevronRight className="w-4 h-4 text-ink-muted/40 group-hover:text-gold-dark transition-colors mt-0.5 ml-auto" />
                         </div>
                       </div>
                     </Link>
@@ -832,11 +831,11 @@ export default function HomePage() {
           <div className="glass-card rounded-2xl p-6 bg-gradient-to-br from-amber/5 to-copper/5 relative overflow-hidden">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold text-ink flex items-center gap-2" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-                <Lucide.Target className="w-5 h-5 text-rose" />
+                <Target className="w-5 h-5 text-rose" />
                 {new Date().getFullYear()} Reading Goal
               </h2>
               <Link href="/goals" className="text-sm text-gold-dark hover:text-gold flex items-center gap-1 transition-colors">
-                Manage <Lucide.ChevronRight className="w-4 h-4" />
+                Manage <ChevronRight className="w-4 h-4" />
               </Link>
             </div>
             <div className="flex items-end gap-4">
@@ -874,11 +873,11 @@ export default function HomePage() {
         >
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-ink flex items-center gap-2" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-              <Lucide.Trophy className="w-5 h-5 text-forest" />
+              <Trophy className="w-5 h-5 text-forest" />
               Completed
             </h2>
             <Link href="/library?status=completed" className="text-sm text-gold-dark hover:text-gold flex items-center gap-1 transition-colors">
-              All ({stats.completed.length}) <Lucide.ChevronRight className="w-4 h-4" />
+              All ({stats.completed.length}) <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -900,17 +899,17 @@ export default function HomePage() {
                           <img src={book.coverUrl} alt={book.title} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <Lucide.BookOpen className="w-8 h-8 text-gold-light/30" />
+                            <BookOpen className="w-8 h-8 text-gold-light/30" />
                           </div>
                         )}
                         {/* Finished badge */}
                         <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-forest/90 flex items-center justify-center shadow-sm">
-                          <Lucide.Check className="w-3.5 h-3.5 text-white" />
+                          <Check className="w-3.5 h-3.5 text-white" />
                         </div>
                         {/* Gold recommend badge */}
                         {book.goldRecommended && (
                           <div className="absolute top-2 left-2 flex items-center gap-1 px-1.5 py-0.5 rounded-full shadow-md" style={{ background: 'linear-gradient(135deg, #D4A855, #E8C878)', color: '#3A2C22' }}>
-                            <Lucide.Award className="w-3 h-3" />
+                            <Award className="w-3 h-3" />
                             <span className="text-[9px] md:text-[11px] font-bold">GOLD</span>
                           </div>
                         )}
@@ -924,7 +923,7 @@ export default function HomePage() {
                       {book.rating && (
                         <div className="flex gap-0.5 mt-1">
                           {Array.from({ length: 5 }).map((_, s) => (
-                            <Lucide.Star key={s} className={`w-2.5 h-2.5 ${s < book.rating! ? 'text-gold fill-gold' : 'text-gold-light/30'}`} />
+                            <Star key={s} className={`w-2.5 h-2.5 ${s < book.rating! ? 'text-gold fill-gold' : 'text-gold-light/30'}`} />
                           ))}
                         </div>
                       )}
@@ -939,9 +938,9 @@ export default function HomePage() {
                           }`}
                         >
                           {book.goldRecommended ? (
-                            <><Lucide.Award className="w-3 h-3" /> Gold Pick</>
+                            <><Award className="w-3 h-3" /> Gold Pick</>
                           ) : (
-                            <><Lucide.Share2 className="w-3 h-3" /> Share</>
+                            <><Share2 className="w-3 h-3" /> Share</>
                           )}
                         </button>
                       )}
@@ -980,7 +979,7 @@ export default function HomePage() {
                               <img src={book.coverUrl} alt={book.title} className="w-full h-full object-cover" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center">
-                                <Lucide.BookOpen className="w-5 h-5 text-gold-light/40" />
+                                <BookOpen className="w-5 h-5 text-gold-light/40" />
                               </div>
                             )}
                           </div>
@@ -989,12 +988,12 @@ export default function HomePage() {
                             <p className="text-xs text-ink-muted truncate">{book.author}</p>
                             {book.goldRecommended && (
                               <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bold" style={{ background: 'linear-gradient(135deg, #D4A855, #E8C878)', color: '#3A2C22' }}>
-                                <Lucide.Award className="w-2.5 h-2.5" /> Gold Pick
+                                <Award className="w-2.5 h-2.5" /> Gold Pick
                               </span>
                             )}
                           </div>
                           <button onClick={() => { setRecommendBookId(null); setRecommendMode('choose'); }} className="p-1.5 rounded-lg text-ink-muted hover:text-ink hover:bg-cream/60 transition-colors">
-                            <Lucide.X className="w-4 h-4" />
+                            <X className="w-4 h-4" />
                           </button>
                         </div>
 
@@ -1008,13 +1007,13 @@ export default function HomePage() {
                               className="w-full flex items-center gap-3 p-3.5 rounded-xl border-2 border-gold/25 hover:border-gold/50 hover:bg-gold/5 transition-all text-left disabled:opacity-40 disabled:cursor-not-allowed group"
                             >
                               <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, #D4A855, #E8C878)' }}>
-                                <Lucide.Award className="w-5 h-5 text-[#3A2C22]" />
+                                <Award className="w-5 h-5 text-[#3A2C22]" />
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-semibold text-ink group-hover:text-gold-dark transition-colors">Gold Recommend</p>
                                 <p className="text-[11px] md:text-xs text-ink-muted">Your top picks with a gold badge ({goldRecommendedCount}/3 used)</p>
                               </div>
-                              <Lucide.ChevronRight className="w-4 h-4 text-ink-muted/50 group-hover:text-gold-dark transition-colors" />
+                              <ChevronRight className="w-4 h-4 text-ink-muted/50 group-hover:text-gold-dark transition-colors" />
                             </button>
 
                             {/* Post to Network */}
@@ -1023,13 +1022,13 @@ export default function HomePage() {
                               className="w-full flex items-center gap-3 p-3.5 rounded-xl border-2 border-forest/20 hover:border-forest/40 hover:bg-forest/5 transition-all text-left group"
                             >
                               <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-forest/15">
-                                <Lucide.Megaphone className="w-5 h-5 text-forest" />
+                                <Megaphone className="w-5 h-5 text-forest" />
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-semibold text-ink group-hover:text-forest transition-colors">Post to Network</p>
                                 <p className="text-[11px] md:text-xs text-ink-muted">Share your thoughts like a post — visible to all followers</p>
                               </div>
-                              <Lucide.ChevronRight className="w-4 h-4 text-ink-muted/50 group-hover:text-forest transition-colors" />
+                              <ChevronRight className="w-4 h-4 text-ink-muted/50 group-hover:text-forest transition-colors" />
                             </button>
 
                             {/* Send to a Friend */}
@@ -1038,13 +1037,13 @@ export default function HomePage() {
                               className="w-full flex items-center gap-3 p-3.5 rounded-xl border-2 border-teal/20 hover:border-teal/40 hover:bg-teal/5 transition-all text-left group"
                             >
                               <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-teal/15">
-                                <Lucide.Send className="w-5 h-5 text-teal" />
+                                <Send className="w-5 h-5 text-teal" />
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-semibold text-ink group-hover:text-teal transition-colors">Send to a Friend</p>
                                 <p className="text-[11px] md:text-xs text-ink-muted">Privately recommend this book to someone specific</p>
                               </div>
-                              <Lucide.ChevronRight className="w-4 h-4 text-ink-muted/50 group-hover:text-teal transition-colors" />
+                              <ChevronRight className="w-4 h-4 text-ink-muted/50 group-hover:text-teal transition-colors" />
                             </button>
                           </div>
                         )}
@@ -1055,7 +1054,7 @@ export default function HomePage() {
                             {goldSaved ? (
                               <div className="text-center py-6">
                                 <div className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #D4A855, #E8C878)' }}>
-                                  <Lucide.Award className="w-7 h-7 text-[#3A2C22]" />
+                                  <Award className="w-7 h-7 text-[#3A2C22]" />
                                 </div>
                                 <p className="text-sm font-semibold text-ink">Gold badge added!</p>
                                 <p className="text-xs text-ink-muted mt-1">Your network has been notified.</p>
@@ -1063,7 +1062,7 @@ export default function HomePage() {
                             ) : (
                               <>
                                 <button onClick={() => setRecommendMode('choose')} className="flex items-center gap-1 text-xs text-ink-muted hover:text-ink mb-3 transition-colors">
-                                  <Lucide.ArrowLeft className="w-3.5 h-3.5" /> Back
+                                  <ArrowLeft className="w-3.5 h-3.5" /> Back
                                 </button>
                                 <p className="text-xs text-ink-muted mb-3">
                                   Give <strong className="text-ink">{book.title}</strong> your personal gold badge. Tell everyone why it&apos;s a must-read.
@@ -1081,7 +1080,7 @@ export default function HomePage() {
                                   className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-[#3A2C22] shadow-md transition-all hover:shadow-lg disabled:opacity-50"
                                   style={{ background: 'linear-gradient(135deg, #D4A855, #E8C878)' }}
                                 >
-                                  {recommendSending ? <Lucide.Loader2 className="w-4 h-4 animate-spin" /> : <><Lucide.Award className="w-4 h-4" /> Award Gold Badge</>}
+                                  {recommendSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Award className="w-4 h-4" /> Award Gold Badge</>}
                                 </button>
                               </>
                             )}
@@ -1094,7 +1093,7 @@ export default function HomePage() {
                             {networkPostSent ? (
                               <div className="text-center py-6">
                                 <div className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center bg-forest/15">
-                                  <Lucide.Check className="w-7 h-7 text-forest" />
+                                  <Check className="w-7 h-7 text-forest" />
                                 </div>
                                 <p className="text-sm font-semibold text-ink">Posted to your network!</p>
                                 <p className="text-xs text-ink-muted mt-1">Your followers can now see this in their feed.</p>
@@ -1102,7 +1101,7 @@ export default function HomePage() {
                             ) : (
                               <>
                                 <button onClick={() => setRecommendMode('choose')} className="flex items-center gap-1 text-xs text-ink-muted hover:text-ink mb-3 transition-colors">
-                                  <Lucide.ArrowLeft className="w-3.5 h-3.5" /> Back
+                                  <ArrowLeft className="w-3.5 h-3.5" /> Back
                                 </button>
                                 <p className="text-xs text-ink-muted mb-3">
                                   Share your thoughts about <strong className="text-ink">{book.title}</strong> with your network — like an Instagram post for readers.
@@ -1120,7 +1119,7 @@ export default function HomePage() {
                                   className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-parchment shadow-md transition-all hover:shadow-lg disabled:opacity-50"
                                   style={{ background: 'linear-gradient(135deg, var(--th-forest), var(--th-sage))' }}
                                 >
-                                  {recommendSending ? <Lucide.Loader2 className="w-4 h-4 animate-spin" /> : <><Lucide.Megaphone className="w-4 h-4" /> Post to Network</>}
+                                  {recommendSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Megaphone className="w-4 h-4" /> Post to Network</>}
                                 </button>
                               </>
                             )}
@@ -1133,14 +1132,14 @@ export default function HomePage() {
                             {recommendSent ? (
                               <div className="text-center py-6">
                                 <div className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center bg-teal/15">
-                                  <Lucide.Check className="w-7 h-7 text-teal" />
+                                  <Check className="w-7 h-7 text-teal" />
                                 </div>
                                 <p className="text-sm font-semibold text-ink">Recommendation sent!</p>
                               </div>
                             ) : (
                               <>
                                 <button onClick={() => setRecommendMode('choose')} className="flex items-center gap-1 text-xs text-ink-muted hover:text-ink mb-3 transition-colors">
-                                  <Lucide.ArrowLeft className="w-3.5 h-3.5" /> Back
+                                  <ArrowLeft className="w-3.5 h-3.5" /> Back
                                 </button>
                                 <div className="mb-3">
                                   <input
@@ -1189,10 +1188,10 @@ export default function HomePage() {
                                         </div>
                                         {recommendSent === u.id ? (
                                           <div className="flex items-center gap-1 text-forest text-xs">
-                                            <Lucide.Check className="w-3.5 h-3.5" /> Sent!
+                                            <Check className="w-3.5 h-3.5" /> Sent!
                                           </div>
                                         ) : (
-                                          <Lucide.Send className="w-4 h-4 text-teal" />
+                                          <Send className="w-4 h-4 text-teal" />
                                         )}
                                       </button>
                                     ))}
@@ -1266,7 +1265,7 @@ export default function HomePage() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-xl font-semibold text-ink flex items-center gap-2" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-                <Lucide.Library className="w-5 h-5 text-copper" />
+                <LibraryIcon className="w-5 h-5 text-copper" />
                 Threads
               </h2>
               <p className="text-xs text-ink-muted mt-0.5">Group books into collections — by mood, theme, genre, or anything you like</p>
@@ -1277,7 +1276,7 @@ export default function HomePage() {
               onClick={() => setShowNewThread(!showNewThread)}
               className="flex items-center gap-1 text-xs text-gold-dark hover:text-gold transition-colors px-3 py-1.5 rounded-lg border border-gold-light/30 hover:bg-gold-light/10"
             >
-              <Lucide.Plus className="w-3.5 h-3.5" /> New Thread
+              <Plus className="w-3.5 h-3.5" /> New Thread
             </motion.button>
           </div>
 
@@ -1383,13 +1382,13 @@ export default function HomePage() {
                         onClick={() => setManagingThreadId(isManaging ? null : thread.id)}
                         className="p-1 rounded text-ink-muted/50 hover:text-gold-dark transition-colors"
                       >
-                        <Lucide.Settings className="w-3 h-3" />
+                        <Settings className="w-3 h-3" />
                       </button>
                       <button
                         onClick={() => deleteThread(thread.id)}
                         className="p-1 rounded text-ink-muted/50 hover:text-rose transition-colors"
                       >
-                        <Lucide.Trash2 className="w-3 h-3" />
+                        <Trash2 className="w-3 h-3" />
                       </button>
                     </div>
                   </div>
@@ -1423,7 +1422,7 @@ export default function HomePage() {
                                   onClick={() => { addBookToThread(thread.id, b.id); setThreadBookSearch(''); }}
                                   className="w-full flex items-center gap-2 px-2 py-1 rounded text-left hover:bg-gold-light/10 transition-colors"
                                 >
-                                  <Lucide.Plus className="w-3 h-3 text-gold-dark" />
+                                  <Plus className="w-3 h-3 text-gold-dark" />
                                   <span className="text-xs text-ink truncate">{b.title}</span>
                                   <span className="text-[10px] md:text-xs text-ink-muted ml-auto">{b.author}</span>
                                 </button>
@@ -1443,7 +1442,7 @@ export default function HomePage() {
                               <img src={b!.coverUrl} alt={b!.title} className="w-full h-full object-cover" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center">
-                                <Lucide.BookOpen className="w-4 h-4 text-gold-light/30" />
+                                <BookOpen className="w-4 h-4 text-gold-light/30" />
                               </div>
                             )}
                           </div>
@@ -1454,12 +1453,12 @@ export default function HomePage() {
                             onClick={() => removeBookFromThread(thread.id, b!.id)}
                             className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose text-white flex items-center justify-center"
                           >
-                            <Lucide.X className="w-2.5 h-2.5" />
+                            <X className="w-2.5 h-2.5" />
                           </button>
                         )}
                       </div>
                     )) : (
-                      <p className="text-[10px] md:text-xs text-ink-muted italic py-2">Click <Lucide.Settings className="w-3 h-3 inline" /> to add books to this thread.</p>
+                      <p className="text-[10px] md:text-xs text-ink-muted italic py-2">Click <Settings className="w-3 h-3 inline" /> to add books to this thread.</p>
                     )}
                   </div>
                 </div>
@@ -1469,7 +1468,7 @@ export default function HomePage() {
             {/* Show hint when no custom threads exist */}
             {threads.length === 0 && (
               <div className="glass-card rounded-xl p-6 text-center border-2 border-dashed border-gold-light/20">
-                <Lucide.Library className="w-10 h-10 text-gold-light/30 mx-auto mb-2" />
+                <LibraryIcon className="w-10 h-10 text-gold-light/30 mx-auto mb-2" />
                 <p className="text-sm text-ink-muted">Create your first thread to group books into collections.</p>
                 <p className="text-xs text-ink-muted/60 mt-1">Threads are like custom bookshelves — organize by mood, theme, series, or any way you like.</p>
               </div>
@@ -1501,7 +1500,7 @@ export default function HomePage() {
               <ChintzFloral />
             </div>
             <h2 className="text-xl font-semibold text-ink flex items-center gap-2 mb-4" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-              <Lucide.TrendingUp className="w-5 h-5 text-teal" />
+              <TrendingUp className="w-5 h-5 text-teal" />
               Quick Stats
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">

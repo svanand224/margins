@@ -583,7 +583,7 @@ export default function ProfilePage() {
                         value={formFirstName}
                         onChange={(e) => setFormFirstName(e.target.value)}
                         className="w-full px-4 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink"
-                        style={{ fontFamily: "'Lora', Georgia, serif", fontSize: '0.9rem' }}
+                        style={{ fontFamily: "'Lora', Georgia, serif",  }}
                         placeholder="First name"
                       />
                     </div>
@@ -594,7 +594,7 @@ export default function ProfilePage() {
                         value={formLastName}
                         onChange={(e) => setFormLastName(e.target.value)}
                         className="w-full px-4 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink"
-                        style={{ fontFamily: "'Lora', Georgia, serif", fontSize: '0.9rem' }}
+                        style={{ fontFamily: "'Lora', Georgia, serif",  }}
                         placeholder="Last name"
                       />
                     </div>
@@ -608,7 +608,7 @@ export default function ProfilePage() {
                         value={formUsername}
                         onChange={(e) => setFormUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
                         className="w-full pl-8 pr-4 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink"
-                        style={{ fontFamily: "'Lora', Georgia, serif", fontSize: '0.9rem' }}
+                        style={{ fontFamily: "'Lora', Georgia, serif",  }}
                         placeholder="your_username"
                         minLength={3}
                         maxLength={30}
@@ -623,7 +623,7 @@ export default function ProfilePage() {
                       onChange={(e) => setFormBio(e.target.value)}
                       rows={3}
                       className="w-full px-4 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink resize-none"
-                      style={{ fontFamily: "'Lora', Georgia, serif", fontSize: '0.9rem' }}
+                      style={{ fontFamily: "'Lora', Georgia, serif",  }}
                       placeholder="Tell the world about your reading journey..."
                     />
                   </div>
@@ -633,7 +633,7 @@ export default function ProfilePage() {
                       value={formGenre}
                       onChange={(e) => setFormGenre(e.target.value)}
                       className="w-full px-4 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink"
-                      style={{ fontFamily: "'Lora', Georgia, serif", fontSize: '0.9rem' }}
+                      style={{ fontFamily: "'Lora', Georgia, serif",  }}
                     >
                       <option value="">Select a genre</option>
                       {genres.map((g) => (

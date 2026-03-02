@@ -254,7 +254,7 @@ export default function LoginPage() {
                           onChange={(e) => setFirstName(e.target.value)}
                           placeholder="First name"
                           className="w-full pl-10 pr-4 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink placeholder:text-ink-muted/50 transition-all duration-200"
-                          style={{ fontFamily: "'Lora', Georgia, serif", fontSize: '0.9rem' }}
+                          style={{ fontFamily: "'Lora', Georgia, serif",  }}
                         />
                       </div>
                     </div>
@@ -270,7 +270,7 @@ export default function LoginPage() {
                           onChange={(e) => setLastName(e.target.value)}
                           placeholder="Last name"
                           className="w-full pl-10 pr-4 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink placeholder:text-ink-muted/50 transition-all duration-200"
-                          style={{ fontFamily: "'Lora', Georgia, serif", fontSize: '0.9rem' }}
+                          style={{ fontFamily: "'Lora', Georgia, serif",  }}
                         />
                       </div>
                     </div>
@@ -290,7 +290,7 @@ export default function LoginPage() {
                         minLength={3}
                         maxLength={30}
                         className="w-full pl-10 pr-4 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink placeholder:text-ink-muted/50 transition-all duration-200"
-                        style={{ fontFamily: "'Lora', Georgia, serif", fontSize: '0.9rem' }}
+                        style={{ fontFamily: "'Lora', Georgia, serif",  }}
                       />
                     </div>
                     <p className="text-[10px] md:text-xs text-ink-muted mt-1">Letters, numbers, and underscores only. This is how others will find you.</p>
@@ -316,7 +316,7 @@ export default function LoginPage() {
                   placeholder={mode === 'signin' ? 'your@email.com or username' : 'your@email.com'}
                   required
                   className="w-full pl-10 pr-4 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink placeholder:text-ink-muted/50 transition-all duration-200"
-                  style={{ fontFamily: "'Lora', Georgia, serif", fontSize: '0.9rem' }}
+                  style={{ fontFamily: "'Lora', Georgia, serif",  }}
                 />
               </div>
             </div>
@@ -335,7 +335,7 @@ export default function LoginPage() {
                   required
                   minLength={6}
                   className="w-full pl-10 pr-12 py-3 rounded-xl bg-cream/50 border border-gold-light/30 text-ink placeholder:text-ink-muted/50 transition-all duration-200"
-                  style={{ fontFamily: "'Lora', Georgia, serif", fontSize: '0.9rem' }}
+                  style={{ fontFamily: "'Lora', Georgia, serif",  }}
                 />
                 <button
                   type="button"

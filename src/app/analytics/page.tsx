@@ -38,7 +38,7 @@ export default function AnalyticsPage() {
     const wantToRead = books.filter(b => b.status === 'want-to-read');
     const totalPages = books.reduce((s, b) => s + b.currentPage, 0);
     const totalMinutes = books.reduce(
-      (s, b) => s + b.sessions.reduce((ss, sess) => ss + sess.minutesSpent, 0),
+      (s, b) => s + (b.sessions || []).reduce((ss, sess) => ss + sess.minutesSpent, 0),
       0
     );
     const ratedBooks = completed.filter(b => b.rating);
@@ -75,7 +75,7 @@ export default function AnalyticsPage() {
     });
     // Merge session data as fallback for dates without a dailyLog entry
     books.forEach(b => {
-      b.sessions.forEach(sess => {
+      (b.sessions || []).forEach(sess => {
         const dateKey = sess.date.split('T')[0];
         if (!dailyMap[dateKey]) {
           dailyMap[dateKey] = { pages: sess.pagesRead, minutes: sess.minutesSpent };
