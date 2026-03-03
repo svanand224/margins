@@ -209,25 +209,21 @@ export default function OnboardingTutorial() {
   const [currentStep, setCurrentStep] = useState(0);
 
   useEffect(() => {
-    // Show the tutorial only the first 2 times the user logs in
+    // Show the tutorial only once ever
+    const seen = localStorage.getItem('margins-tutorial-seen');
+    if (seen === 'true') return;
+    // Also check legacy count flag
     const countStr = localStorage.getItem('margins-tutorial-count');
     const count = countStr ? parseInt(countStr, 10) : 0;
-    // Also honour the legacy boolean flag
-    const legacySeen = localStorage.getItem('margins-tutorial-seen');
-    if (count >= 2 || legacySeen === 'true') return;
+    if (count >= 1) return;
 
     const timer = setTimeout(() => setShow(true), 800);
     return () => clearTimeout(timer);
   }, []);
 
   const handleClose = () => {
-    const countStr = localStorage.getItem('margins-tutorial-count');
-    const count = countStr ? parseInt(countStr, 10) : 0;
-    localStorage.setItem('margins-tutorial-count', String(count + 1));
-    // Keep legacy flag for anyone who already dismissed once
-    if (count + 1 >= 2) {
-      localStorage.setItem('margins-tutorial-seen', 'true');
-    }
+    localStorage.setItem('margins-tutorial-seen', 'true');
+    localStorage.setItem('margins-tutorial-count', '1');
     setShow(false);
   };
 

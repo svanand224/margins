@@ -287,7 +287,7 @@ body::before {
 
 /* Input styling – 16px minimum prevents iOS Safari auto-zoom on focus */
 input, textarea, select {
-  font-family: 'Homemade Apple', cursive;
+  font-family: 'Lora', Georgia, serif;
   font-size: 16px;
   line-height: 1.6;
 }

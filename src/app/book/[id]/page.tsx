@@ -537,13 +537,14 @@ export default function BookPage() {
 
             {/* Page controls */}
             <div className="mt-3 pt-3 border-t border-gold-light/20 space-y-2">
-              <div className="flex items-center gap-1.5">
+              {/* Row 1: −10 −1  [input]  +1 +10 with responsive sizing */}
+              <div className="flex items-center gap-1">
                 <button
-                  className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-xs font-medium border border-gold-light/30 text-ink-muted hover:bg-cream/60 active:bg-cream/80 transition-colors touch-manipulation"
+                  className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-lg text-[11px] font-medium border border-gold-light/30 text-ink-muted hover:bg-cream/60 active:bg-cream/80 transition-colors touch-manipulation"
                   onClick={() => setForm(f => ({ ...f, currentPage: Math.max(0, f.currentPage - 10) }))}
                 >−10</button>
                 <button
-                  className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-xs font-medium border border-gold-light/30 text-ink-muted hover:bg-cream/60 active:bg-cream/80 transition-colors touch-manipulation"
+                  className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-lg text-xs font-medium border border-gold-light/30 text-ink-muted hover:bg-cream/60 active:bg-cream/80 transition-colors touch-manipulation"
                   onClick={() => setForm(f => ({ ...f, currentPage: Math.max(0, f.currentPage - 1) }))}
                 >−1</button>
                 <input
@@ -556,14 +557,14 @@ export default function BookPage() {
                     const val = raw === '' ? 0 : Math.max(0, Math.min(book.totalPages, Number(raw)));
                     setForm(f => ({ ...f, currentPage: val }));
                   }}
-                  className="flex-1 text-center px-2 min-h-[44px] rounded-lg bg-cream/50 border border-gold-light/30 text-ink text-sm touch-manipulation"
+                  className="flex-1 min-w-0 text-center px-1 h-10 rounded-lg bg-cream/50 border border-gold-light/30 text-ink text-sm touch-manipulation"
                 />
                 <button
-                  className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-xs font-medium border border-gold-light/30 text-ink-muted hover:bg-cream/60 active:bg-cream/80 transition-colors touch-manipulation"
+                  className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-lg text-xs font-medium border border-gold-light/30 text-ink-muted hover:bg-cream/60 active:bg-cream/80 transition-colors touch-manipulation"
                   onClick={() => setForm(f => ({ ...f, currentPage: Math.min(book.totalPages, f.currentPage + 1) }))}
                 >+1</button>
                 <button
-                  className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-xs font-medium border border-gold-light/30 text-ink-muted hover:bg-cream/60 active:bg-cream/80 transition-colors touch-manipulation"
+                  className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-lg text-[11px] font-medium border border-gold-light/30 text-ink-muted hover:bg-cream/60 active:bg-cream/80 transition-colors touch-manipulation"
                   onClick={() => setForm(f => ({ ...f, currentPage: Math.min(book.totalPages, f.currentPage + 10) }))}
                 >+10</button>
               </div>

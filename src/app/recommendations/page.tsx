@@ -1037,7 +1037,7 @@ export default function RecommendationsPage() {
                         </div>
                       ) : friends.length > 0 ? (
                         <div className="mb-3">
-                          <p className="text-[10px] md:text-xs font-medium text-ink-muted uppercase tracking-wider mb-2">Friends</p>
+                          <p className="text-[10px] md:text-xs font-medium text-ink-muted uppercase tracking-wider mb-2">Mutual Follows</p>
                           <div className="space-y-1 max-h-36 overflow-y-auto">
                             {friends.map((f) => (
                               <button
@@ -1061,52 +1061,14 @@ export default function RecommendationsPage() {
                               </button>
                             ))}
                           </div>
-                          <div className="flex items-center gap-3 mt-3 mb-2">
-                            <div className="flex-1 h-px bg-gold-light/20" />
-                            <span className="text-[10px] md:text-xs text-ink-muted uppercase">or search anyone</span>
-                            <div className="flex-1 h-px bg-gold-light/20" />
-                          </div>
                         </div>
-                      ) : null}
-
-                      {/* Send to specific user */}
-                      <div>
-                        <div className="relative">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" />
-                          <input
-                            type="text"
-                            value={sendUserQuery}
-                            onChange={(e) => setSendUserQuery(e.target.value)}
-                            placeholder="Search for a reader..."
-                            className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-cream/50 border border-gold-light/30 text-ink text-sm"
-                          />
-                        </div>
-                        {sendUsers.length > 0 && (
-                          <div className="mt-2 space-y-1 max-h-32 overflow-y-auto">
-                            {sendUsers.map((u) => (
-                            <button
-                              key={u.id}
-                              onClick={() => handleSendRec(u.id)}
-                              disabled={sendingRec || !sendMessage.trim()}
-                              className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-cream/40 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                            >
-                              {u.avatar_url ? (
-                                <img src={u.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" />
-                              ) : (
-                                <div className="w-7 h-7 rounded-full flex items-center justify-center text-parchment text-xs font-bold" style={{ background: 'linear-gradient(135deg, var(--th-gold), var(--th-amber))' }}>
-                                  {u.reader_name.charAt(0).toUpperCase()}
-                                </div>
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs font-medium text-ink">{u.reader_name}</p>
-                                <p className="text-[10px] md:text-xs text-ink-muted">@{u.username || u.public_slug}</p>
-                              </div>
-                              <Send className="w-4 h-4 text-gold" />
-                            </button>
-                          ))}
+                      ) : (
+                        <div className="text-center py-4 mb-3">
+                          <UserPlus className="w-8 h-8 text-gold/30 mx-auto mb-2" />
+                          <p className="text-xs text-ink-muted">You can only send recommendations to mutual follows.</p>
+                          <p className="text-[10px] md:text-xs text-ink-muted mt-1">Follow readers on the <Link href="/discover" className="text-gold-dark underline">Discover</Link> page to connect!</p>
                         </div>
                       )}
-                      </div>
                     </div>
                   )}
 

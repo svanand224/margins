@@ -129,6 +129,9 @@ export default function PageTutorial({ pathname }: { pathname: string }) {
 
   useEffect(() => {
     if (!tip) return;
+    // Global dismiss: if user dismissed tips on ANY page, don't show on others
+    const allDismissed = localStorage.getItem('margins-page-tips-all-dismissed');
+    if (allDismissed === 'true') return;
     const key = `margins-page-tip-${tip.id}`;
     const seen = localStorage.getItem(key);
     if (!seen) {
@@ -141,6 +144,8 @@ export default function PageTutorial({ pathname }: { pathname: string }) {
     if (tip) {
       localStorage.setItem(`margins-page-tip-${tip.id}`, 'true');
     }
+    // Globally dismiss all page tips once one is dismissed
+    localStorage.setItem('margins-page-tips-all-dismissed', 'true');
     setDismissed(true);
     setTimeout(() => setShow(false), 300);
   };

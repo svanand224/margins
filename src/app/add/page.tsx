@@ -51,7 +51,7 @@ export default function AddBookPage() {
     coverUrl: '',
     totalPages: '',
     genre: 'Fiction',
-    status: 'want-to-read' as ReadingStatus,
+    status: 'reading' as ReadingStatus,
     notes: '',
     tags: '',
   });
@@ -84,7 +84,7 @@ export default function AddBookPage() {
           coverUrl: book.coverUrl || '',
           totalPages: String(book.totalPages || ''),
           genre: book.genre || 'Fiction',
-          status: 'want-to-read',
+          status: 'reading',
           notes: book.notes || '',
           tags: '',
         });
@@ -112,7 +112,7 @@ export default function AddBookPage() {
           coverUrl: book.coverUrl || '',
           totalPages: String(book.totalPages || ''),
           genre: book.genre || 'Fiction',
-          status: 'want-to-read',
+          status: 'reading',
           notes: book.notes || '',
           tags: '',
         });
@@ -134,7 +134,7 @@ export default function AddBookPage() {
       coverUrl: book.coverUrl || '',
       totalPages: String(book.totalPages || ''),
       genre: book.genre || 'Fiction',
-      status: 'want-to-read',
+      status: 'reading',
       notes: book.notes || '',
       tags: '',
     });
