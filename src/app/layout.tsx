@@ -6,17 +6,17 @@ import SupabaseSync from "@/components/SupabaseSync";
 
 export const metadata: Metadata = {
   title: "Margins — reading, remembered.",
-  description: "A whimsical reading tracker to nurture your love of books",
+  description: "for the thoughts you leave in the margins",
   openGraph: {
     title: "Margins — reading, remembered.",
-    description: "A whimsical reading tracker to nurture your love of books",
+    description: "for the thoughts you leave in the margins",
     siteName: "Margins",
     type: "website",
   },
   twitter: {
     card: "summary",
     title: "Margins — reading, remembered.",
-    description: "A whimsical reading tracker to nurture your love of books",
+    description: "for the thoughts you leave in the margins",
   },
   // Note: omit `manifest` to avoid fetching protected preview manifests
   appleWebApp: {
